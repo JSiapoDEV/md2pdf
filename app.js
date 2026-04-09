@@ -1314,7 +1314,7 @@ body {
         if (!text.trim()) { showToast('Nothing to share'); return; }
 
         const compressed = LZString.compressToEncodedURIComponent(text);
-        const url = `${location.origin}${location.pathname}#doc=${compressed}`;
+        const url = `${location.origin}${location.pathname}?doc=${compressed}`;
 
         if (url.length > 8000) {
             showToast('Document too long to share by URL');
@@ -1324,12 +1324,29 @@ body {
         navigator.clipboard.writeText(url).then(() => {
             showToast('Link copied to clipboard!');
         }).catch(() => {
-            // Fallback
             prompt('Copy this link:', url);
         });
     }
 
     function loadFromURL() {
+        // Try ?doc= (query param — visible to server for OG previews)
+        const params = new URLSearchParams(location.search);
+        const docParam = params.get('doc');
+        if (docParam) {
+            try {
+                const content = LZString.decompressFromEncodedURIComponent(docParam);
+                if (content) {
+                    editor.value = content;
+                    currentFileName = 'shared.md';
+                    fileNameEl.textContent = currentFileName;
+                    history.replaceState(null, '', location.pathname);
+                    showToast('Shared document loaded');
+                    return true;
+                }
+            } catch (_) {}
+        }
+
+        // Backward compat: try #doc= (hash)
         const hash = location.hash;
         if (hash.startsWith('#doc=')) {
             const compressed = hash.slice(5);
