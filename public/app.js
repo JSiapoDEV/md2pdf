@@ -2058,6 +2058,22 @@ body {
         }
     }
 
+    // ── GitHub Stars ─────────────────────────────────
+
+    function fetchGitHubStars() {
+        fetch('https://api.github.com/repos/JSiapoDEV/md2pdf')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.stargazers_count !== undefined) {
+                    var count = data.stargazers_count;
+                    var label = count >= 1000 ? (count / 1000).toFixed(1) + 'k' : count;
+                    var el = $('#starText');
+                    if (el) el.textContent = label + ' \u2605';
+                }
+            })
+            .catch(function () {});
+    }
+
     // ── Boot ─────────────────────────────────────────
 
     function init() {
@@ -2093,6 +2109,7 @@ body {
         initDropdowns();
         initEvents();
         initWebMCP();
+        fetchGitHubStars();
     }
 
     if (document.readyState === 'loading') {

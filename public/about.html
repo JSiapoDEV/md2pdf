@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About MD2PDF — Free Markdown to PDF Converter Online</title>
+    <meta name="description" content="MD2PDF is a free, open-source tool to convert Markdown files to beautifully styled PDFs, HTML, and images. 11 visual styles, no signup, runs in your browser. Learn how it works.">
+    <meta name="keywords" content="markdown to pdf, convert md to pdf, free markdown converter, online markdown editor, github markdown pdf, markdown pdf export, open source markdown tool">
+    <meta name="author" content="JSiapoDev">
+    <link rel="canonical" href="https://md2pdf.studio/about">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://md2pdf.studio/about">
+    <meta property="og:title" content="About MD2PDF — Free Markdown to PDF Converter">
+    <meta property="og:description" content="Convert Markdown to styled PDFs with 11 visual themes. Free, open-source, no signup. Runs entirely in your browser.">
+    <meta property="og:image" content="https://md2pdf.studio/og-image.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0d1117; color: #e6edf3;
+            line-height: 1.7; -webkit-font-smoothing: antialiased;
+        }
+        a { color: #f0883e; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+
+        h1 { font-size: 2.5em; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+        h1 span { color: #f0883e; }
+        .subtitle { font-size: 1.15em; color: #8b949e; margin-bottom: 48px; }
+
+        h2 { font-size: 1.4em; font-weight: 700; margin: 40px 0 16px; color: #f0883e; }
+        h3 { font-size: 1.1em; font-weight: 600; margin: 24px 0 8px; }
+
+        p, li { font-size: 1em; color: #c9d1d9; margin-bottom: 12px; }
+        ul { padding-left: 24px; margin-bottom: 16px; }
+        li { margin-bottom: 6px; }
+
+        .cta {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 28px; background: #f0883e; color: #0d1117;
+            border-radius: 8px; font-weight: 700; font-size: 1em;
+            margin: 24px 0; transition: background 0.15s;
+        }
+        .cta:hover { background: #f4a261; text-decoration: none; }
+
+        .features-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 16px; margin: 24px 0;
+        }
+        .feature-card {
+            padding: 16px; background: #161b22;
+            border: 1px solid #30363d; border-radius: 10px;
+        }
+        .feature-card h3 { margin: 0 0 6px; font-size: 0.95em; color: #e6edf3; }
+        .feature-card p { font-size: 0.88em; color: #8b949e; margin: 0; }
+
+        .styles-list {
+            display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0;
+        }
+        .style-tag {
+            padding: 4px 12px; background: #161b22;
+            border: 1px solid #30363d; border-radius: 20px;
+            font-size: 0.85em; color: #c9d1d9;
+        }
+
+        footer {
+            border-top: 1px solid #30363d;
+            margin-top: 48px; padding-top: 24px;
+            font-size: 0.85em; color: #6e7681;
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .features-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 1.8em; }
+        }
+    </style>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I convert Markdown to PDF?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Open md2pdf.studio, paste or write your Markdown in the editor, choose a visual style, and click Export > Export PDF. The PDF downloads instantly with no signup required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is MD2PDF free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, MD2PDF is completely free and open-source. It runs entirely in your browser with no server processing, no ads, and no tracking."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What styles are available?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "MD2PDF offers 11 visual styles: Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, and Pastel. You can also inject your own custom CSS."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I share my documents?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document directly in their browser. Links are valid for 90 days."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can AI agents use MD2PDF?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. MD2PDF has a public REST API (POST /api/save) that AI agents like Claude, ChatGPT, and Gemini can use to create and share styled documents. It also supports WebMCP for direct browser integration."
+          }
+        }
+      ]
+    }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>MD<span>2</span>PDF</h1>
+        <p class="subtitle">Free, open-source Markdown to PDF converter. No signup, no server, no tracking. Runs in your browser.</p>
+
+        <a href="/" class="cta">Open the Editor</a>
+
+        <h2>What is MD2PDF?</h2>
+        <p>MD2PDF is a web tool that converts Markdown (.md) files into beautifully styled PDFs, HTML files, and images. It supports GitHub-Flavored Markdown with syntax highlighting for 180+ programming languages.</p>
+        <p>Everything runs client-side in your browser. Your documents are never sent to a server. The tool is free, open-source, and requires no account or installation.</p>
+
+        <h2>Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <h3>Live Preview</h3>
+                <p>Split-pane editor with real-time rendering. See your changes as you type.</p>
+            </div>
+            <div class="feature-card">
+                <h3>11 Visual Styles</h3>
+                <p>Choose from Notion, GitHub, LaTeX, Dracula, and 7 more. Or inject your own CSS.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Export Anywhere</h3>
+                <p>Download as PDF, HTML, or PNG image. Share via URL with live previews in Teams, Slack, WhatsApp.</p>
+            </div>
+            <div class="feature-card">
+                <h3>AI Agent Ready</h3>
+                <p>REST API for programmatic access. WebMCP support. AI agents can create and share documents.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Templates</h3>
+                <p>Start with pre-built templates: CV, Report, Documentation, Changelog, Meeting Notes.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Privacy First</h3>
+                <p>No cookies, no analytics scripts, no server processing. Your data stays in your browser.</p>
+            </div>
+        </div>
+
+        <h2>Available Styles</h2>
+        <div class="styles-list">
+            <span class="style-tag">Notion</span>
+            <span class="style-tag">GitHub</span>
+            <span class="style-tag">Minimal</span>
+            <span class="style-tag">Academic</span>
+            <span class="style-tag">Corporate</span>
+            <span class="style-tag">LaTeX</span>
+            <span class="style-tag">Dracula</span>
+            <span class="style-tag">Newspaper</span>
+            <span class="style-tag">Handwritten</span>
+            <span class="style-tag">Terminal</span>
+            <span class="style-tag">Pastel</span>
+        </div>
+
+        <h2>How to Convert Markdown to PDF</h2>
+        <ol>
+            <li>Open <a href="/">md2pdf.studio</a></li>
+            <li>Write, paste, or drag and drop your .md file into the editor</li>
+            <li>Choose a visual style from the dropdown in the preview panel</li>
+            <li>Click <strong>Export > Export PDF</strong> to download</li>
+        </ol>
+        <p>You can also export to HTML (standalone file) or PNG (image screenshot).</p>
+
+        <h2>Keyboard Shortcuts</h2>
+        <ul>
+            <li><strong>Ctrl + S</strong> — Export to PDF</li>
+            <li><strong>Ctrl + F</strong> — Find in editor</li>
+            <li><strong>Ctrl + H</strong> — Find & Replace</li>
+            <li><strong>Ctrl + Shift + L</strong> — Toggle dark/light theme</li>
+            <li><strong>F11</strong> — Fullscreen mode</li>
+        </ul>
+
+        <h2>API for Developers & AI Agents</h2>
+        <p>MD2PDF has a public API that anyone can use to create and share styled documents programmatically:</p>
+        <ul>
+            <li><strong>POST /api/save</strong> — Create a document, get a shareable URL</li>
+            <li><strong>PUT /api/update/{id}</strong> — Update an existing document (requires editKey)</li>
+        </ul>
+        <p>AI agents like Claude, ChatGPT, and Gemini can use this API to generate styled documents. See the <a href="/">API & Prompts</a> section in the app for ready-to-use prompts.</p>
+
+        <h2>Open Source</h2>
+        <p>MD2PDF is MIT licensed and fully open-source. Built with pure HTML, CSS, and JavaScript — no framework, no build step.</p>
+        <p><a href="https://github.com/JSiapoDEV/md2pdf">View on GitHub</a> — contributions welcome.</p>
+
+        <footer>
+            <span>Built by <a href="https://jsiapo.dev">JSiapoDev</a></span>
+            <span>
+                <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a> &middot;
+                <a href="https://www.linkedin.com/in/jsiapo/">LinkedIn</a> &middot;
+                <a href="/">Open Editor</a>
+            </span>
+        </footer>
+    </div>
+</body>
+</html>
