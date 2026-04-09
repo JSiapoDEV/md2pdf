@@ -143,6 +143,22 @@ function extractMeta(markdown) {
     return { title: title, description: desc };
 }
 
+// --- Rate Limiting ---
+
+var RATE_LIMIT = 10;       // max saves
+var RATE_WINDOW = 60;      // per 60 seconds
+
+async function checkRateLimit(ip, env) {
+    var key = 'rl:' + ip;
+    var data = await env.DOCS.get(key);
+    var count = data ? parseInt(data, 10) : 0;
+
+    if (count >= RATE_LIMIT) return false; // blocked
+
+    await env.DOCS.put(key, String(count + 1), { expirationTtl: RATE_WINDOW });
+    return true; // allowed
+}
+
 // --- Helpers ---
 
 function generateId() {
@@ -186,6 +202,16 @@ export default {
         // --- POST /api/save — save markdown to KV, return short URL ---
         if (url.pathname === '/api/save' && request.method === 'POST') {
             try {
+                // Rate limit by IP
+                var ip = request.headers.get('cf-connecting-ip') || 'unknown';
+                var allowed = await checkRateLimit(ip, env);
+                if (!allowed) {
+                    return new Response(JSON.stringify({ error: 'Too many requests. Try again in a minute.' }), {
+                        status: 429,
+                        headers: { 'content-type': 'application/json', 'retry-after': '60' },
+                    });
+                }
+
                 var body = await request.text();
                 if (!body || !body.trim()) {
                     return new Response(JSON.stringify({ error: 'Empty content' }), {
