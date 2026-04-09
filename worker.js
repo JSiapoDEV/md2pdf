@@ -143,36 +143,137 @@ function extractMeta(markdown) {
     return { title: title, description: desc };
 }
 
+// --- Helpers ---
+
+function generateId() {
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var arr = new Uint8Array(8);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, function (b) { return chars[b % chars.length]; }).join('');
+}
+
+function injectContent(html, content, meta) {
+    var safeTitle = escapeHtml(meta.title);
+    var safeDesc = escapeHtml(meta.description);
+    // Escape for safe JSON inside <script>
+    var safeJson = JSON.stringify(content).replace(/</g, '\\u003c');
+
+    // Inject markdown content as embedded data
+    html = html.replace('</head>', '<script id="shared-content" type="application/json">' + safeJson + '</script>\n</head>');
+
+    // Replace OG tags
+    html = html.replace(/<meta property="og:title"[^>]*>/, '<meta property="og:title" content="' + safeTitle + '">');
+    html = html.replace(/<meta property="og:description"[^>]*>/, '<meta property="og:description" content="' + safeDesc + '">');
+    html = html.replace(/<meta name="twitter:title"[^>]*>/, '<meta name="twitter:title" content="' + safeTitle + '">');
+    html = html.replace(/<meta name="twitter:description"[^>]*>/, '<meta name="twitter:description" content="' + safeDesc + '">');
+    html = html.replace(/<meta name="description"[^>]*>/, '<meta name="description" content="' + safeDesc + '">');
+
+    return html;
+}
+
+async function getIndexHtml(env, request) {
+    var assetReq = new Request(new URL('/', request.url).toString());
+    var response = await env.ASSETS.fetch(assetReq);
+    return response.text();
+}
+
 // --- Worker entry point ---
 
 export default {
     async fetch(request, env) {
         var url = new URL(request.url);
-        var docParam = url.searchParams.get('doc');
 
-        // Intercept /share?doc= — this path has no static asset, so the Worker handles it
+        // --- POST /api/save — save markdown to KV, return short URL ---
+        if (url.pathname === '/api/save' && request.method === 'POST') {
+            try {
+                var body = await request.text();
+                if (!body || !body.trim()) {
+                    return new Response(JSON.stringify({ error: 'Empty content' }), {
+                        status: 400,
+                        headers: { 'content-type': 'application/json' },
+                    });
+                }
+
+                // Limit: 500KB max
+                if (body.length > 512000) {
+                    return new Response(JSON.stringify({ error: 'Document too large (max 500KB)' }), {
+                        status: 413,
+                        headers: { 'content-type': 'application/json' },
+                    });
+                }
+
+                var id = generateId();
+                // Store with 90-day TTL
+                await env.DOCS.put(id, body, { expirationTtl: 86400 * 90 });
+
+                return new Response(JSON.stringify({
+                    id: id,
+                    url: url.origin + '/s/' + id,
+                }), {
+                    headers: {
+                        'content-type': 'application/json',
+                        'access-control-allow-origin': '*',
+                    },
+                });
+            } catch (e) {
+                return new Response(JSON.stringify({ error: 'Save failed' }), {
+                    status: 500,
+                    headers: { 'content-type': 'application/json' },
+                });
+            }
+        }
+
+        // --- CORS preflight for /api/save ---
+        if (url.pathname === '/api/save' && request.method === 'OPTIONS') {
+            return new Response(null, {
+                headers: {
+                    'access-control-allow-origin': '*',
+                    'access-control-allow-methods': 'POST, OPTIONS',
+                    'access-control-allow-headers': 'Content-Type',
+                },
+            });
+        }
+
+        // --- GET /s/:id — load document from KV ---
+        if (url.pathname.startsWith('/s/') && url.pathname.length > 3) {
+            try {
+                var id = url.pathname.slice(3);
+                var content = await env.DOCS.get(id);
+
+                if (!content) {
+                    return new Response('Document not found or expired.', {
+                        status: 404,
+                        headers: { 'content-type': 'text/plain' },
+                    });
+                }
+
+                var meta = extractMeta(content);
+                var html = await getIndexHtml(env, request);
+                html = injectContent(html, content, meta);
+
+                return new Response(html, {
+                    headers: { 'content-type': 'text/html;charset=UTF-8' },
+                });
+            } catch (e) {
+                return new Response('Error loading document.', {
+                    status: 500,
+                    headers: { 'content-type': 'text/plain' },
+                });
+            }
+        }
+
+        // --- GET /share?doc= — legacy LZ-string compressed sharing ---
+        var docParam = url.searchParams.get('doc');
         if (url.pathname === '/share' && docParam) {
             try {
-                var content = decompressFromEncodedURIComponent(docParam);
+                var lzContent = decompressFromEncodedURIComponent(docParam);
 
-                if (content) {
-                    var meta = extractMeta(content);
-                    var safeTitle = escapeHtml(meta.title);
-                    var safeDesc = escapeHtml(meta.description);
+                if (lzContent) {
+                    var lzMeta = extractMeta(lzContent);
+                    var lzHtml = await getIndexHtml(env, request);
+                    lzHtml = injectContent(lzHtml, lzContent, lzMeta);
 
-                    // Fetch index.html from static assets
-                    var assetReq = new Request(new URL('/', request.url).toString());
-                    var response = await env.ASSETS.fetch(assetReq);
-                    var html = await response.text();
-
-                    // Replace OG tags with dynamic content
-                    html = html.replace(/<meta property="og:title"[^>]*>/, '<meta property="og:title" content="' + safeTitle + '">');
-                    html = html.replace(/<meta property="og:description"[^>]*>/, '<meta property="og:description" content="' + safeDesc + '">');
-                    html = html.replace(/<meta name="twitter:title"[^>]*>/, '<meta name="twitter:title" content="' + safeTitle + '">');
-                    html = html.replace(/<meta name="twitter:description"[^>]*>/, '<meta name="twitter:description" content="' + safeDesc + '">');
-                    html = html.replace(/<meta name="description"[^>]*>/, '<meta name="description" content="' + safeDesc + '">');
-
-                    return new Response(html, {
+                    return new Response(lzHtml, {
                         headers: { 'content-type': 'text/html;charset=UTF-8' },
                     });
                 }
@@ -181,7 +282,7 @@ export default {
             }
         }
 
-        // Serve static assets for everything else
+        // --- Serve static assets for everything else ---
         return env.ASSETS.fetch(request);
     },
 };

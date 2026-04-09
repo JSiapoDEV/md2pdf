@@ -5,3 +5,7 @@ compatibility_date = "2026-04-01"
 [assets]
 directory = "./public"
 binding = "ASSETS"
+
+[[kv_namespaces]]
+binding = "DOCS"
+id = "a6b32dd5e339407998e719b0baa1dcb8"

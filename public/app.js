@@ -1309,27 +1309,61 @@ body {
 
     // ── Share by URL ─────────────────────────────────
 
-    function shareByURL() {
+    async function shareByURL() {
         const text = editor.value;
         if (!text.trim()) { showToast('Nothing to share'); return; }
 
-        const compressed = LZString.compressToEncodedURIComponent(text);
-        const url = `${location.origin}/share?doc=${compressed}`;
+        showToast('Creating link...');
 
-        if (url.length > 8000) {
-            showToast('Document too long to share by URL');
-            return;
+        try {
+            // Try KV-based sharing (no size limit)
+            const res = await fetch('/api/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: text,
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                await navigator.clipboard.writeText(data.url);
+                showToast('Link copied!');
+                return;
+            }
+        } catch (_) {}
+
+        // Fallback: LZ-string URL (for small docs or if KV fails)
+        try {
+            const compressed = LZString.compressToEncodedURIComponent(text);
+            const url = `${location.origin}/share?doc=${compressed}`;
+            if (url.length > 8000) {
+                showToast('Share failed — document too large');
+                return;
+            }
+            await navigator.clipboard.writeText(url);
+            showToast('Link copied (fallback)');
+        } catch (e) {
+            showToast('Share failed');
         }
-
-        navigator.clipboard.writeText(url).then(() => {
-            showToast('Link copied to clipboard!');
-        }).catch(() => {
-            prompt('Copy this link:', url);
-        });
     }
 
     function loadFromURL() {
-        // Try ?doc= (query param — visible to server for OG previews)
+        // Try embedded content (injected by Worker for /s/:id and /share?doc=)
+        const sharedEl = document.getElementById('shared-content');
+        if (sharedEl) {
+            try {
+                const content = JSON.parse(sharedEl.textContent);
+                if (content) {
+                    editor.value = content;
+                    currentFileName = 'shared.md';
+                    fileNameEl.textContent = currentFileName;
+                    history.replaceState(null, '', '/');
+                    showToast('Shared document loaded');
+                    return true;
+                }
+            } catch (_) {}
+        }
+
+        // Fallback: try ?doc= query param (client-side decompression)
         const params = new URLSearchParams(location.search);
         const docParam = params.get('doc');
         if (docParam) {
@@ -1356,7 +1390,7 @@ body {
                     editor.value = content;
                     currentFileName = 'shared.md';
                     fileNameEl.textContent = currentFileName;
-                    history.replaceState(null, '', location.pathname);
+                    history.replaceState(null, '', '/');
                     showToast('Shared document loaded');
                     return true;
                 }
