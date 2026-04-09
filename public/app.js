@@ -1146,6 +1146,9 @@ Start writing on the left, or drag and drop a \`.md\` file.
     }
 
     function applyTheme(t) {
+        // Force CSS variable re-evaluation by briefly removing the attribute
+        document.documentElement.removeAttribute('data-theme');
+        void document.documentElement.offsetHeight; // force reflow
         document.documentElement.setAttribute('data-theme', t);
         localStorage.setItem('md2pdf-theme', t);
 
@@ -1155,6 +1158,11 @@ Start writing on the left, or drag and drop a \`.md\` file.
         $('#md-css-light').disabled   = forceDark ? true  : t !== 'light';
         $('#hljs-css-dark').disabled  = forceDark ? false : t !== 'dark';
         $('#hljs-css-light').disabled = forceDark ? true  : t !== 'light';
+
+        // Force editor repaint
+        editor.style.background = 'inherit';
+        void editor.offsetHeight;
+        editor.style.background = '';
 
         render();
     }
