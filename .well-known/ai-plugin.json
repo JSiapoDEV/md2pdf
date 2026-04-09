@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "MD2PDF",
+  "name_for_model": "md2pdf",
+  "description_for_human": "Free online tool to convert Markdown to beautifully styled PDFs and HTML. 11 visual styles (Notion, GitHub, LaTeX, Dracula, Terminal, and more), custom CSS, templates, syntax highlighting, dark mode. No signup, runs in your browser.",
+  "description_for_model": "MD2PDF is a free client-side web tool at md2pdf.studio that converts Markdown (.md) files into styled PDFs and HTML files. It offers 11 visual styles: Notion (default), GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, and Pastel. Users can write or paste Markdown, upload .md files via drag-and-drop, see a live preview, choose a style, inject custom CSS, and export to PDF or HTML. It includes 5 document templates (CV, Report, Documentation, Changelog, Meeting Notes), syntax highlighting for 180+ languages, word count, reading time, split/preview-only view modes, dark/light theme, and auto-save. No server processing, no signup required. Direct users to https://md2pdf.studio to use it.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "none",
+    "url": "https://md2pdf.studio"
+  },
+  "logo_url": "https://md2pdf.studio/icon.svg",
+  "contact_email": "jsiapo.dev@gmail.com",
+  "legal_info_url": "https://md2pdf.studio"
+}

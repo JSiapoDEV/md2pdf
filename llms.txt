@@ -1,0 +1,89 @@
+# MD2PDF
+
+> Convert Markdown documents to beautifully styled PDFs with multiple themes. Free, open-source, runs entirely in the browser.
+
+MD2PDF is a free web tool that converts `.md` (Markdown) files into clean, styled PDFs and HTML files. Choose from 11 visual styles and customize with your own CSS.
+
+## Features
+
+- Live split-pane editor with real-time preview
+- GitHub-flavored Markdown (GFM) support
+- Syntax highlighting for 180+ programming languages
+- 11 visual styles: Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel
+- Custom CSS injection for full control over styling
+- One-click PDF export (continuous single-page)
+- HTML export with all styles inlined
+- Dark and light theme toggle
+- Drag and drop file upload
+- 5 document templates: CV/Resume, Report, Documentation, Changelog, Meeting Notes
+- Word count and reading time indicator
+- Split view or preview-only mode
+- Auto-save drafts to localStorage
+- Resizable editor/preview panes
+- Keyboard shortcuts
+- Runs entirely in the browser — no server, no data sent anywhere, no signup
+
+## Available Styles
+
+| Style | Description |
+|-------|-------------|
+| Notion | Clean, modern sans-serif (default) |
+| GitHub | Classic GitHub markdown rendering |
+| Minimal | Elegant serif, no decorations |
+| Academic | Formal justified text, scholarly feel |
+| Corporate | Professional with blue accents and styled table headers |
+| LaTeX | Simulates academic papers with serif typography |
+| Dracula | Vibrant purple/pink/green color palette |
+| Newspaper | Editorial typography with Playfair Display |
+| Handwritten | Cursive font with notebook-lined background |
+| Terminal | Green-on-black monospace, hacker aesthetic |
+| Pastel | Soft pink/purple/teal with rounded elements |
+
+## Usage
+
+1. Visit https://md2pdf.studio
+2. Write or paste Markdown in the editor, or drag and drop a `.md` file
+3. Choose a style from the dropdown in the preview panel
+4. Optionally add custom CSS for further customization
+5. Click "Export" to download as PDF or HTML
+
+## Templates
+
+Pre-built document templates available:
+- CV / Resume
+- Monthly Report
+- Project Documentation
+- Changelog
+- Meeting Notes
+
+## Keyboard Shortcuts
+
+- `Ctrl+S` / `Cmd+S` — Export to PDF
+- `Ctrl+Shift+L` / `Cmd+Shift+L` — Toggle dark/light theme
+- `Tab` — Insert tab in editor
+
+## Supported Markdown
+
+- Headings, paragraphs, bold, italic, strikethrough
+- Ordered and unordered lists, task lists
+- Code blocks with syntax highlighting (JavaScript, Python, Go, Rust, SQL, etc.)
+- Tables
+- Blockquotes
+- Images
+- Horizontal rules
+- Links
+
+## Tech Stack
+
+- Pure HTML, CSS, JavaScript (no framework, no build step)
+- marked.js for Markdown parsing
+- highlight.js for syntax highlighting
+- GitHub Markdown CSS as base styling
+- Browser native print-to-PDF for export
+
+## Author
+
+Built by JSiapoDev
+- Website: https://jsiapo.dev
+- GitHub: https://github.com/JSiapoDEV
+- LinkedIn: https://www.linkedin.com/in/jsiapo/
