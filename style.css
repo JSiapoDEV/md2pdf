@@ -646,6 +646,22 @@ body {
 }
 .footer-links a:hover { color: var(--accent); transform: scale(1.15); }
 
+.star-link {
+    font-size: 11px;
+    font-weight: 600;
+    gap: 5px;
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    transform: none !important;
+}
+
+.star-link:hover {
+    color: #f0883e !important;
+    border-color: #f0883e;
+    transform: none !important;
+}
+
 /* =========================================
    Export Overlay
    ========================================= */
