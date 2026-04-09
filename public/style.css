@@ -941,6 +941,19 @@ body {
 
     #editor { padding: 16px; font-size: 13px; }
     .preview-container .markdown-body { padding: 20px; }
+
+    /* Footer: stack and wrap */
+    .app-footer {
+        height: auto;
+        padding: 8px 12px;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .footer-links { gap: 6px; flex-wrap: wrap; justify-content: center; }
+
+    .star-link { font-size: 10px; padding: 2px 6px; }
 }
 
 /* =========================================
