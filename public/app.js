@@ -1314,7 +1314,7 @@ body {
         if (!text.trim()) { showToast('Nothing to share'); return; }
 
         const compressed = LZString.compressToEncodedURIComponent(text);
-        const url = `${location.origin}${location.pathname}?doc=${compressed}`;
+        const url = `${location.origin}/share?doc=${compressed}`;
 
         if (url.length > 8000) {
             showToast('Document too long to share by URL');
@@ -1339,7 +1339,7 @@ body {
                     editor.value = content;
                     currentFileName = 'shared.md';
                     fileNameEl.textContent = currentFileName;
-                    history.replaceState(null, '', location.pathname);
+                    history.replaceState(null, '', '/');
                     showToast('Shared document loaded');
                     return true;
                 }

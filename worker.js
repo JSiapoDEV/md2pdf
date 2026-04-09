@@ -150,8 +150,8 @@ export default {
         var url = new URL(request.url);
         var docParam = url.searchParams.get('doc');
 
-        // Only intercept root with ?doc= parameter
-        if (docParam && (url.pathname === '/' || url.pathname === '/index.html')) {
+        // Intercept /share?doc= — this path has no static asset, so the Worker handles it
+        if (url.pathname === '/share' && docParam) {
             try {
                 var content = decompressFromEncodedURIComponent(docParam);
 
@@ -160,13 +160,12 @@ export default {
                     var safeTitle = escapeHtml(meta.title);
                     var safeDesc = escapeHtml(meta.description);
 
-                    // Fetch original HTML from static assets
-                    var assetUrl = new URL('/', request.url);
-                    assetUrl.search = '';
-                    var response = await env.ASSETS.fetch(new Request(assetUrl));
+                    // Fetch index.html from static assets
+                    var assetReq = new Request(new URL('/', request.url).toString());
+                    var response = await env.ASSETS.fetch(assetReq);
                     var html = await response.text();
 
-                    // Replace OG tags
+                    // Replace OG tags with dynamic content
                     html = html.replace(/<meta property="og:title"[^>]*>/, '<meta property="og:title" content="' + safeTitle + '">');
                     html = html.replace(/<meta property="og:description"[^>]*>/, '<meta property="og:description" content="' + safeDesc + '">');
                     html = html.replace(/<meta name="twitter:title"[^>]*>/, '<meta name="twitter:title" content="' + safeTitle + '">');
@@ -182,7 +181,7 @@ export default {
             }
         }
 
-        // Serve static assets
+        // Serve static assets for everything else
         return env.ASSETS.fetch(request);
     },
 };
