@@ -168,6 +168,12 @@ function generateId() {
     return Array.from(arr, function (b) { return chars[b % chars.length]; }).join('');
 }
 
+function generateEditKey() {
+    var arr = new Uint8Array(32);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
 function injectContent(html, content, meta) {
     var safeTitle = escapeHtml(meta.title);
     var safeDesc = escapeHtml(meta.description);
@@ -229,11 +235,17 @@ export default {
                 }
 
                 var id = generateId();
-                // Store with 90-day TTL
-                await env.DOCS.put(id, body, { expirationTtl: 86400 * 90 });
+                var editKey = generateEditKey();
+
+                // Store with 90-day TTL + editKey in metadata
+                await env.DOCS.put(id, body, {
+                    expirationTtl: 86400 * 90,
+                    metadata: { editKey: editKey, created: Date.now() },
+                });
 
                 return new Response(JSON.stringify({
                     id: id,
+                    editKey: editKey,
                     url: url.origin + '/s/' + id,
                 }), {
                     headers: {
@@ -249,13 +261,63 @@ export default {
             }
         }
 
-        // --- CORS preflight for /api/save ---
-        if (url.pathname === '/api/save' && request.method === 'OPTIONS') {
+        // --- PUT /api/update/:id — update existing document ---
+        if (url.pathname.startsWith('/api/update/') && request.method === 'PUT') {
+            try {
+                var updateId = url.pathname.slice(12);
+                var updateBody = await request.text();
+                var editKeyHeader = request.headers.get('x-edit-key');
+
+                if (!updateBody || !updateBody.trim()) {
+                    return new Response(JSON.stringify({ error: 'Empty content' }), {
+                        status: 400, headers: { 'content-type': 'application/json' },
+                    });
+                }
+
+                if (updateBody.length > 512000) {
+                    return new Response(JSON.stringify({ error: 'Document too large' }), {
+                        status: 413, headers: { 'content-type': 'application/json' },
+                    });
+                }
+
+                // Verify editKey
+                var existing = await env.DOCS.getWithMetadata(updateId);
+                if (!existing.value) {
+                    return new Response(JSON.stringify({ error: 'Document not found' }), {
+                        status: 404, headers: { 'content-type': 'application/json' },
+                    });
+                }
+
+                var storedKey = existing.metadata?.editKey;
+                if (!storedKey || storedKey !== editKeyHeader) {
+                    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                        status: 403, headers: { 'content-type': 'application/json' },
+                    });
+                }
+
+                // Update with fresh 90-day TTL, keep same editKey
+                await env.DOCS.put(updateId, updateBody, {
+                    expirationTtl: 86400 * 90,
+                    metadata: existing.metadata,
+                });
+
+                return new Response(JSON.stringify({ id: updateId, url: url.origin + '/s/' + updateId }), {
+                    headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
+                });
+            } catch (e) {
+                return new Response(JSON.stringify({ error: 'Update failed' }), {
+                    status: 500, headers: { 'content-type': 'application/json' },
+                });
+            }
+        }
+
+        // --- CORS preflight for /api/* ---
+        if (url.pathname.startsWith('/api/') && request.method === 'OPTIONS') {
             return new Response(null, {
                 headers: {
                     'access-control-allow-origin': '*',
-                    'access-control-allow-methods': 'POST, OPTIONS',
-                    'access-control-allow-headers': 'Content-Type',
+                    'access-control-allow-methods': 'POST, PUT, OPTIONS',
+                    'access-control-allow-headers': 'Content-Type, X-Edit-Key',
                 },
             });
         }

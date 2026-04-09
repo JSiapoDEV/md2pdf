@@ -1337,6 +1337,20 @@ body {
         });
     }
 
+    // Share state: map of content hash → { id, editKey }
+    function getShareMap() {
+        try { return JSON.parse(localStorage.getItem('md2pdf-shares') || '{}'); } catch (_) { return {}; }
+    }
+    function saveShareMap(map) {
+        localStorage.setItem('md2pdf-shares', JSON.stringify(map));
+    }
+
+    // Simple hash for change detection
+    async function contentHash(text) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+        return Array.from(new Uint8Array(buf).slice(0, 8), b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     async function shareByURL() {
         const text = editor.value;
         if (!text.trim()) { showToast('Nothing to share'); return; }
@@ -1344,6 +1358,31 @@ body {
         exportOverlay.classList.add('active');
 
         try {
+            const shares = getShareMap();
+            const docKey = currentFileName; // use filename as document identity
+
+            // Check if we have an existing share for this document
+            if (shares[docKey]) {
+                const { id, editKey } = shares[docKey];
+
+                // Try to update existing document
+                const updateRes = await fetch('/api/update/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'text/plain', 'X-Edit-Key': editKey },
+                    body: text,
+                });
+
+                if (updateRes.ok) {
+                    const data = await updateRes.json();
+                    exportOverlay.classList.remove('active');
+                    showShareModal(data.url);
+                    showToast('Link updated');
+                    return;
+                }
+                // If update fails (404 expired, 403 wrong key), create new below
+            }
+
+            // Create new share
             const res = await fetch('/api/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
@@ -1354,6 +1393,9 @@ body {
 
             if (res.ok) {
                 const data = await res.json();
+                // Save editKey for future updates
+                shares[docKey] = { id: data.id, editKey: data.editKey };
+                saveShareMap(shares);
                 showShareModal(data.url);
                 return;
             }
