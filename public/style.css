@@ -780,6 +780,112 @@ body {
 }
 
 /* =========================================
+   API & Prompts Modal
+   ========================================= */
+
+.api-modal {
+    width: 640px;
+    max-width: 92vw;
+    max-height: 80vh;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    animation: dropdown-in 150ms var(--ease);
+}
+
+.api-content {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.api-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.api-tab {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    background: none;
+    border: none;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--t-fast);
+}
+
+.api-tab:hover { color: var(--text-1); background: var(--btn-ghost-hover); }
+.api-tab.active { color: var(--accent); background: var(--accent-subtle); }
+
+.api-tab-content { display: none; }
+.api-tab-content.active { display: block; }
+
+.api-desc {
+    font-size: 13px;
+    color: var(--text-2);
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.api-section { margin-bottom: 16px; }
+
+.api-section h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-1);
+    margin-bottom: 8px;
+}
+
+.api-code-block {
+    position: relative;
+    background: var(--bg-app);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.api-code-block pre {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--text-1);
+    padding: 12px 14px;
+    padding-right: 60px;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.api-copy-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-2);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: all var(--t-fast);
+}
+
+.api-copy-btn:hover { color: var(--text-1); border-color: var(--accent); }
+
+/* =========================================
    Toast
    ========================================= */
 

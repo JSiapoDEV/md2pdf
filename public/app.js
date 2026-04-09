@@ -1666,6 +1666,35 @@ body {
         shareCloseBtn.addEventListener('click', closeShareModal);
         shareOverlay.addEventListener('click', (e) => { if (e.target === shareOverlay) closeShareModal(); });
 
+        // API & Prompts modal
+        const apiOverlay  = $('#apiOverlay');
+        const apiCloseBtn = $('#apiCloseBtn');
+
+        $('#apiPromptsBtn').addEventListener('click', () => { apiOverlay.classList.add('active'); });
+        apiCloseBtn.addEventListener('click', () => { apiOverlay.classList.remove('active'); });
+        apiOverlay.addEventListener('click', (e) => { if (e.target === apiOverlay) apiOverlay.classList.remove('active'); });
+
+        // Tabs
+        document.querySelectorAll('.api-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.api-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.api-tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Copy buttons
+        document.querySelectorAll('.api-copy-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const pre = btn.parentElement.querySelector('pre');
+                navigator.clipboard.writeText(pre.textContent).then(() => {
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+                });
+            });
+        });
+
         // Fullscreen
         fullscreenBtn.addEventListener('click', toggleFullscreen);
 
