@@ -301,6 +301,21 @@
         </div>
     </div>
 
+    <!-- Share Modal -->
+    <div class="share-overlay" id="shareOverlay">
+        <div class="share-modal">
+            <div class="share-header">
+                <span class="share-title">Link created!</span>
+                <button class="find-btn" id="shareCloseBtn" title="Close">&#10005;</button>
+            </div>
+            <div class="share-url-row">
+                <input type="text" id="shareUrlInput" class="share-url-input" readonly>
+                <button class="btn btn-primary btn-sm" id="shareCopyBtn">Copy</button>
+            </div>
+            <p class="share-hint">This link expires in 90 days.</p>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div class="toast" id="toast">
         <span id="toastMessage"></span>

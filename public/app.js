@@ -1309,29 +1309,59 @@ body {
 
     // ── Share by URL ─────────────────────────────────
 
+    const shareOverlay  = $('#shareOverlay');
+    const shareUrlInput = $('#shareUrlInput');
+    const shareCopyBtn  = $('#shareCopyBtn');
+    const shareCloseBtn = $('#shareCloseBtn');
+
+    function showShareModal(url) {
+        shareUrlInput.value = url;
+        shareOverlay.classList.add('active');
+        shareUrlInput.focus();
+        shareUrlInput.select();
+    }
+
+    function closeShareModal() {
+        shareOverlay.classList.remove('active');
+    }
+
+    function copyShareUrl() {
+        navigator.clipboard.writeText(shareUrlInput.value).then(() => {
+            shareCopyBtn.textContent = 'Copied!';
+            setTimeout(() => { shareCopyBtn.textContent = 'Copy'; }, 2000);
+        }).catch(() => {
+            shareUrlInput.select();
+            document.execCommand('copy');
+            shareCopyBtn.textContent = 'Copied!';
+            setTimeout(() => { shareCopyBtn.textContent = 'Copy'; }, 2000);
+        });
+    }
+
     async function shareByURL() {
         const text = editor.value;
         if (!text.trim()) { showToast('Nothing to share'); return; }
 
-        showToast('Creating link...');
+        exportOverlay.classList.add('active');
 
         try {
-            // Try KV-based sharing (no size limit)
             const res = await fetch('/api/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
                 body: text,
             });
 
+            exportOverlay.classList.remove('active');
+
             if (res.ok) {
                 const data = await res.json();
-                await navigator.clipboard.writeText(data.url);
-                showToast('Link copied!');
+                showShareModal(data.url);
                 return;
             }
-        } catch (_) {}
+        } catch (_) {
+            exportOverlay.classList.remove('active');
+        }
 
-        // Fallback: LZ-string URL (for small docs or if KV fails)
+        // Fallback: LZ-string URL
         try {
             const compressed = LZString.compressToEncodedURIComponent(text);
             const url = `${location.origin}/share?doc=${compressed}`;
@@ -1339,8 +1369,7 @@ body {
                 showToast('Share failed — document too large');
                 return;
             }
-            await navigator.clipboard.writeText(url);
-            showToast('Link copied (fallback)');
+            showShareModal(url);
         } catch (e) {
             showToast('Share failed');
         }
@@ -1589,6 +1618,11 @@ body {
         exportHTMLBtn.addEventListener('click', () => { exportDropdown.classList.remove('open'); exportHTML(); });
         exportImageBtn.addEventListener('click', () => { exportDropdown.classList.remove('open'); exportImage(); });
         shareBtn.addEventListener('click', () => { exportDropdown.classList.remove('open'); shareByURL(); });
+
+        // Share modal
+        shareCopyBtn.addEventListener('click', copyShareUrl);
+        shareCloseBtn.addEventListener('click', closeShareModal);
+        shareOverlay.addEventListener('click', (e) => { if (e.target === shareOverlay) closeShareModal(); });
 
         // Fullscreen
         fullscreenBtn.addEventListener('click', toggleFullscreen);
