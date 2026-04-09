@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head><title>OG Image Generator</title></head>
+<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;">
+<canvas id="c" width="1200" height="630"></canvas>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+
+// Background
+ctx.fillStyle = '#0d1117';
+ctx.fillRect(0, 0, 1200, 630);
+
+// Subtle grid pattern
+ctx.strokeStyle = 'rgba(48,54,61,0.4)';
+ctx.lineWidth = 1;
+for (let x = 0; x < 1200; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 630); ctx.stroke(); }
+for (let y = 0; y < 630; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1200, y); ctx.stroke(); }
+
+// Accent line top
+const grad = ctx.createLinearGradient(0, 0, 1200, 0);
+grad.addColorStop(0, '#f0883e');
+grad.addColorStop(0.5, '#f4a261');
+grad.addColorStop(1, '#f0883e');
+ctx.fillStyle = grad;
+ctx.fillRect(0, 0, 1200, 4);
+
+// Document icon
+ctx.save();
+ctx.translate(100, 195);
+ctx.strokeStyle = '#f0883e';
+ctx.lineWidth = 4;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+ctx.beginPath();
+ctx.moveTo(28, 0);
+ctx.lineTo(0, 0);
+ctx.quadraticCurveTo(-4, 0, -4, 4);
+ctx.lineTo(-4, 36);
+ctx.quadraticCurveTo(-4, 40, 0, 40);
+ctx.lineTo(24, 40);
+ctx.quadraticCurveTo(28, 40, 28, 36);
+ctx.lineTo(28, 12);
+ctx.closeTo;
+ctx.moveTo(28, 0);
+ctx.lineTo(28, 12);
+ctx.lineTo(40, 12);
+ctx.moveTo(28, 0);
+ctx.lineTo(40, 12);
+ctx.lineTo(40, 36);
+ctx.quadraticCurveTo(40, 40, 36, 40);
+ctx.lineTo(24, 40);
+ctx.stroke();
+ctx.restore();
+
+// Logo text "MD2PDF"
+ctx.font = 'bold 72px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+ctx.fillStyle = '#e6edf3';
+ctx.fillText('MD', 100, 280);
+// "2" in accent
+const md_w = ctx.measureText('MD').width;
+ctx.fillStyle = '#f0883e';
+ctx.fillText('2', 100 + md_w, 280);
+const two_w = ctx.measureText('2').width;
+ctx.fillStyle = '#e6edf3';
+ctx.fillText('PDF', 100 + md_w + two_w, 280);
+
+// Tagline
+ctx.font = '500 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+ctx.fillStyle = '#8b949e';
+ctx.fillText('Markdown to PDF, HTML & Image converter', 100, 330);
+
+// Features line
+ctx.font = '400 20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+ctx.fillStyle = '#6e7681';
+ctx.fillText('11 styles  \u00B7  Custom CSS  \u00B7  Templates  \u00B7  Dark mode  \u00B7  Free & open source', 100, 380);
+
+// URL
+ctx.font = '500 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+ctx.fillStyle = '#f0883e';
+ctx.fillText('md2pdf.studio', 100, 540);
+
+// Code block mockup on the right
+const bx = 720, by = 160, bw = 400, bh = 300, br = 12;
+ctx.fillStyle = '#161b22';
+ctx.beginPath();
+ctx.moveTo(bx + br, by);
+ctx.lineTo(bx + bw - br, by);
+ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + br);
+ctx.lineTo(bx + bw, by + bh - br);
+ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - br, by + bh);
+ctx.lineTo(bx + br, by + bh);
+ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - br);
+ctx.lineTo(bx, by + br);
+ctx.quadraticCurveTo(bx, by, bx + br, by);
+ctx.fill();
+
+// Border
+ctx.strokeStyle = '#30363d';
+ctx.lineWidth = 1;
+ctx.stroke();
+
+// Dots
+ctx.fillStyle = '#f85149'; ctx.beginPath(); ctx.arc(bx+20, by+18, 5, 0, Math.PI*2); ctx.fill();
+ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(bx+36, by+18, 5, 0, Math.PI*2); ctx.fill();
+ctx.fillStyle = '#3fb950'; ctx.beginPath(); ctx.arc(bx+52, by+18, 5, 0, Math.PI*2); ctx.fill();
+
+// Fake code
+const lines = [
+    { text: '# Welcome to MD2PDF', color: '#e6edf3' },
+    { text: '', color: '' },
+    { text: '> Convert Markdown to PDF', color: '#8b949e' },
+    { text: '', color: '' },
+    { text: '## Features', color: '#e6edf3' },
+    { text: '', color: '' },
+    { text: '- **11 visual styles**', color: '#79c0ff' },
+    { text: '- Custom CSS injection', color: '#c9d1d9' },
+    { text: '- Export PDF, HTML, Image', color: '#c9d1d9' },
+    { text: '- Share by URL', color: '#c9d1d9' },
+    { text: '', color: '' },
+    { text: '```javascript', color: '#6e7681' },
+    { text: 'const style = "notion";', color: '#ffa657' },
+    { text: '```', color: '#6e7681' },
+];
+ctx.font = '14px ui-monospace, SFMono-Regular, monospace';
+lines.forEach((l, i) => {
+    if (l.text) {
+        ctx.fillStyle = l.color;
+        ctx.fillText(l.text, bx + 20, by + 50 + i * 18);
+    }
+});
+
+// Auto download
+const link = document.createElement('a');
+link.download = 'og-image.png';
+link.href = c.toDataURL('image/png');
+link.click();
+document.body.innerHTML = '<p style="color:#8b949e;font-family:system-ui;text-align:center;margin-top:20px;">og-image.png downloaded! You can close this tab.</p>' + '<br><img src="' + c.toDataURL() + '" style="max-width:100%;border:1px solid #333;border-radius:8px;">';
+</script>
+</body>
+</html>

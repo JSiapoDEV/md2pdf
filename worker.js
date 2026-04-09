@@ -1,8 +1,8 @@
-// Cloudflare Pages Middleware — Dynamic OG tags for shared documents
-// When a ?doc= param is present, decompress the markdown and inject
-// title + description into OG meta tags so WhatsApp/Teams/Slack show a preview.
+// Cloudflare Worker — Dynamic OG meta tags for shared documents
+// When ?doc= is present, decompress the markdown and inject title + description
+// so WhatsApp, Teams, and Slack show a real preview of the content.
 
-// --- Inline LZ-String decompressFromEncodedURIComponent ---
+// --- LZ-String decompressFromEncodedURIComponent (inlined) ---
 
 function _decompress(length, resetValue, getNextValue) {
     var dictionary = [], enlargeIn = 4, dictSize = 4, numBits = 3,
@@ -13,11 +13,9 @@ function _decompress(length, resetValue, getNextValue) {
 
     bits = 0; maxpower = Math.pow(2, 2); power = 1;
     while (power != maxpower) {
-        resb = data.val & data.position;
-        data.position >>= 1;
+        resb = data.val & data.position; data.position >>= 1;
         if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
-        bits |= (resb > 0 ? 1 : 0) * power;
-        power <<= 1;
+        bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
     }
 
     var next = bits;
@@ -119,7 +117,6 @@ function extractMeta(markdown) {
     var title = 'MD2PDF — Shared Document';
     var desc = '';
 
-    // Find first heading as title
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim();
         if (line.startsWith('# ')) {
@@ -128,7 +125,6 @@ function extractMeta(markdown) {
         }
     }
 
-    // Find first non-heading, non-empty text lines as description
     var descLines = [];
     for (var j = 0; j < lines.length; j++) {
         var l = lines[j].trim();
@@ -137,7 +133,6 @@ function extractMeta(markdown) {
         if (l.startsWith('```')) continue;
         if (l.startsWith('|') && l.endsWith('|')) continue;
         if (l.startsWith('---') || l.startsWith('***')) continue;
-        // Clean markdown syntax
         var clean = l.replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
         descLines.push(clean);
         if (descLines.join(' ').length > 200) break;
@@ -148,58 +143,46 @@ function extractMeta(markdown) {
     return { title: title, description: desc };
 }
 
-// --- Middleware ---
+// --- Worker entry point ---
 
-export async function onRequest(context) {
-    var url = new URL(context.request.url);
-    var docParam = url.searchParams.get('doc');
+export default {
+    async fetch(request, env) {
+        var url = new URL(request.url);
+        var docParam = url.searchParams.get('doc');
 
-    // Only intercept root with ?doc= parameter
-    if (!docParam || (url.pathname !== '/' && url.pathname !== '/index.html')) {
-        return context.next();
-    }
+        // Only intercept root with ?doc= parameter
+        if (docParam && (url.pathname === '/' || url.pathname === '/index.html')) {
+            try {
+                var content = decompressFromEncodedURIComponent(docParam);
 
-    try {
-        var content = decompressFromEncodedURIComponent(docParam);
-        if (!content) return context.next();
+                if (content) {
+                    var meta = extractMeta(content);
+                    var safeTitle = escapeHtml(meta.title);
+                    var safeDesc = escapeHtml(meta.description);
 
-        var meta = extractMeta(content);
-        var safeTitle = escapeHtml(meta.title);
-        var safeDesc = escapeHtml(meta.description);
+                    // Fetch original HTML from static assets
+                    var assetUrl = new URL('/', request.url);
+                    assetUrl.search = '';
+                    var response = await env.ASSETS.fetch(new Request(assetUrl));
+                    var html = await response.text();
 
-        // Fetch original page
-        var response = await context.next();
-        var html = await response.text();
+                    // Replace OG tags
+                    html = html.replace(/<meta property="og:title"[^>]*>/, '<meta property="og:title" content="' + safeTitle + '">');
+                    html = html.replace(/<meta property="og:description"[^>]*>/, '<meta property="og:description" content="' + safeDesc + '">');
+                    html = html.replace(/<meta name="twitter:title"[^>]*>/, '<meta name="twitter:title" content="' + safeTitle + '">');
+                    html = html.replace(/<meta name="twitter:description"[^>]*>/, '<meta name="twitter:description" content="' + safeDesc + '">');
+                    html = html.replace(/<meta name="description"[^>]*>/, '<meta name="description" content="' + safeDesc + '">');
 
-        // Replace OG tags
-        html = html.replace(
-            /<meta property="og:title"[^>]*>/,
-            '<meta property="og:title" content="' + safeTitle + '">'
-        );
-        html = html.replace(
-            /<meta property="og:description"[^>]*>/,
-            '<meta property="og:description" content="' + safeDesc + '">'
-        );
-        html = html.replace(
-            /<meta name="twitter:title"[^>]*>/,
-            '<meta name="twitter:title" content="' + safeTitle + '">'
-        );
-        html = html.replace(
-            /<meta name="twitter:description"[^>]*>/,
-            '<meta name="twitter:description" content="' + safeDesc + '">'
-        );
-        html = html.replace(
-            /<meta name="description"[^>]*>/,
-            '<meta name="description" content="' + safeDesc + '">'
-        );
+                    return new Response(html, {
+                        headers: { 'content-type': 'text/html;charset=UTF-8' },
+                    });
+                }
+            } catch (e) {
+                // Fall through to static
+            }
+        }
 
-        return new Response(html, {
-            headers: {
-                'content-type': 'text/html;charset=UTF-8',
-                'cache-control': 'public, max-age=3600',
-            },
-        });
-    } catch (e) {
-        return context.next();
-    }
-}
+        // Serve static assets
+        return env.ASSETS.fetch(request);
+    },
+};
