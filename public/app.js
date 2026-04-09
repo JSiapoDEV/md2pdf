@@ -45,13 +45,241 @@
     const replaceBtn      = $('#replaceBtn');
     const replaceAllBtn   = $('#replaceAllBtn');
     const previewContainer= $('.preview-container');
+    const langToggle      = $('#langToggle');
 
     // ── State ────────────────────────────────────────
 
     let currentFileName = 'untitled.md';
     let currentStyle    = 'github';
+    let currentLang     = 'en';
     let renderTimer     = null;
     let saveTimer       = null;
+
+    // ── i18n ─────────────────────────────────────────
+
+    const I18N = {
+        en: {
+            markdown: 'Markdown', preview: 'Preview',
+            export: 'Export', exportPdf: 'Export PDF', exportHtml: 'Export HTML',
+            exportImage: 'Export Image', shareLink: 'Share Link',
+            templates: 'Templates', upload: 'Upload',
+            blankDoc: 'Blank document', cvResume: 'CV / Resume', report: 'Report',
+            docs: 'Documentation', changelog: 'Changelog', meeting: 'Meeting Notes',
+            find: 'Find...', replace: 'Replace...',
+            replaceBtn: 'Replace', replaceAll: 'All',
+            builtBy: 'Built by', starGithub: 'Star on GitHub',
+            apiPrompts: 'API & Prompts',
+            linkCreated: 'Link created!', linkHint: 'Link expires 90 days after last update.',
+            copy: 'Copy', copied: 'Copied!',
+            generatingPdf: 'Generating PDF...',
+            dropHere: 'Drop your <strong>.md</strong> file here',
+            emptyPreview: 'Start typing to see the preview...',
+            words: 'words', minRead: 'min',
+            nothingToShare: 'Nothing to share', creatingLink: 'Creating link...',
+            linkCopied: 'Link copied!', linkUpdated: 'Link updated',
+            shareFailed: 'Share failed', docTooLarge: 'Share failed — document too large',
+            draftRestored: 'Draft restored', templateLoaded: 'Template loaded',
+            newDocument: 'New document', sharedDocLoaded: 'Shared document loaded',
+            imgDownloaded: 'Image downloaded', htmlDownloaded: 'HTML downloaded',
+            exportFailed: 'Export failed.',
+            replaced: 'Replaced {n} occurrences',
+            customCssPlaceholder: '/* Custom CSS — applied to preview & PDF */\n\n/* Example: colored headings */\n.markdown-body h1, .markdown-body h2 {\n  color: #6366f1;\n}\n\n/* Example: rounded code blocks */\n.markdown-body pre {\n  border-radius: 16px;\n}',
+            editorPlaceholder: 'Write or drop your Markdown here...',
+            // Prompts tab
+            promptsDesc: 'Copy these prompts into your AI agent to integrate MD2PDF.',
+            promptFullTitle: 'Full agent instructions (system prompt)',
+            promptFullBody: `You can create styled documents using MD2PDF (md2pdf.studio). To create a document:
+
+1. Write the content in Markdown format
+2. POST to https://md2pdf.studio/api/save
+   - Body: the raw markdown text
+   - Header: Content-Type: text/plain
+   - Response: { "id": "xxx", "editKey": "xxx", "url": "https://md2pdf.studio/s/xxx" }
+3. Share the "url" with the user
+
+To update a previously created document:
+1. PUT to https://md2pdf.studio/api/update/{id}
+   - Body: updated markdown
+   - Header: Content-Type: text/plain
+   - Header: X-Edit-Key: {editKey from step 2}
+   - Response: { "id": "xxx", "url": "https://md2pdf.studio/s/xxx" }
+
+Save the id and editKey from step 2 so you can update later. Links expire after 90 days. Max document size: 500KB.
+
+The user can view the document with 11 visual styles (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel) and export to PDF, HTML, or Image.`,
+            promptGenerateTitle: 'Generate & share a document',
+            promptGenerateBody: 'Generate a markdown document about [your topic]. Then send a POST request to https://md2pdf.studio/api/save with the markdown as the body (Content-Type: text/plain). Return the "url" from the response so I can view it in MD2PDF.',
+            promptUpdateTitle: 'Update an existing document',
+            promptUpdateBody: 'Update the document at https://md2pdf.studio/api/update/{id} by sending a PUT request with the updated markdown as body, and include the header X-Edit-Key: {editKey}. Use the id and editKey from the previous /api/save response.',
+            promptClaudeTitle: 'Claude Code',
+            promptClaudeBody: 'Generate the markdown for [your topic] and save it as a .md file. Then use curl to POST it to https://md2pdf.studio/api/save with Content-Type: text/plain. Give me the URL from the JSON response. If I ask to update it, use PUT to /api/update/{id} with the X-Edit-Key header from the original response.',
+            // API tab
+            apiDesc: 'REST API for programmatic access. No authentication required.',
+            apiCreate: 'Create document', apiUpdate: 'Update document',
+            apiCurl: 'cURL examples', apiLimits: 'Limits',
+        },
+        es: {
+            markdown: 'Markdown', preview: 'Vista previa',
+            export: 'Exportar', exportPdf: 'Exportar PDF', exportHtml: 'Exportar HTML',
+            exportImage: 'Exportar Imagen', shareLink: 'Compartir',
+            templates: 'Plantillas', upload: 'Subir',
+            blankDoc: 'Documento en blanco', cvResume: 'CV / Hoja de vida', report: 'Reporte',
+            docs: 'Documentacion', changelog: 'Changelog', meeting: 'Notas de reunion',
+            find: 'Buscar...', replace: 'Reemplazar...',
+            replaceBtn: 'Reemplazar', replaceAll: 'Todo',
+            builtBy: 'Creado por', starGithub: 'Estrella en GitHub',
+            apiPrompts: 'API y Prompts',
+            linkCreated: 'Enlace creado!', linkHint: 'El enlace expira 90 dias despues de la ultima actualizacion.',
+            copy: 'Copiar', copied: 'Copiado!',
+            generatingPdf: 'Generando PDF...',
+            dropHere: 'Suelta tu archivo <strong>.md</strong> aqui',
+            emptyPreview: 'Empieza a escribir para ver la vista previa...',
+            words: 'palabras', minRead: 'min',
+            nothingToShare: 'Nada que compartir', creatingLink: 'Creando enlace...',
+            linkCopied: 'Enlace copiado!', linkUpdated: 'Enlace actualizado',
+            shareFailed: 'Error al compartir', docTooLarge: 'Error — documento muy grande',
+            draftRestored: 'Borrador restaurado', templateLoaded: 'Plantilla cargada',
+            newDocument: 'Nuevo documento', sharedDocLoaded: 'Documento compartido cargado',
+            imgDownloaded: 'Imagen descargada', htmlDownloaded: 'HTML descargado',
+            exportFailed: 'Error al exportar.',
+            replaced: '{n} ocurrencias reemplazadas',
+            customCssPlaceholder: '/* CSS personalizado — se aplica al preview y PDF */\n\n/* Ejemplo: titulos con color */\n.markdown-body h1, .markdown-body h2 {\n  color: #6366f1;\n}\n\n/* Ejemplo: bloques de codigo redondeados */\n.markdown-body pre {\n  border-radius: 16px;\n}',
+            editorPlaceholder: 'Escribe o arrastra tu Markdown aqui...',
+            // Prompts tab
+            promptsDesc: 'Copia estos prompts en tu agente de IA para integrar MD2PDF.',
+            promptFullTitle: 'Instrucciones completas para agente (system prompt)',
+            promptFullBody: `Puedes crear documentos con estilo usando MD2PDF (md2pdf.studio). Para crear un documento:
+
+1. Escribe el contenido en formato Markdown
+2. POST a https://md2pdf.studio/api/save
+   - Body: el texto markdown
+   - Header: Content-Type: text/plain
+   - Respuesta: { "id": "xxx", "editKey": "xxx", "url": "https://md2pdf.studio/s/xxx" }
+3. Comparte el "url" con el usuario
+
+Para actualizar un documento existente:
+1. PUT a https://md2pdf.studio/api/update/{id}
+   - Body: markdown actualizado
+   - Header: Content-Type: text/plain
+   - Header: X-Edit-Key: {editKey del paso 2}
+   - Respuesta: { "id": "xxx", "url": "https://md2pdf.studio/s/xxx" }
+
+Guarda el id y editKey del paso 2 para poder actualizar despues. Los enlaces expiran a los 90 dias. Tamano maximo: 500KB.
+
+El usuario puede ver el documento con 11 estilos visuales (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel) y exportar a PDF, HTML o Imagen.`,
+            promptGenerateTitle: 'Generar y compartir un documento',
+            promptGenerateBody: 'Genera un documento markdown sobre [tu tema]. Luego envia un POST a https://md2pdf.studio/api/save con el markdown como body (Content-Type: text/plain). Dame el "url" de la respuesta para verlo en MD2PDF.',
+            promptUpdateTitle: 'Actualizar un documento existente',
+            promptUpdateBody: 'Actualiza el documento en https://md2pdf.studio/api/update/{id} enviando un PUT con el markdown actualizado como body, e incluye el header X-Edit-Key: {editKey}. Usa el id y editKey de la respuesta anterior de /api/save.',
+            promptClaudeTitle: 'Claude Code',
+            promptClaudeBody: 'Genera el markdown sobre [tu tema] y guardalo como archivo .md. Luego usa curl para hacer POST a https://md2pdf.studio/api/save con Content-Type: text/plain. Dame la URL de la respuesta JSON. Si te pido actualizar, usa PUT a /api/update/{id} con el header X-Edit-Key de la respuesta original.',
+            // API tab
+            apiDesc: 'API REST para acceso programatico. No requiere autenticacion.',
+            apiCreate: 'Crear documento', apiUpdate: 'Actualizar documento',
+            apiCurl: 'Ejemplos cURL', apiLimits: 'Limites',
+        },
+    };
+
+    function t(key) { return I18N[currentLang]?.[key] || I18N.en[key] || key; }
+
+    function applyLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('md2pdf-lang', lang);
+        langToggle.textContent = lang.toUpperCase();
+        document.documentElement.lang = lang;
+
+        // Static UI elements
+        $('#editorPane .pane-label').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> ' + t('markdown');
+        $('#previewPane .pane-label').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> ' + t('preview');
+
+        $('#exportBtn span').textContent = t('export');
+        $('#exportPDFBtn').lastChild.textContent = ' ' + t('exportPdf');
+        $('#exportHTMLBtn').lastChild.textContent = ' ' + t('exportHtml');
+        $('#exportImageBtn').lastChild.textContent = ' ' + t('exportImage');
+        $('#shareBtn').lastChild.textContent = ' ' + t('shareLink');
+
+        // Templates
+        document.querySelector('[data-template="blank"]').textContent = t('blankDoc');
+        document.querySelector('[data-template="cv"]').textContent = t('cvResume');
+        document.querySelector('[data-template="report"]').textContent = t('report');
+        document.querySelector('[data-template="docs"]').textContent = t('docs');
+        document.querySelector('[data-template="changelog"]').textContent = t('changelog');
+        document.querySelector('[data-template="meeting"]').textContent = t('meeting');
+
+        // Find & Replace
+        $('#findInput').placeholder = t('find');
+        $('#replaceInput').placeholder = t('replace');
+        $('#replaceBtn').textContent = t('replaceBtn');
+        $('#replaceAllBtn').textContent = t('replaceAll');
+
+        // Footer
+        $('.footer-brand').innerHTML = t('builtBy') + ' <a href="https://jsiapo.dev" target="_blank" rel="noopener">JSiapoDev</a>';
+
+        // Editor & Preview
+        editor.placeholder = t('editorPlaceholder');
+        $('#customCSS').placeholder = t('customCssPlaceholder');
+        $('#dropOverlay .drop-content p').innerHTML = t('dropHere');
+        $('.export-modal p').textContent = t('generatingPdf');
+
+        // Share modal
+        $('.share-title').textContent = t('linkCreated');
+        $('.share-hint').textContent = t('linkHint');
+        shareCopyBtn.textContent = t('copy');
+
+        // API modal
+        $('#apiPromptsBtn').lastChild.textContent = ' ' + t('apiPrompts');
+
+        // Rebuild prompts/API content
+        buildPromptsTab();
+        buildApiTab();
+    }
+
+    function buildPromptsTab() {
+        var html = '<p class="api-desc">' + t('promptsDesc') + '</p>';
+        var prompts = [
+            { title: t('promptFullTitle'), body: t('promptFullBody') },
+            { title: t('promptGenerateTitle'), body: t('promptGenerateBody') },
+            { title: t('promptUpdateTitle'), body: t('promptUpdateBody') },
+            { title: t('promptClaudeTitle'), body: t('promptClaudeBody') },
+        ];
+        prompts.forEach(function (p) {
+            html += '<div class="api-section"><h4>' + p.title + '</h4><div class="api-code-block"><pre>' + escapeHtmlLight(p.body) + '</pre><button class="api-copy-btn">' + t('copy') + '</button></div></div>';
+        });
+        $('#tab-prompts').innerHTML = html;
+        bindCopyButtons('#tab-prompts');
+    }
+
+    function buildApiTab() {
+        var html = '<p class="api-desc">' + t('apiDesc') + '</p>';
+
+        var sections = [
+            { title: t('apiCreate'), code: 'POST https://md2pdf.studio/api/save\nContent-Type: text/plain\n\n# Your markdown here\n\n---\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3"\n}' },
+            { title: t('apiUpdate'), code: 'PUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\n\n# Updated markdown\n\n---\nResponse 200:\n{ "id": "BrOrr0N3", "url": "https://md2pdf.studio/s/BrOrr0N3" }\n\nResponse 403: { "error": "Unauthorized" }\nResponse 404: { "error": "Document not found" }' },
+            { title: t('apiCurl'), code: '# Create\ncurl -X POST https://md2pdf.studio/api/save \\\n  -H "Content-Type: text/plain" \\\n  -d "# Hello World"\n\n# Update\ncurl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \\\n  -H "Content-Type: text/plain" \\\n  -H "X-Edit-Key: your-edit-key-here" \\\n  -d "# Updated content"' },
+            { title: t('apiLimits'), code: 'Max document size: 500 KB\nRate limit: 10 requests/minute per IP\nExpiration: 90 days (resets on update)\nResponse: 429 Too Many Requests' },
+        ];
+
+        sections.forEach(function (s) {
+            html += '<div class="api-section"><h4>' + s.title + '</h4><div class="api-code-block"><pre>' + escapeHtmlLight(s.code) + '</pre><button class="api-copy-btn">' + t('copy') + '</button></div></div>';
+        });
+
+        $('#tab-api').innerHTML = html;
+        bindCopyButtons('#tab-api');
+    }
+
+    function escapeHtmlLight(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function bindCopyButtons(containerSel) {
+        document.querySelectorAll(containerSel + ' .api-copy-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var pre = btn.parentElement.querySelector('pre');
+                navigator.clipboard.writeText(pre.textContent).then(function () {
+                    btn.textContent = t('copied');
+                    setTimeout(function () { btn.textContent = t('copy'); }, 2000);
+                });
+            });
+        });
+    }
 
     // ── Styles ───────────────────────────────────────
 
@@ -904,10 +1132,10 @@ Start writing on the left, or drag and drop a \`.md\` file.
 
     function updateCounter() {
         const text = editor.value.trim();
-        if (!text) { counterEl.textContent = '0 words'; return; }
+        if (!text) { counterEl.textContent = `0 ${t('words')}`; return; }
         const words = text.split(/\s+/).filter(Boolean).length;
         const mins  = Math.max(1, Math.ceil(words / 200));
-        counterEl.textContent = `${words} words · ~${mins} min`;
+        counterEl.textContent = `${words} ${t('words')} · ~${mins} ${t('minRead')}`;
     }
 
     // ── Theme ────────────────────────────────────────
@@ -964,7 +1192,7 @@ Start writing on the left, or drag and drop a \`.md\` file.
         fileNameEl.textContent = currentFileName;
         render();
         saveDraft();
-        showToast(key === 'blank' ? 'New document' : 'Template loaded');
+        showToast(key === 'blank' ? t('newDocument') : t('templateLoaded'));
     }
 
     // ── File handling ────────────────────────────────
@@ -1010,7 +1238,7 @@ Start writing on the left, or drag and drop a \`.md\` file.
             editor.value = draft;
             currentFileName = localStorage.getItem('md2pdf-filename') || 'untitled.md';
             fileNameEl.textContent = currentFileName;
-            showToast('Draft restored');
+            showToast(t('draftRestored'));
             return true;
         }
         return false;
@@ -1228,7 +1456,7 @@ body {
         a.download = title + '.html';
         a.click();
         URL.revokeObjectURL(url);
-        showToast('HTML downloaded');
+        showToast(t('htmlDownloaded'));
     }
 
     // ── Dropdowns ────────────────────────────────────
@@ -1298,7 +1526,7 @@ body {
             link.download = currentFileName.replace(/\.(md|markdown|txt|mdx)$/i, '') + '.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
-            showToast('Image downloaded');
+            showToast(t('imgDownloaded'));
         } catch (err) {
             console.error('Image export failed', err);
             alert('Image export failed.');
@@ -1353,7 +1581,7 @@ body {
 
     async function shareByURL() {
         const text = editor.value;
-        if (!text.trim()) { showToast('Nothing to share'); return; }
+        if (!text.trim()) { showToast(t('nothingToShare')); return; }
 
         exportOverlay.classList.add('active');
 
@@ -1376,7 +1604,7 @@ body {
                     const data = await updateRes.json();
                     exportOverlay.classList.remove('active');
                     showShareModal(data.url);
-                    showToast('Link updated');
+                    showToast(t('linkUpdated'));
                     return;
                 }
                 // If update fails (404 expired, 403 wrong key), create new below
@@ -1408,12 +1636,12 @@ body {
             const compressed = LZString.compressToEncodedURIComponent(text);
             const url = `${location.origin}/share?doc=${compressed}`;
             if (url.length > 8000) {
-                showToast('Share failed — document too large');
+                showToast(t('docTooLarge'));
                 return;
             }
             showShareModal(url);
         } catch (e) {
-            showToast('Share failed');
+            showToast(t('shareFailed'));
         }
     }
 
@@ -1428,7 +1656,7 @@ body {
                     currentFileName = 'shared.md';
                     fileNameEl.textContent = currentFileName;
                     history.replaceState(null, '', '/');
-                    showToast('Shared document loaded');
+                    showToast(t('sharedDocLoaded'));
                     return true;
                 }
             } catch (_) {}
@@ -1445,7 +1673,7 @@ body {
                     currentFileName = 'shared.md';
                     fileNameEl.textContent = currentFileName;
                     history.replaceState(null, '', '/');
-                    showToast('Shared document loaded');
+                    showToast(t('sharedDocLoaded'));
                     return true;
                 }
             } catch (_) {}
@@ -1462,7 +1690,7 @@ body {
                     currentFileName = 'shared.md';
                     fileNameEl.textContent = currentFileName;
                     history.replaceState(null, '', '/');
-                    showToast('Shared document loaded');
+                    showToast(t('sharedDocLoaded'));
                     return true;
                 }
             } catch (_) {}
@@ -1655,6 +1883,11 @@ body {
     function initEvents() {
         themeToggle.addEventListener('click', toggleTheme);
 
+        // Language toggle
+        langToggle.addEventListener('click', () => {
+            applyLanguage(currentLang === 'en' ? 'es' : 'en');
+        });
+
         // Export
         exportPDFBtn.addEventListener('click',  () => { exportDropdown.classList.remove('open'); exportPDF(); });
         exportHTMLBtn.addEventListener('click', () => { exportDropdown.classList.remove('open'); exportHTML(); });
@@ -1684,16 +1917,7 @@ body {
             });
         });
 
-        // Copy buttons
-        document.querySelectorAll('.api-copy-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const pre = btn.parentElement.querySelector('pre');
-                navigator.clipboard.writeText(pre.textContent).then(() => {
-                    btn.textContent = 'Copied!';
-                    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
-                });
-            });
-        });
+        // Copy buttons are bound dynamically in buildPromptsTab/buildApiTab
 
         // Fullscreen
         fullscreenBtn.addEventListener('click', toggleFullscreen);
@@ -1827,6 +2051,10 @@ body {
     function init() {
         initMarked();
         applyTheme(getTheme());
+
+        // Restore language (default: detect from browser)
+        const savedLang = localStorage.getItem('md2pdf-lang') || (navigator.language.startsWith('es') ? 'es' : 'en');
+        applyLanguage(savedLang);
 
         // Restore saved style (default: notion)
         const savedStyle = localStorage.getItem('md2pdf-style') || 'notion';

@@ -239,6 +239,16 @@ body {
    Fullscreen Button
    ========================================= */
 
+/* Language toggle */
+.lang-toggle {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+    padding: 4px 8px !important;
+    min-width: 32px;
+    text-align: center;
+}
+
 .icon-compress { display: none; }
 .icon-expand { display: block; }
 :fullscreen .icon-compress { display: block; }

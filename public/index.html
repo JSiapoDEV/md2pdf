@@ -103,6 +103,8 @@
                     </button>
                 </div>
 
+                <button class="btn btn-ghost lang-toggle" id="langToggle" title="EN / ES" aria-label="Toggle language">EN</button>
+
                 <button class="btn btn-ghost" id="fullscreenBtn" title="Fullscreen (F11)" aria-label="Fullscreen">
                     <svg class="icon-expand" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
                     <svg class="icon-compress" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
@@ -318,129 +320,9 @@
                     <button class="api-tab" data-tab="api">API</button>
                 </div>
 
-                <div class="api-tab-content active" id="tab-prompts">
-                    <p class="api-desc">Copy these prompts into your AI agent to integrate MD2PDF.</p>
-
-                    <div class="api-section">
-                        <h4>Generate & share a document</h4>
-                        <div class="api-code-block">
-                            <pre>Generate a markdown document about [your topic]. Then send a POST request to https://md2pdf.studio/api/save with the markdown as the body (Content-Type: text/plain). Return the "url" from the response so I can view it in MD2PDF.</pre>
-                            <button class="api-copy-btn" data-copy="prompt-1">Copy</button>
-                        </div>
-                    </div>
-
-                    <div class="api-section">
-                        <h4>Update an existing document</h4>
-                        <div class="api-code-block">
-                            <pre>Update the document at https://md2pdf.studio/api/update/{id} by sending a PUT request with the updated markdown as body, and include the header X-Edit-Key: {editKey}. Use the id and editKey from the previous /api/save response.</pre>
-                            <button class="api-copy-btn" data-copy="prompt-2">Copy</button>
-                        </div>
-                    </div>
-
-                    <div class="api-section">
-                        <h4>Claude Code</h4>
-                        <div class="api-code-block">
-                            <pre>Generate the markdown for [your topic] and save it as a .md file. Then use curl to POST it to https://md2pdf.studio/api/save with Content-Type: text/plain. Give me the URL from the JSON response. If I ask to update it, use PUT to /api/update/{id} with the X-Edit-Key header from the original response.</pre>
-                            <button class="api-copy-btn" data-copy="prompt-3">Copy</button>
-                        </div>
-                    </div>
-
-                    <div class="api-section">
-                        <h4>Full agent instructions (system prompt)</h4>
-                        <div class="api-code-block">
-                            <pre>You can create styled documents using MD2PDF (md2pdf.studio). To create a document:
-
-1. Write the content in Markdown format
-2. POST to https://md2pdf.studio/api/save
-   - Body: the raw markdown text
-   - Header: Content-Type: text/plain
-   - Response: { "id": "xxx", "editKey": "xxx", "url": "https://md2pdf.studio/s/xxx" }
-3. Share the "url" with the user
-
-To update a previously created document:
-1. PUT to https://md2pdf.studio/api/update/{id}
-   - Body: updated markdown
-   - Header: Content-Type: text/plain
-   - Header: X-Edit-Key: {editKey from step 2}
-   - Response: { "id": "xxx", "url": "https://md2pdf.studio/s/xxx" }
-
-Save the id and editKey from step 2 so you can update later. Links expire after 90 days. Max document size: 500KB.
-
-The user can view the document with 11 visual styles (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel) and export to PDF, HTML, or Image.</pre>
-                            <button class="api-copy-btn" data-copy="prompt-4">Copy</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="api-tab-content" id="tab-api">
-                    <p class="api-desc">REST API for programmatic access. No authentication required.</p>
-
-                    <div class="api-section">
-                        <h4>Create document</h4>
-                        <div class="api-code-block">
-                            <pre>POST https://md2pdf.studio/api/save
-Content-Type: text/plain
-
-# Your markdown here
-
----
-Response 200:
-{
-  "id": "BrOrr0N3",
-  "editKey": "a1b2c3...64chars",
-  "url": "https://md2pdf.studio/s/BrOrr0N3"
-}</pre>
-                            <button class="api-copy-btn" data-copy="api-1">Copy</button>
-                        </div>
-                    </div>
-
-                    <div class="api-section">
-                        <h4>Update document</h4>
-                        <div class="api-code-block">
-                            <pre>PUT https://md2pdf.studio/api/update/{id}
-Content-Type: text/plain
-X-Edit-Key: {editKey}
-
-# Updated markdown
-
----
-Response 200:
-{ "id": "BrOrr0N3", "url": "https://md2pdf.studio/s/BrOrr0N3" }
-
-Response 403: { "error": "Unauthorized" }
-Response 404: { "error": "Document not found" }</pre>
-                            <button class="api-copy-btn" data-copy="api-2">Copy</button>
-                        </div>
-                    </div>
-
-                    <div class="api-section">
-                        <h4>cURL examples</h4>
-                        <div class="api-code-block">
-                            <pre># Create
-curl -X POST https://md2pdf.studio/api/save \
-  -H "Content-Type: text/plain" \
-  -d "# Hello World"
-
-# Update
-curl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \
-  -H "Content-Type: text/plain" \
-  -H "X-Edit-Key: your-edit-key-here" \
-  -d "# Updated content"</pre>
-                            <button class="api-copy-btn" data-copy="api-3">Copy</button>
-                        </div>
-                    </div>
-
-                    <div class="api-section">
-                        <h4>Limits</h4>
-                        <div class="api-code-block">
-                            <pre>Max document size: 500 KB
-Rate limit: 10 requests/minute per IP
-Expiration: 90 days (resets on update)
-Response: 429 Too Many Requests when rate limited</pre>
-                            <button class="api-copy-btn" data-copy="api-4">Copy</button>
-                        </div>
-                    </div>
-                </div>
+                <!-- Content generated by JS based on language -->
+                <div class="api-tab-content active" id="tab-prompts"></div>
+                <div class="api-tab-content" id="tab-api"></div>
             </div>
         </div>
     </div>
