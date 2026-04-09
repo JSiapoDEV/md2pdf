@@ -1177,9 +1177,12 @@ Start writing on the left, or drag and drop a \`.md\` file.
 
     // ── Custom CSS ───────────────────────────────────
 
-    function applyCustomCSS() {
-        customOverride.textContent = customCSSInput.value;
-        localStorage.setItem('md2pdf-custom-css', customCSSInput.value);
+    function applyCustomCSS(showFeedback) {
+        // Boost specificity: wrap user CSS so it always wins over style overrides
+        var raw = customCSSInput.value;
+        customOverride.textContent = raw ? ('\n/* Custom CSS */\n' + raw + '\n') : '';
+        localStorage.setItem('md2pdf-custom-css', raw);
+        if (showFeedback) showToast(currentLang === 'es' ? 'CSS aplicado' : 'CSS applied');
     }
 
     // ── Templates ────────────────────────────────────
@@ -1944,7 +1947,8 @@ body {
             customCSSPanel.classList.toggle('open');
             customCSSToggle.classList.toggle('active');
         });
-        customCSSInput.addEventListener('input', applyCustomCSS);
+        customCSSInput.addEventListener('input', () => applyCustomCSS(false));
+        $('#applyCSSBtn').addEventListener('click', () => applyCustomCSS(true));
 
         // Templates
         document.querySelectorAll('[data-template]').forEach(btn => {

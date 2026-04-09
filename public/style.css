@@ -493,6 +493,21 @@ body {
 
 .custom-css-panel textarea::placeholder { color: var(--text-3); }
 
+.custom-css-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-surface);
+}
+
+.custom-css-hint {
+    font-size: 11px;
+    color: var(--text-3);
+    font-style: italic;
+}
+
 /* =========================================
    Editor
    ========================================= */
