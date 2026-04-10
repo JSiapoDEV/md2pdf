@@ -222,7 +222,8 @@ El usuario puede ver el documento con 11 estilos visuales (Notion, GitHub, Minim
         $('.export-modal p').textContent = t('generatingPdf');
 
         // Share modal
-        $('.share-title').textContent = t('linkCreated');
+        $('#shareModalTitle').textContent = t('linkCreated');
+        $('#apiModalTitle').textContent = t('apiPrompts');
         $('.share-hint').textContent = t('linkHint');
         shareCopyBtn.textContent = t('copy');
 
