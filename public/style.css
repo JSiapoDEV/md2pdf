@@ -967,10 +967,11 @@ body {
     /* Hide non-essential toolbar buttons on mobile */
     #fullscreenBtn { display: none; }
     #apiPromptsBtn { display: none; }
-    .lang-toggle { font-size: 10px !important; padding: 3px 5px !important; min-width: 24px !important; }
+    .lang-toggle { display: none; }
     .view-toggle { gap: 1px; }
     .view-btn { width: 24px; height: 22px; }
-    .toolbar-right { gap: 6px; }
+    .toolbar-right { gap: 4px; }
+    .toolbar-left { flex: 0; }
 
     #editor { padding: 16px; font-size: 13px; }
     .preview-container .markdown-body { padding: 20px; }
