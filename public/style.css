@@ -967,7 +967,7 @@ body {
     /* Hide non-essential toolbar buttons on mobile */
     #fullscreenBtn { display: none; }
     #apiPromptsBtn { display: none; }
-    .lang-toggle { display: none; }
+    .lang-toggle { font-size: 9px !important; padding: 2px 5px !important; min-width: 22px !important; }
     .view-toggle { gap: 1px; }
     .view-btn { width: 24px; height: 22px; }
     .toolbar-right { gap: 4px; }
