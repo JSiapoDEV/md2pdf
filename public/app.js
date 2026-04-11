@@ -68,9 +68,11 @@
             find: 'Find...', replace: 'Replace...',
             replaceBtn: 'Replace', replaceAll: 'All',
             builtBy: 'Built by', starGithub: 'Star on GitHub',
-            apiPrompts: 'API & Prompts',
+            apiPrompts: 'AI Skill',
             linkCreated: 'Link created!', linkHint: 'Link expires 90 days after last update.',
             copy: 'Copy', copied: 'Copied!',
+            download: 'Download',
+            tabSkill: 'Skill', tabApi: 'API',
             generatingPdf: 'Generating PDF...',
             dropHere: 'Drop your <strong>.md</strong> file here',
             emptyPreview: 'Start typing to see the preview...',
@@ -85,34 +87,8 @@
             replaced: 'Replaced {n} occurrences',
             customCssPlaceholder: '/* Custom CSS — applied to preview & PDF */\n\n/* Example: colored headings */\n.markdown-body h1, .markdown-body h2 {\n  color: #6366f1;\n}\n\n/* Example: rounded code blocks */\n.markdown-body pre {\n  border-radius: 16px;\n}',
             editorPlaceholder: 'Write or drop your Markdown here...',
-            // Prompts tab
-            promptsDesc: 'Copy these prompts into your AI agent to integrate MD2PDF.',
-            promptFullTitle: 'Full agent instructions (system prompt)',
-            promptFullBody: `You can create styled documents using MD2PDF (md2pdf.studio). To create a document:
-
-1. Write the content in Markdown format
-2. POST to https://md2pdf.studio/api/save
-   - Body: the raw markdown text
-   - Header: Content-Type: text/plain
-   - Response: { "id": "xxx", "editKey": "xxx", "url": "https://md2pdf.studio/s/xxx" }
-3. Share the "url" with the user
-
-To update a previously created document:
-1. PUT to https://md2pdf.studio/api/update/{id}
-   - Body: updated markdown
-   - Header: Content-Type: text/plain
-   - Header: X-Edit-Key: {editKey from step 2}
-   - Response: { "id": "xxx", "url": "https://md2pdf.studio/s/xxx" }
-
-Save the id and editKey from step 2 so you can update later. Links expire after 90 days. Max document size: 500KB.
-
-The user can view the document with 11 visual styles (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel) and export to PDF, HTML, or Image.`,
-            promptGenerateTitle: 'Generate & share a document',
-            promptGenerateBody: 'Generate a markdown document about [your topic]. Then send a POST request to https://md2pdf.studio/api/save with the markdown as the body (Content-Type: text/plain). Return the "url" from the response so I can view it in MD2PDF.',
-            promptUpdateTitle: 'Update an existing document',
-            promptUpdateBody: 'Update the document at https://md2pdf.studio/api/update/{id} by sending a PUT request with the updated markdown as body, and include the header X-Edit-Key: {editKey}. Use the id and editKey from the previous /api/save response.',
-            promptClaudeTitle: 'Claude Code',
-            promptClaudeBody: 'Generate the markdown for [your topic] and save it as a .md file. Then use curl to POST it to https://md2pdf.studio/api/save with Content-Type: text/plain. Give me the URL from the JSON response. If I ask to update it, use PUT to /api/update/{id} with the X-Edit-Key header from the original response.',
+            // Skill tab
+            skillDesc: 'Install this skill in Claude, custom GPTs, or any AI agent to let it create and share styled documents via MD2PDF.',
             // API tab
             apiDesc: 'REST API for programmatic access. No authentication required.',
             apiCreate: 'Create document', apiUpdate: 'Update document',
@@ -128,9 +104,11 @@ The user can view the document with 11 visual styles (Notion, GitHub, Minimal, A
             find: 'Buscar...', replace: 'Reemplazar...',
             replaceBtn: 'Reemplazar', replaceAll: 'Todo',
             builtBy: 'Creado por', starGithub: 'Estrella en GitHub',
-            apiPrompts: 'API y Prompts',
+            apiPrompts: 'Skill de IA',
             linkCreated: 'Enlace creado!', linkHint: 'El enlace expira 90 dias despues de la ultima actualizacion.',
             copy: 'Copiar', copied: 'Copiado!',
+            download: 'Descargar',
+            tabSkill: 'Skill', tabApi: 'API',
             generatingPdf: 'Generando PDF...',
             dropHere: 'Suelta tu archivo <strong>.md</strong> aqui',
             emptyPreview: 'Empieza a escribir para ver la vista previa...',
@@ -145,40 +123,104 @@ The user can view the document with 11 visual styles (Notion, GitHub, Minimal, A
             replaced: '{n} ocurrencias reemplazadas',
             customCssPlaceholder: '/* CSS personalizado — se aplica al preview y PDF */\n\n/* Ejemplo: titulos con color */\n.markdown-body h1, .markdown-body h2 {\n  color: #6366f1;\n}\n\n/* Ejemplo: bloques de codigo redondeados */\n.markdown-body pre {\n  border-radius: 16px;\n}',
             editorPlaceholder: 'Escribe o arrastra tu Markdown aqui...',
-            // Prompts tab
-            promptsDesc: 'Copia estos prompts en tu agente de IA para integrar MD2PDF.',
-            promptFullTitle: 'Instrucciones completas para agente (system prompt)',
-            promptFullBody: `Puedes crear documentos con estilo usando MD2PDF (md2pdf.studio). Para crear un documento:
-
-1. Escribe el contenido en formato Markdown
-2. POST a https://md2pdf.studio/api/save
-   - Body: el texto markdown
-   - Header: Content-Type: text/plain
-   - Respuesta: { "id": "xxx", "editKey": "xxx", "url": "https://md2pdf.studio/s/xxx" }
-3. Comparte el "url" con el usuario
-
-Para actualizar un documento existente:
-1. PUT a https://md2pdf.studio/api/update/{id}
-   - Body: markdown actualizado
-   - Header: Content-Type: text/plain
-   - Header: X-Edit-Key: {editKey del paso 2}
-   - Respuesta: { "id": "xxx", "url": "https://md2pdf.studio/s/xxx" }
-
-Guarda el id y editKey del paso 2 para poder actualizar despues. Los enlaces expiran a los 90 dias. Tamano maximo: 500KB.
-
-El usuario puede ver el documento con 11 estilos visuales (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel) y exportar a PDF, HTML o Imagen.`,
-            promptGenerateTitle: 'Generar y compartir un documento',
-            promptGenerateBody: 'Genera un documento markdown sobre [tu tema]. Luego envia un POST a https://md2pdf.studio/api/save con el markdown como body (Content-Type: text/plain). Dame el "url" de la respuesta para verlo en MD2PDF.',
-            promptUpdateTitle: 'Actualizar un documento existente',
-            promptUpdateBody: 'Actualiza el documento en https://md2pdf.studio/api/update/{id} enviando un PUT con el markdown actualizado como body, e incluye el header X-Edit-Key: {editKey}. Usa el id y editKey de la respuesta anterior de /api/save.',
-            promptClaudeTitle: 'Claude Code',
-            promptClaudeBody: 'Genera el markdown sobre [tu tema] y guardalo como archivo .md. Luego usa curl para hacer POST a https://md2pdf.studio/api/save con Content-Type: text/plain. Dame la URL de la respuesta JSON. Si te pido actualizar, usa PUT a /api/update/{id} con el header X-Edit-Key de la respuesta original.',
+            // Skill tab
+            skillDesc: 'Instala esta skill en Claude, GPTs personalizados, o cualquier agente de IA para que pueda crear y compartir documentos con MD2PDF.',
             // API tab
             apiDesc: 'API REST para acceso programatico. No requiere autenticacion.',
             apiCreate: 'Crear documento', apiUpdate: 'Actualizar documento',
             apiCurl: 'Ejemplos cURL', apiLimits: 'Limites',
         },
     };
+
+    // The skill content itself stays in English (what agents read best)
+    const SKILL_CONTENT = `---
+name: md2pdf
+description: Create and share styled PDF, HTML, and image documents from Markdown via md2pdf.studio. Use when the user wants to export, share, or create a visually styled document from markdown content.
+---
+
+# MD2PDF Skill
+
+Use this skill when the user asks you to:
+- Create a document or report from their request
+- Save or export markdown as a PDF, HTML, or image
+- Share a styled version of written content
+- Generate a shareable link for a document
+
+## How to create a document
+
+1. Write the content in Markdown format (GitHub-Flavored Markdown supported: headings, tables, task lists, code blocks with syntax highlighting, blockquotes, images, links).
+
+2. POST the markdown to the API:
+   \`\`\`
+   POST https://md2pdf.studio/api/save
+   Content-Type: text/plain
+
+   # Your markdown content here
+   \`\`\`
+
+3. You will receive a JSON response:
+   \`\`\`json
+   {
+     "id": "BrOrr0N3",
+     "editKey": "a1b2c3...",
+     "url": "https://md2pdf.studio/s/BrOrr0N3"
+   }
+   \`\`\`
+
+4. Share the \`url\` with the user. Save the \`id\` and \`editKey\` in your context in case the user wants to update it later.
+
+## How to update a document
+
+If the user asks to modify a previously created document, use the saved \`id\` and \`editKey\`:
+
+\`\`\`
+PUT https://md2pdf.studio/api/update/{id}
+Content-Type: text/plain
+X-Edit-Key: {editKey}
+
+# Updated markdown content
+\`\`\`
+
+The URL stays the same — only the content is updated.
+
+## Available visual styles
+
+The recipient can choose from 11 styles when viewing the document:
+
+- **notion** (default) — Clean modern sans-serif
+- **github** — Classic GitHub markdown
+- **minimal** — Elegant serif, no decorations
+- **academic** — Formal justified, scholarly feel
+- **corporate** — Professional with blue accents
+- **latex** — Academic paper typography
+- **dracula** — Vibrant purple/pink/green dark theme
+- **newspaper** — Editorial typography
+- **handwritten** — Cursive with notebook lines
+- **terminal** — Green-on-black monospace
+- **pastel** — Soft rounded colors
+
+## Limits
+
+- **Max document size:** 500 KB
+- **Rate limit:** 10 requests/minute per IP
+- **Expiration:** 90 days (resets on update)
+
+## Example (curl)
+
+\`\`\`bash
+curl -X POST https://md2pdf.studio/api/save \\
+  -H "Content-Type: text/plain" \\
+  -d "# Hello World
+
+This is my first document."
+\`\`\`
+
+## Notes
+
+- No authentication required
+- The user can export the document as PDF, HTML, or image
+- Shared links show rich previews in WhatsApp, Teams, and Slack
+`;
 
     function t(key) { return I18N[currentLang]?.[key] || I18N.en[key] || key; }
 
@@ -228,26 +270,51 @@ El usuario puede ver el documento con 11 estilos visuales (Notion, GitHub, Minim
         shareCopyBtn.textContent = t('copy');
 
         // API modal
-        $('#apiPromptsBtn').lastChild.textContent = ' ' + t('apiPrompts');
+        $('#apiPromptsBtn').title = t('apiPrompts');
+        $('#apiPromptsBtn').setAttribute('aria-label', t('apiPrompts'));
 
-        // Rebuild prompts/API content
-        buildPromptsTab();
+        // Tab labels
+        $('#tabBtnSkill').textContent = t('tabSkill');
+        $('#tabBtnApi').textContent = t('tabApi');
+
+        // Rebuild Skill/API content
+        buildSkillTab();
         buildApiTab();
     }
 
-    function buildPromptsTab() {
-        var html = '<p class="api-desc">' + t('promptsDesc') + '</p>';
-        var prompts = [
-            { title: t('promptFullTitle'), body: t('promptFullBody') },
-            { title: t('promptGenerateTitle'), body: t('promptGenerateBody') },
-            { title: t('promptUpdateTitle'), body: t('promptUpdateBody') },
-            { title: t('promptClaudeTitle'), body: t('promptClaudeBody') },
-        ];
-        prompts.forEach(function (p) {
-            html += '<div class="api-section"><h4>' + p.title + '</h4><div class="api-code-block"><pre>' + escapeHtmlLight(p.body) + '</pre><button class="api-copy-btn">' + t('copy') + '</button></div></div>';
+    function buildSkillTab() {
+        var html = '<p class="api-desc">' + t('skillDesc') + '</p>';
+        html += '<div class="api-section">';
+        html += '<h4>SKILL.md</h4>';
+        html += '<div class="api-code-block">';
+        html += '<pre>' + escapeHtmlLight(SKILL_CONTENT) + '</pre>';
+        html += '<div class="api-code-actions">';
+        html += '<button class="api-copy-btn" id="skillCopyBtn">' + t('copy') + '</button>';
+        html += '<button class="api-copy-btn" id="skillDownloadBtn">' + t('download') + '</button>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+
+        $('#tab-skill').innerHTML = html;
+
+        // Bind copy
+        $('#skillCopyBtn').addEventListener('click', function () {
+            navigator.clipboard.writeText(SKILL_CONTENT).then(function () {
+                $('#skillCopyBtn').textContent = t('copied');
+                setTimeout(function () { $('#skillCopyBtn').textContent = t('copy'); }, 2000);
+            });
         });
-        $('#tab-prompts').innerHTML = html;
-        bindCopyButtons('#tab-prompts');
+
+        // Bind download
+        $('#skillDownloadBtn').addEventListener('click', function () {
+            var blob = new Blob([SKILL_CONTENT], { type: 'text/markdown;charset=utf-8' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'SKILL.md';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
     }
 
     function buildApiTab() {
