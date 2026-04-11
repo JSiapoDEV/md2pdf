@@ -272,6 +272,7 @@ This is my first document."
         // API modal
         $('#apiPromptsBtn').title = t('apiPrompts');
         $('#apiPromptsBtn').setAttribute('aria-label', t('apiPrompts'));
+        $('#apiPromptsBtnLabel').textContent = t('apiPrompts');
 
         // Tab labels
         $('#tabBtnSkill').textContent = t('tabSkill');
