@@ -1657,20 +1657,27 @@ body {
         }
     }
 
+    function loadSharedContent(content) {
+        editor.value = content;
+        currentFileName = 'shared.md';
+        fileNameEl.textContent = currentFileName;
+        history.replaceState(null, '', '/');
+        showToast(t('sharedDocLoaded'));
+
+        // Open in preview-only mode — receivers want to read, not edit
+        workspace.classList.add('preview-only');
+        viewToggle.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        const previewBtn = viewToggle.querySelector('[data-view="preview"]');
+        if (previewBtn) previewBtn.classList.add('active');
+    }
+
     function loadFromURL() {
         // Try embedded content (injected by Worker for /s/:id and /share?doc=)
         const sharedEl = document.getElementById('shared-content');
         if (sharedEl) {
             try {
                 const content = JSON.parse(sharedEl.textContent);
-                if (content) {
-                    editor.value = content;
-                    currentFileName = 'shared.md';
-                    fileNameEl.textContent = currentFileName;
-                    history.replaceState(null, '', '/');
-                    showToast(t('sharedDocLoaded'));
-                    return true;
-                }
+                if (content) { loadSharedContent(content); return true; }
             } catch (_) {}
         }
 
@@ -1680,14 +1687,7 @@ body {
         if (docParam) {
             try {
                 const content = LZString.decompressFromEncodedURIComponent(docParam);
-                if (content) {
-                    editor.value = content;
-                    currentFileName = 'shared.md';
-                    fileNameEl.textContent = currentFileName;
-                    history.replaceState(null, '', '/');
-                    showToast(t('sharedDocLoaded'));
-                    return true;
-                }
+                if (content) { loadSharedContent(content); return true; }
             } catch (_) {}
         }
 
@@ -1697,14 +1697,7 @@ body {
             const compressed = hash.slice(5);
             try {
                 const content = LZString.decompressFromEncodedURIComponent(compressed);
-                if (content) {
-                    editor.value = content;
-                    currentFileName = 'shared.md';
-                    fileNameEl.textContent = currentFileName;
-                    history.replaceState(null, '', '/');
-                    showToast(t('sharedDocLoaded'));
-                    return true;
-                }
+                if (content) { loadSharedContent(content); return true; }
             } catch (_) {}
         }
         return false;
