@@ -47,6 +47,20 @@ MD2PDF is a free web tool that converts `.md` (Markdown) files into clean, style
 4. Optionally add custom CSS for further customization
 5. Click "Export" to download as PDF or HTML
 
+## AI Agent Integration (Skill)
+
+MD2PDF provides an installable **Skill** for AI agents (Claude, Custom GPTs, Gemini, etc.) in the Claude Skills format. Agents can create, update, and share styled documents programmatically.
+
+Install the skill by copying or downloading `SKILL.md` from the "AI Skill" section in the app, or use the REST API directly:
+
+- **Create document:** `POST https://md2pdf.studio/api/save` with the markdown as body (`Content-Type: text/plain`). Returns `{ id, editKey, url }`.
+- **Update document:** `PUT https://md2pdf.studio/api/update/{id}` with the updated markdown, requires `X-Edit-Key` header.
+- **Response:** shareable URL that displays the document with the chosen style.
+- **Limits:** 500 KB max, 10 req/min per IP, links expire 90 days after last update.
+- **No authentication required.**
+
+The skill is intentionally written in English as it is the technical standard for AI agent instructions.
+
 ## Templates
 
 Pre-built document templates available:

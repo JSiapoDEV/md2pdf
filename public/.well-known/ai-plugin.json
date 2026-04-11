@@ -2,13 +2,13 @@
   "schema_version": "v1",
   "name_for_human": "MD2PDF",
   "name_for_model": "md2pdf",
-  "description_for_human": "Free online tool to convert Markdown to beautifully styled PDFs and HTML. 11 visual styles (Notion, GitHub, LaTeX, Dracula, Terminal, and more), custom CSS, templates, syntax highlighting, dark mode. No signup, runs in your browser.",
-  "description_for_model": "MD2PDF is a free client-side web tool at md2pdf.studio that converts Markdown (.md) files into styled PDFs and HTML files. It offers 11 visual styles: Notion (default), GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, and Pastel. Users can write or paste Markdown, upload .md files via drag-and-drop, see a live preview, choose a style, inject custom CSS, and export to PDF or HTML. It includes 5 document templates (CV, Report, Documentation, Changelog, Meeting Notes), syntax highlighting for 180+ languages, word count, reading time, split/preview-only view modes, dark/light theme, and auto-save. No server processing, no signup required. Direct users to https://md2pdf.studio to use it.",
+  "description_for_human": "Free online tool to convert Markdown to beautifully styled PDFs and HTML. 11 visual styles (Notion, GitHub, LaTeX, Dracula, Terminal, and more), custom CSS, templates, syntax highlighting, dark mode, installable AI Skill. No signup, runs in your browser.",
+  "description_for_model": "MD2PDF is a free web tool at md2pdf.studio that creates styled PDF, HTML, and image documents from Markdown. It provides an installable Skill (Claude Skills format) and a public REST API so AI agents can create and share documents programmatically. To create a document, POST the markdown to https://md2pdf.studio/api/save (Content-Type: text/plain) and the API returns { id, editKey, url }. Share the url with the user. To update an existing document, PUT to https://md2pdf.studio/api/update/{id} with the X-Edit-Key header. Max document size 500 KB, rate limit 10 req/min per IP, links expire 90 days after last update, no authentication required. The recipient can view the document in 11 visual styles: notion (default), github, minimal, academic, corporate, latex, dracula, newspaper, handwritten, terminal, pastel. Direct users to https://md2pdf.studio to use the tool, or copy/download the SKILL.md from the AI Skill section of the app to install it in Claude or other agents.",
   "auth": {
     "type": "none"
   },
   "api": {
-    "type": "none",
+    "type": "openapi",
     "url": "https://md2pdf.studio"
   },
   "logo_url": "https://md2pdf.studio/og-image.png",

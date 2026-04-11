@@ -8,7 +8,7 @@
 
     <!-- SEO & AI Discoverability -->
     <meta name="description" content="Free online tool to convert Markdown (.md) files to beautifully styled PDFs and HTML. 11 visual styles (Notion, GitHub, LaTeX, Dracula, Terminal & more), custom CSS, templates, syntax highlighting, dark mode. No signup — runs in your browser.">
-    <meta name="keywords" content="markdown to pdf, md to pdf, markdown converter, github markdown, markdown editor, pdf export, html export, notion style, latex style, dracula theme, free tool">
+    <meta name="keywords" content="markdown to pdf, md to pdf, markdown converter, github markdown, markdown editor, pdf export, html export, notion style, latex style, dracula theme, ai skill, claude skill, ai agent, free tool">
     <meta name="author" content="JSiapoDev">
     <link rel="canonical" href="https://md2pdf.studio/">
 
@@ -47,7 +47,7 @@
         "url": "https://jsiapo.dev",
         "sameAs": ["https://github.com/JSiapoDEV","https://www.linkedin.com/in/jsiapo/"]
       },
-      "featureList": ["Live Markdown preview","GitHub-flavored Markdown","Syntax highlighting for 180+ languages","PDF export","HTML export","11 visual styles (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel)","Custom CSS injection","5 document templates","Dark and light theme","Drag and drop file upload","Auto-save drafts","Word count and reading time","Split and preview-only view modes"]
+      "featureList": ["Live Markdown preview","GitHub-flavored Markdown","Syntax highlighting for 180+ languages","PDF export","HTML export","Image export (PNG)","11 visual styles (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel)","Custom CSS injection","5 document templates","Dark and light theme","Drag and drop file upload","Auto-save drafts","Word count and reading time","Split and preview-only view modes","Installable AI Skill (Claude Skills format)","Public REST API for agents","Share by URL with dynamic OG previews"]
     }
     </script>
 
@@ -353,8 +353,9 @@
                 <li><strong>Pastel</strong> — Soft pink, purple, and teal with rounded elements.</li>
             </ul>
 
-            <h2>API for Developers and AI Agents</h2>
-            <p>MD2PDF provides a free REST API that developers and AI agents can use to create and share styled documents programmatically. Send a POST request to <code>/api/save</code> with your Markdown content and receive a shareable URL. Update documents with PUT to <code>/api/update/{id}</code> using your edit key.</p>
+            <h2>AI Skill & API for Developers</h2>
+            <p>MD2PDF ships with an installable <strong>AI Skill</strong> in the Claude Skills format. Copy or download it from the AI Skill section in the toolbar and install it in Claude, Custom GPTs, or any compatible agent. The agent can then create, update, and share styled documents on the user's behalf.</p>
+            <p>Developers can also call the public REST API directly. Send a POST request to <code>/api/save</code> with your Markdown content (<code>Content-Type: text/plain</code>) and receive a shareable URL plus an edit key. Update documents with PUT to <code>/api/update/{id}</code> using the <code>X-Edit-Key</code> header. No authentication required.</p>
 
             <h2>Frequently Asked Questions</h2>
 
@@ -374,7 +375,7 @@
 
             <details><summary>What export formats are available?</summary><p>PDF (continuous single page), HTML (standalone file with inlined styles), and PNG image. All formats preserve your chosen style.</p></details>
 
-            <details><summary>Can AI agents use MD2PDF?</summary><p>Yes. MD2PDF has a public REST API. AI agents like Claude, ChatGPT, and Gemini can create and update documents programmatically. It also supports WebMCP for direct browser integration.</p></details>
+            <details><summary>Can AI agents use MD2PDF?</summary><p>Yes. MD2PDF provides an installable Skill in the Claude Skills format (SKILL.md) that works with Claude, Custom GPTs, Gemini, and any compatible agent. It also exposes a public REST API for programmatic access and supports WebMCP for direct browser integration.</p></details>
 
             <details><summary>What programming languages are supported for syntax highlighting?</summary><p>MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, Bash, TypeScript, and many more.</p></details>
 
@@ -430,7 +431,7 @@
         {"@type": "Question", "name": "Can I share my documents?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document. Links show rich previews in WhatsApp, Teams, and Slack."}},
         {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "The editor and preview work offline after the initial page load. Export and sharing features require an internet connection."}},
         {"@type": "Question", "name": "What export formats are available?", "acceptedAnswer": {"@type": "Answer", "text": "PDF (continuous single page), HTML (standalone file with inlined styles), and PNG image. All formats preserve your chosen style."}},
-        {"@type": "Question", "name": "Can AI agents use MD2PDF?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF has a public REST API. AI agents like Claude, ChatGPT, and Gemini can create and update documents programmatically."}},
+        {"@type": "Question", "name": "Can AI agents use MD2PDF?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF provides an installable Skill in the Claude Skills format plus a public REST API, so Claude, Custom GPTs, Gemini, and other agents can create, update, and share styled documents on the user's behalf."}},
         {"@type": "Question", "name": "What programming languages are supported?", "acceptedAnswer": {"@type": "Answer", "text": "MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, and more."}},
         {"@type": "Question", "name": "How long do shared links last?", "acceptedAnswer": {"@type": "Answer", "text": "Shared links expire 90 days after the last update. You can update the content without changing the URL."}},
         {"@type": "Question", "name": "Is MD2PDF open source?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF is MIT licensed and available on GitHub. Contributions are welcome."}}
@@ -449,11 +450,11 @@
         </div>
     </div>
 
-    <!-- API & Prompts Modal -->
+    <!-- AI Skill Modal -->
     <div class="share-overlay" id="apiOverlay">
         <div class="api-modal">
             <div class="share-header">
-                <span class="share-title" id="apiModalTitle">API & Prompts</span>
+                <span class="share-title" id="apiModalTitle">AI Skill</span>
                 <button class="find-btn" id="apiCloseBtn">&#10005;</button>
             </div>
             <div class="api-content">

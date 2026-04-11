@@ -23,7 +23,8 @@
 - **Fullscreen Mode** — Distraction-free editing (`F11`)
 - **Word Count** — Words and estimated reading time
 - **Auto-Save** — Drafts saved to localStorage automatically
-- **WebMCP** — AI agents can interact with MD2PDF directly
+- **AI Skill** — Installable Skill (Claude Skills format) and public REST API so AI agents can create, update, and share documents programmatically
+- **WebMCP** — AI agents can also interact with MD2PDF directly via WebMCP
 - **AI Discoverable** — `llms.txt`, `robots.txt`, JSON-LD, Open Graph, `ai-plugin.json`
 
 ## Tech Stack

@@ -125,7 +125,7 @@
           "name": "Can AI agents use MD2PDF?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. MD2PDF has a public REST API (POST /api/save) that AI agents like Claude, ChatGPT, and Gemini can use to create and share styled documents. It also supports WebMCP for direct browser integration."
+            "text": "Yes. MD2PDF provides an installable AI Skill in the Claude Skills format (SKILL.md) plus a public REST API. Claude, Custom GPTs, Gemini, and other agents can create, update, and share styled documents on the user's behalf. It also supports WebMCP for direct browser integration."
           }
         }
       ]
@@ -159,7 +159,7 @@
             </div>
             <div class="feature-card">
                 <h3>AI Agent Ready</h3>
-                <p>REST API for programmatic access. WebMCP support. AI agents can create and share documents.</p>
+                <p>Installable Skill (Claude Skills format) + public REST API. Agents can create, update and share documents.</p>
             </div>
             <div class="feature-card">
                 <h3>Templates</h3>
@@ -204,13 +204,14 @@
             <li><strong>F11</strong> — Fullscreen mode</li>
         </ul>
 
-        <h2>API for Developers & AI Agents</h2>
-        <p>MD2PDF has a public API that anyone can use to create and share styled documents programmatically:</p>
+        <h2>AI Skill & API for Developers</h2>
+        <p>MD2PDF ships with an installable <strong>AI Skill</strong> in the Claude Skills format. Open the AI Skill button in the toolbar, copy or download <code>SKILL.md</code>, and install it in Claude, Custom GPTs, Gemini, or any compatible agent. The agent can then create and update styled documents on your behalf.</p>
+        <p>Developers can also call the public REST API directly:</p>
         <ul>
-            <li><strong>POST /api/save</strong> — Create a document, get a shareable URL</li>
-            <li><strong>PUT /api/update/{id}</strong> — Update an existing document (requires editKey)</li>
+            <li><strong>POST /api/save</strong> — Create a document, returns <code>{ id, editKey, url }</code></li>
+            <li><strong>PUT /api/update/{id}</strong> — Update an existing document (requires <code>X-Edit-Key</code> header)</li>
         </ul>
-        <p>AI agents like Claude, ChatGPT, and Gemini can use this API to generate styled documents. See the <a href="/">API & Prompts</a> section in the app for ready-to-use prompts.</p>
+        <p>No authentication required. Max 500 KB per document, 10 requests/minute per IP, links expire 90 days after last update.</p>
 
         <h2>Open Source</h2>
         <p>MD2PDF is MIT licensed and fully open-source. Built with pure HTML, CSS, and JavaScript — no framework, no build step.</p>
