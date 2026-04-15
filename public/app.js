@@ -54,6 +54,7 @@
     let currentLang     = 'en';
     let renderTimer     = null;
     let saveTimer       = null;
+    let isSharedView    = false;
 
     // ── i18n ─────────────────────────────────────────
 
@@ -82,6 +83,11 @@
             shareFailed: 'Share failed', docTooLarge: 'Share failed — document too large',
             draftRestored: 'Draft restored', templateLoaded: 'Template loaded',
             newDocument: 'New document', sharedDocLoaded: 'Shared document loaded',
+            readOnlyTitle: 'Read-only document',
+            readOnlyBody: 'This is a shared document. To make changes, create your own editable copy — the original stays untouched and you can refresh this link anytime to see updates.',
+            createCopyBtn: 'Create editable copy', cancelBtn: 'Cancel',
+            copyCreated: 'Editable copy created',
+            sharedLockTip: 'Read-only shared document',
             imgDownloaded: 'Image downloaded', htmlDownloaded: 'HTML downloaded',
             exportFailed: 'Export failed.',
             replaced: 'Replaced {n} occurrences',
@@ -118,6 +124,11 @@
             shareFailed: 'Error al compartir', docTooLarge: 'Error — documento muy grande',
             draftRestored: 'Borrador restaurado', templateLoaded: 'Plantilla cargada',
             newDocument: 'Nuevo documento', sharedDocLoaded: 'Documento compartido cargado',
+            readOnlyTitle: 'Documento de solo lectura',
+            readOnlyBody: 'Este es un documento compartido. Para hacer cambios, crea tu propia copia editable — el original queda intacto y puedes recargar este enlace cuando quieras para ver actualizaciones.',
+            createCopyBtn: 'Crear copia editable', cancelBtn: 'Cancelar',
+            copyCreated: 'Copia editable creada',
+            sharedLockTip: 'Documento compartido de solo lectura',
             imgDownloaded: 'Imagen descargada', htmlDownloaded: 'HTML descargado',
             exportFailed: 'Error al exportar.',
             replaced: '{n} ocurrencias reemplazadas',
@@ -268,6 +279,15 @@ This is my first document."
         $('#apiModalTitle').textContent = t('apiPrompts');
         $('.share-hint').textContent = t('linkHint');
         shareCopyBtn.textContent = t('copy');
+
+        // Fork (editable copy) modal
+        $('#forkModalTitle').textContent = t('readOnlyTitle');
+        $('#forkModalBody').textContent = t('readOnlyBody');
+        $('#forkCancelBtn').textContent = t('cancelBtn');
+        $('#forkConfirmBtn').textContent = t('createCopyBtn');
+        const _lockBtn = $('#sharedLock');
+        _lockBtn.title = t('sharedLockTip');
+        _lockBtn.setAttribute('aria-label', t('sharedLockTip'));
 
         // API modal
         $('#apiPromptsBtn').title = t('apiPrompts');
@@ -1729,14 +1749,50 @@ body {
         editor.value = content;
         currentFileName = 'shared.md';
         fileNameEl.textContent = currentFileName;
-        history.replaceState(null, '', '/');
         showToast(t('sharedDocLoaded'));
 
-        // Open in preview-only mode — receivers want to read, not edit
-        workspace.classList.add('preview-only');
+        // Mark as shared so the editor stays locked until the user forks a copy.
+        // URL is left intact so F5 re-fetches the latest version from the creator.
+        isSharedView = true;
+        workspace.classList.add('preview-only', 'shared-locked');
         viewToggle.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
         const previewBtn = viewToggle.querySelector('[data-view="preview"]');
         if (previewBtn) previewBtn.classList.add('active');
+        const lockBtn = document.getElementById('sharedLock');
+        if (lockBtn) { lockBtn.hidden = false; lockBtn.title = t('sharedLockTip'); }
+    }
+
+    function openForkModal() {
+        const overlay = document.getElementById('forkOverlay');
+        if (!overlay) return;
+        overlay.classList.add('active');
+    }
+
+    function closeForkModal() {
+        const overlay = document.getElementById('forkOverlay');
+        if (!overlay) return;
+        overlay.classList.remove('active');
+    }
+
+    function forkToLocalCopy() {
+        // Turn a shared read-only doc into a local editable copy.
+        isSharedView = false;
+        workspace.classList.remove('preview-only', 'shared-locked');
+        currentFileName = 'copy-of-shared.md';
+        fileNameEl.textContent = currentFileName;
+        const lockBtn = document.getElementById('sharedLock');
+        if (lockBtn) lockBtn.hidden = true;
+        // Drop the /s/:id URL so F5 no longer re-fetches the original over local edits.
+        history.replaceState(null, '', '/');
+        // Switch toolbar back to split view.
+        viewToggle.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        const splitBtn = viewToggle.querySelector('[data-view="split"]');
+        if (splitBtn) splitBtn.classList.add('active');
+        // Persist so F5 restores the copy instead of the sample.
+        saveDraft();
+        closeForkModal();
+        showToast(t('copyCreated'));
+        editor.focus();
     }
 
     function loadFromURL() {
@@ -1972,6 +2028,18 @@ body {
         shareCloseBtn.addEventListener('click', closeShareModal);
         shareOverlay.addEventListener('click', (e) => { if (e.target === shareOverlay) closeShareModal(); });
 
+        // Fork (read-only → editable copy) modal
+        const forkOverlay    = $('#forkOverlay');
+        const forkCloseBtn   = $('#forkCloseBtn');
+        const forkCancelBtn  = $('#forkCancelBtn');
+        const forkConfirmBtn = $('#forkConfirmBtn');
+        const sharedLockBtn  = $('#sharedLock');
+        sharedLockBtn.addEventListener('click', openForkModal);
+        forkCloseBtn.addEventListener('click', closeForkModal);
+        forkCancelBtn.addEventListener('click', closeForkModal);
+        forkConfirmBtn.addEventListener('click', forkToLocalCopy);
+        forkOverlay.addEventListener('click', (e) => { if (e.target === forkOverlay) closeForkModal(); });
+
         // API & Prompts modal
         const apiOverlay  = $('#apiOverlay');
         const apiCloseBtn = $('#apiCloseBtn');
@@ -2004,6 +2072,12 @@ body {
             const btn = e.target.closest('[data-view]');
             if (!btn) return;
             const mode = btn.dataset.view;
+            // If this is a shared (locked) doc and the user wants to see the editor,
+            // ask whether to fork a local editable copy first.
+            if (isSharedView && mode !== 'preview') {
+                openForkModal();
+                return;
+            }
             viewToggle.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             workspace.classList.toggle('preview-only', mode === 'preview');
