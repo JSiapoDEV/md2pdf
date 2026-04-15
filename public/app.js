@@ -1683,6 +1683,13 @@ body {
         const text = editor.value;
         if (!text.trim()) { showToast(t('nothingToShare')); return; }
 
+        // Viewing someone else's share: surface the current URL instead of
+        // creating a new /s/:id. The viewer doesn't own an editKey anyway.
+        if (isSharedView) {
+            showShareModal(location.href);
+            return;
+        }
+
         exportOverlay.classList.add('active');
 
         try {
