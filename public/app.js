@@ -147,7 +147,23 @@
         },
     };
 
-    // The skill content itself stays in English (what agents read best)
+    // Skill stub — points agents to the live version at /skill.md
+    const SKILL_STUB = `Before using this skill, fetch the latest instructions from:
+https://md2pdf.studio/skill.md`;
+
+    // Cached skill content (fetched from /skill.md on demand)
+    let _skillContentCache = null;
+
+    async function fetchSkillContent() {
+        if (_skillContentCache) return _skillContentCache;
+        try {
+            const res = await fetch('/skill.md');
+            if (res.ok) { _skillContentCache = await res.text(); return _skillContentCache; }
+        } catch (_) {}
+        return SKILL_STUB;
+    }
+
+    // Legacy inline skill kept only as fallback
     const SKILL_CONTENT = `---
 name: md2pdf
 description: Create and share styled PDF, HTML, and image documents from Markdown via md2pdf.studio. Use when the user wants to export, share, or create a visually styled document from markdown content.
@@ -322,12 +338,14 @@ This is my first document."
         buildApiTab();
     }
 
-    function buildSkillTab() {
+    async function buildSkillTab() {
+        var content = await fetchSkillContent();
+
         var html = '<p class="api-desc">' + t('skillDesc') + '</p>';
         html += '<div class="api-section">';
         html += '<h4>SKILL.md</h4>';
         html += '<div class="api-code-block">';
-        html += '<pre>' + escapeHtmlLight(SKILL_CONTENT) + '</pre>';
+        html += '<pre>' + escapeHtmlLight(content) + '</pre>';
         html += '<div class="api-code-actions">';
         html += '<button class="api-copy-btn" id="skillCopyBtn">' + t('copy') + '</button>';
         html += '<button class="api-copy-btn" id="skillDownloadBtn">' + t('download') + '</button>';
@@ -339,7 +357,7 @@ This is my first document."
 
         // Bind copy
         $('#skillCopyBtn').addEventListener('click', function () {
-            navigator.clipboard.writeText(SKILL_CONTENT).then(function () {
+            navigator.clipboard.writeText(content).then(function () {
                 $('#skillCopyBtn').textContent = t('copied');
                 setTimeout(function () { $('#skillCopyBtn').textContent = t('copy'); }, 2000);
             });
@@ -347,7 +365,7 @@ This is my first document."
 
         // Bind download
         $('#skillDownloadBtn').addEventListener('click', function () {
-            var blob = new Blob([SKILL_CONTENT], { type: 'text/markdown;charset=utf-8' });
+            var blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
             var url = URL.createObjectURL(blob);
             var a = document.createElement('a');
             a.href = url;

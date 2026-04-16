@@ -462,7 +462,7 @@ export default {
         }
 
         // --- Serve llms.txt / llms-full.txt with correct Content-Type ---
-        if (url.pathname === '/llms.txt' || url.pathname === '/llms-full.txt') {
+        if (url.pathname === '/llms.txt' || url.pathname === '/llms-full.txt' || url.pathname === '/skill.md') {
             var llmsRes = await env.ASSETS.fetch(request);
             return new Response(llmsRes.body, {
                 status: llmsRes.status,
