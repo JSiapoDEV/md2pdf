@@ -1202,30 +1202,45 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
 
     function initMarked() {
         marked.setOptions({ breaks: true, gfm: true });
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: getTheme() === 'dark' ? 'dark' : 'default',
-            securityLevel: 'loose',
-        });
 
         // Custom renderer: add id anchors to headings for TOC links
-        const renderer = new marked.Renderer();
-        renderer.heading = function ({ text, depth }) {
-            const raw = text.replace(/<[^>]+>/g, '');
-            const slug = raw.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
-            return '<h' + depth + ' id="' + slug + '">' + text + '</h' + depth + '>';
-        };
-        marked.use({ renderer });
+        try {
+            const renderer = new marked.Renderer();
+            renderer.heading = function (token) {
+                var text = typeof token === 'object' ? token.text : arguments[0];
+                var depth = typeof token === 'object' ? token.depth : arguments[1];
+                var raw = text.replace(/<[^>]+>/g, '');
+                var slug = raw.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+                return '<h' + depth + ' id="' + slug + '">' + text + '</h' + depth + '>\n';
+            };
+            marked.use({ renderer: renderer });
+        } catch (_) {}
+
+        // Mermaid init (non-blocking — app works without it)
+        try {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: getTheme() === 'dark' ? 'dark' : 'default',
+                    securityLevel: 'loose',
+                });
+            }
+        } catch (_) {}
     }
 
     // ── Render ───────────────────────────────────────
+
+    const TOC_PLACEHOLDER = '<!--TOC_PLACEHOLDER-->';
 
     function render() {
         const src = editor.value.trim();
         if (!src) {
             preview.innerHTML = '<div class="preview-empty"><p>Start typing to see the preview...</p></div>';
         } else {
-            preview.innerHTML = marked.parse(src);
+            // Replace [TOC] / [toc] with a placeholder before marked parses it
+            // (marked interprets [TOC] as a link reference)
+            const processed = src.replace(/^\[toc\]$/gim, TOC_PLACEHOLDER);
+            preview.innerHTML = marked.parse(processed);
             injectTOC();
             preview.querySelectorAll('pre code').forEach(block => {
                 if (block.classList.contains('language-mermaid')) return;
@@ -1238,40 +1253,53 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     }
 
     function injectTOC() {
-        // Find [TOC] or [[toc]] placeholder (rendered as <p>[TOC]</p> by marked)
-        const tocPlaceholder = Array.from(preview.querySelectorAll('p')).find(p => {
-            const text = p.textContent.trim();
-            return text === '[TOC]' || text === '[[toc]]' || text === '[toc]' || text === '[[TOC]]';
-        });
-        if (!tocPlaceholder) return;
+        // Find the placeholder in the rendered HTML
+        const html = preview.innerHTML;
+        if (!html.includes(TOC_PLACEHOLDER)) return;
 
         // Collect all headings
         const headings = preview.querySelectorAll('h1, h2, h3, h4, h5, h6');
-        if (!headings.length) { tocPlaceholder.remove(); return; }
+        if (!headings.length) {
+            preview.innerHTML = html.replace(new RegExp('<p>' + TOC_PLACEHOLDER + '</p>', 'g'), '');
+            return;
+        }
 
-        let html = '<nav class="md-toc"><p class="md-toc-title">Table of Contents</p><ul>';
+        let toc = '<nav class="md-toc"><p class="md-toc-title">Table of Contents</p><ul>';
         headings.forEach(h => {
             const level = parseInt(h.tagName[1]);
             const text = h.textContent;
             const id = h.id;
-            html += '<li class="md-toc-h' + level + '"><a href="#' + id + '">' + text + '</a></li>';
+            toc += '<li class="md-toc-h' + level + '"><a href="#' + id + '">' + text + '</a></li>';
         });
-        html += '</ul></nav>';
+        toc += '</ul></nav>';
 
-        tocPlaceholder.outerHTML = html;
+        preview.innerHTML = html.replace(new RegExp('<p>' + TOC_PLACEHOLDER + '</p>', 'g'), toc);
     }
 
     function renderMermaidBlocks() {
-        preview.querySelectorAll('pre code.language-mermaid').forEach(code => {
+        if (typeof mermaid === 'undefined') return;
+        const blocks = preview.querySelectorAll('pre code.language-mermaid');
+        if (!blocks.length) return;
+
+        // Mermaid needs re-init to clear internal state between renders
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: (STYLES[currentStyle]?.dark || getTheme() === 'dark') ? 'dark' : 'default',
+            securityLevel: 'loose',
+        });
+
+        blocks.forEach(code => {
             const pre = code.parentElement;
+            // Skip if already inside a wrapper (re-render guard)
+            if (pre.closest('.mermaid-block')) return;
             const diagram = code.textContent;
             const id = 'mermaid-' + (++_mermaidId);
             const container = document.createElement('div');
             container.className = 'mermaid-block';
             pre.parentNode.replaceChild(container, pre);
-            mermaid.render(id, diagram).then(({ svg }) => {
-                container.innerHTML = svg;
-            }).catch(() => {
+            mermaid.render(id, diagram).then(function (result) {
+                container.innerHTML = result.svg;
+            }).catch(function () {
                 container.innerHTML = '<pre class="mermaid-error">Invalid Mermaid diagram</pre>';
             });
         });
@@ -1357,8 +1385,12 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         $('#hljs-css-light').disabled = forceDark ? true  : t !== 'light';
 
         // Update mermaid theme
-        const forceDarkMermaid = forceDark || t === 'dark';
-        mermaid.initialize({ startOnLoad: false, theme: forceDarkMermaid ? 'dark' : 'default', securityLevel: 'loose' });
+        try {
+            if (typeof mermaid !== 'undefined') {
+                const forceDarkMermaid = forceDark || t === 'dark';
+                mermaid.initialize({ startOnLoad: false, theme: forceDarkMermaid ? 'dark' : 'default', securityLevel: 'loose' });
+            }
+        } catch (_) {}
 
         // Force editor repaint
         editor.style.background = 'inherit';
@@ -2500,7 +2532,8 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         if (savedCSS) { customCSSInput.value = savedCSS; applyCustomCSS(); }
 
         // Check for shared URL first, then draft, then sample
-        const loaded = await loadFromURL();
+        let loaded = false;
+        try { loaded = await loadFromURL(); } catch (_) {}
         if (!loaded) {
             if (!restoreDraft()) {
                 editor.value = SAMPLE;
