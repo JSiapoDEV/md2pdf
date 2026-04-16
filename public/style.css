@@ -140,12 +140,33 @@ body {
     color: var(--text-2);
     padding: 3px 12px;
     background: var(--bg-raised);
+    border: 1px solid transparent;
     border-radius: 20px;
     max-width: 260px;
+    width: auto;
+    min-width: 80px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    transition: background var(--t-normal), color var(--t-normal);
+    transition: background var(--t-normal), color var(--t-normal), border-color var(--t-normal);
+    cursor: text;
+    outline: none;
+    text-align: center;
+}
+.file-name:hover {
+    border-color: var(--border);
+}
+.file-name:focus {
+    border-color: var(--accent);
+    background: var(--bg-main);
+    color: var(--text-1);
+}
+.shared-locked .file-name {
+    pointer-events: none;
+    cursor: default;
+}
+.shared-locked .file-name:hover {
+    border-color: transparent;
 }
 
 .shared-lock {
@@ -658,6 +679,75 @@ body {
 }
 
 /* =========================================
+   Code block copy button (Google Docs style)
+   ========================================= */
+
+.code-block-wrapper {
+    position: relative;
+    margin: 16px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg-raised);
+}
+
+.code-block-wrapper pre {
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+.code-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px 4px 14px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    min-height: 32px;
+}
+
+.code-block-lang {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.code-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-3);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: color var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+    white-space: nowrap;
+}
+
+.code-copy-btn:hover {
+    color: var(--text-1);
+    background: var(--bg-raised);
+    border-color: var(--border);
+}
+
+.code-copy-btn.copied {
+    color: #22c55e;
+}
+
+.code-copy-btn svg {
+    flex-shrink: 0;
+}
+
+/* =========================================
    Footer
    ========================================= */
 
@@ -1143,4 +1233,7 @@ body {
     .workspace { display: block; }
     .preview-pane { width: 100% !important; flex: none !important; }
     .preview-container { overflow: visible; }
+    .code-block-header { display: none !important; }
+    .code-block-wrapper { border: none !important; }
+    .code-block-wrapper pre { border-radius: 6px !important; }
 }

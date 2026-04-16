@@ -12,5 +12,8 @@ Thumbs.db
 firebase-debug.log
 .firebase/
 
+# Cloudflare
+.wrangler/
+
 # Node (if added in the future)
 node_modules/

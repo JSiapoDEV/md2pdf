@@ -1207,8 +1207,51 @@ Start writing on the left, or drag and drop a \`.md\` file.
             preview.querySelectorAll('pre code').forEach(block => {
                 hljs.highlightElement(block);
             });
+            addCodeCopyButtons();
         }
         updateCounter();
+    }
+
+    function addCodeCopyButtons() {
+        preview.querySelectorAll('pre').forEach(pre => {
+            if (pre.querySelector('.code-copy-btn')) return;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'code-block-wrapper';
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
+
+            const code = pre.querySelector('code');
+            const lang = code ? (code.className.match(/language-(\S+)/) || [])[1] || '' : '';
+
+            const header = document.createElement('div');
+            header.className = 'code-block-header';
+            header.innerHTML =
+                '<span class="code-block-lang">' + (lang ? lang : '') + '</span>' +
+                '<button class="code-copy-btn" type="button" aria-label="' + t('copy') + '">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                        '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>' +
+                        '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
+                    '</svg>' +
+                    '<span class="code-copy-label">' + t('copy') + '</span>' +
+                '</button>';
+            wrapper.insertBefore(header, pre);
+
+            header.querySelector('.code-copy-btn').addEventListener('click', function () {
+                const text = pre.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    const label = this.querySelector('.code-copy-label');
+                    const svg = this.querySelector('svg');
+                    label.textContent = t('copied');
+                    svg.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+                    this.classList.add('copied');
+                    setTimeout(() => {
+                        label.textContent = t('copy');
+                        svg.innerHTML = '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>';
+                        this.classList.remove('copied');
+                    }, 2000);
+                });
+            });
+        });
     }
 
     function scheduleRender() {
@@ -1289,7 +1332,7 @@ Start writing on the left, or drag and drop a \`.md\` file.
         if (tpl === undefined) return;
         editor.value = tpl;
         currentFileName = key === 'blank' ? 'untitled.md' : `${key}.md`;
-        fileNameEl.textContent = currentFileName;
+        fileNameEl.value = currentFileName;
         render();
         saveDraft();
         showToast(key === 'blank' ? t('newDocument') : t('templateLoaded'));
@@ -1303,7 +1346,7 @@ Start writing on the left, or drag and drop a \`.md\` file.
         reader.onload = (e) => {
             editor.value = e.target.result;
             currentFileName = file.name;
-            fileNameEl.textContent = file.name;
+            fileNameEl.value = file.name;
             render();
             saveDraft();
         };
@@ -1337,7 +1380,7 @@ Start writing on the left, or drag and drop a \`.md\` file.
         if (draft !== null && draft !== '') {
             editor.value = draft;
             currentFileName = localStorage.getItem('md2pdf-filename') || 'untitled.md';
-            fileNameEl.textContent = currentFileName;
+            fileNameEl.value = currentFileName;
             showToast(t('draftRestored'));
             return true;
         }
@@ -1469,6 +1512,9 @@ body {
 .markdown-body th, .markdown-body td {
   overflow-wrap: break-word; word-break: break-word;
 }
+.code-block-header { display: none; }
+.code-block-wrapper { border: none; overflow: visible; margin: 16px 0; }
+.code-block-wrapper pre { border-radius: 6px !important; }
 </style>
 </head>
 <body>
@@ -1542,10 +1588,60 @@ body {
   font-size: 15px; line-height: 1.7;
   color: ${bodyFg};
 }
+.code-block-wrapper {
+  position: relative; margin: 16px 0; border-radius: 8px;
+  overflow: hidden; border: 1px solid ${dark ? '#30363d' : '#d1d9e0'};
+  background: ${dark ? '#161b22' : '#f6f8fa'};
+}
+.code-block-wrapper pre { margin: 0 !important; border: none !important; border-radius: 0 !important; }
+.code-block-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 6px 4px 14px; min-height: 32px;
+  background: ${dark ? '#0d1117' : '#f0f3f6'};
+  border-bottom: 1px solid ${dark ? '#30363d' : '#d1d9e0'};
+}
+.code-block-lang {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: ${dark ? '#7d8590' : '#656d76'};
+}
+.code-copy-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 11px; font-weight: 500; cursor: pointer;
+  color: ${dark ? '#7d8590' : '#656d76'};
+  background: transparent; border: 1px solid transparent;
+  border-radius: 6px; padding: 4px 10px;
+}
+.code-copy-btn:hover {
+  color: ${dark ? '#e6edf3' : '#1f2328'};
+  background: ${dark ? '#161b22' : '#fff'};
+  border-color: ${dark ? '#30363d' : '#d1d9e0'};
+}
+.code-copy-btn.copied { color: #22c55e; }
 </style>
 </head>
 <body>
 <article class="markdown-body">${content}</article>
+<script>
+document.querySelectorAll('.code-copy-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var pre=btn.closest('.code-block-wrapper').querySelector('pre');
+    navigator.clipboard.writeText(pre.textContent).then(function(){
+      var label=btn.querySelector('.code-copy-label');
+      var svg=btn.querySelector('svg');
+      label.textContent='Copied!';
+      svg.innerHTML='<polyline points="20 6 9 17 4 12"/>';
+      btn.classList.add('copied');
+      setTimeout(function(){
+        label.textContent='Copy';
+        svg.innerHTML='<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>';
+        btn.classList.remove('copied');
+      },2000);
+    });
+  });
+});
+</script>
 </body>
 </html>`;
 
@@ -1615,12 +1711,15 @@ body {
 
         try {
             const style = STYLES[currentStyle] || STYLES.notion;
+            // Hide copy headers for clean screenshot
+            preview.querySelectorAll('.code-block-header').forEach(h => h.style.display = 'none');
             const canvas = await html2canvas(preview, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: style.bg,
                 logging: false,
             });
+            preview.querySelectorAll('.code-block-header').forEach(h => h.style.display = '');
 
             const link = document.createElement('a');
             link.download = currentFileName.replace(/\.(md|markdown|txt|mdx)$/i, '') + '.png';
@@ -1755,7 +1854,7 @@ body {
     function loadSharedContent(content) {
         editor.value = content;
         currentFileName = 'shared.md';
-        fileNameEl.textContent = currentFileName;
+        fileNameEl.value = currentFileName;
         showToast(t('sharedDocLoaded'));
 
         // Mark as shared so the editor stays locked until the user forks a copy.
@@ -1786,7 +1885,7 @@ body {
         isSharedView = false;
         workspace.classList.remove('preview-only', 'shared-locked');
         currentFileName = 'copy-of-shared.md';
-        fileNameEl.textContent = currentFileName;
+        fileNameEl.value = currentFileName;
         const lockBtn = document.getElementById('sharedLock');
         if (lockBtn) lockBtn.hidden = true;
         // Drop the /s/:id URL so F5 no longer re-fetches the original over local edits.
@@ -2067,6 +2166,37 @@ body {
 
         // Copy buttons are bound dynamically in buildPromptsTab/buildApiTab
 
+        // Editable file name
+        fileNameEl.addEventListener('change', () => {
+            const val = fileNameEl.value.trim();
+            if (val) {
+                currentFileName = val.endsWith('.md') ? val : val + '.md';
+            } else {
+                currentFileName = 'untitled.md';
+            }
+            fileNameEl.value = currentFileName;
+            saveDraft();
+        });
+        fileNameEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); fileNameEl.blur(); }
+            if (e.key === 'Escape') { fileNameEl.value = currentFileName; fileNameEl.blur(); }
+        });
+        fileNameEl.addEventListener('focus', () => {
+            const name = fileNameEl.value.replace(/\.(md|markdown|txt|mdx)$/i, '');
+            fileNameEl.value = name;
+            fileNameEl.select();
+        });
+        fileNameEl.addEventListener('blur', () => {
+            const val = fileNameEl.value.trim();
+            if (val) {
+                currentFileName = val.endsWith('.md') ? val : val + '.md';
+            } else {
+                currentFileName = 'untitled.md';
+            }
+            fileNameEl.value = currentFileName;
+            saveDraft();
+        });
+
         // Fullscreen
         fullscreenBtn.addEventListener('click', toggleFullscreen);
 
@@ -2125,7 +2255,7 @@ body {
                 const fd = new FormData(wmcpConvert);
                 const md = fd.get('markdown');
                 const style = fd.get('style');
-                if (md) { editor.value = md; currentFileName = 'agent.md'; fileNameEl.textContent = currentFileName; }
+                if (md) { editor.value = md; currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
                 if (style && STYLES[style]) applyStyle(style);
                 render();
                 saveDraft();
@@ -2158,7 +2288,7 @@ body {
                     style:    { type: 'string', description: 'Visual style (default: notion)' },
                 },
                 execute: async ({ markdown, style }) => {
-                    if (markdown) { editor.value = markdown; currentFileName = 'agent.md'; fileNameEl.textContent = currentFileName; }
+                    if (markdown) { editor.value = markdown; currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
                     if (style && STYLES[style]) applyStyle(style);
                     render();
                     saveDraft();
