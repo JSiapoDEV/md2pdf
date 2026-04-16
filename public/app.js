@@ -2357,8 +2357,9 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         const savedLang = localStorage.getItem('md2pdf-lang') || (navigator.language.startsWith('es') ? 'es' : 'en');
         applyLanguage(savedLang);
 
-        // Restore saved style (default: notion)
-        const savedStyle = localStorage.getItem('md2pdf-style') || 'notion';
+        // Restore saved style (default: notion) — ?style= query param overrides
+        const urlStyle = new URLSearchParams(location.search).get('style');
+        const savedStyle = (urlStyle && STYLES[urlStyle]) ? urlStyle : (localStorage.getItem('md2pdf-style') || 'notion');
         applyStyle(savedStyle);
 
         // Restore custom CSS
