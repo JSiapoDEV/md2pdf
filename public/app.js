@@ -1230,7 +1230,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
 
     // ── Render ───────────────────────────────────────
 
-    const TOC_PLACEHOLDER = '<!--TOC_PLACEHOLDER-->';
+    const TOC_PLACEHOLDER = '\u00ABTOC_PLACEHOLDER\u00BB';
 
     function render() {
         const src = editor.value.trim();
@@ -1253,14 +1253,12 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     }
 
     function injectTOC() {
-        // Find the placeholder in the rendered HTML
         const html = preview.innerHTML;
         if (!html.includes(TOC_PLACEHOLDER)) return;
 
-        // Collect all headings
         const headings = preview.querySelectorAll('h1, h2, h3, h4, h5, h6');
         if (!headings.length) {
-            preview.innerHTML = html.replace(new RegExp('<p>' + TOC_PLACEHOLDER + '</p>', 'g'), '');
+            preview.innerHTML = html.replace(TOC_PLACEHOLDER, '');
             return;
         }
 
@@ -1273,7 +1271,22 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         });
         toc += '</ul></nav>';
 
-        preview.innerHTML = html.replace(new RegExp('<p>' + TOC_PLACEHOLDER + '</p>', 'g'), toc);
+        // Replace placeholder (may be wrapped in <p> or not)
+        preview.innerHTML = html
+            .replace('<p>' + TOC_PLACEHOLDER + '</p>', toc)
+            .replace(TOC_PLACEHOLDER, toc);
+
+        // Intercept TOC clicks — scroll inside the preview container, not the page
+        preview.querySelectorAll('.md-toc a').forEach(a => {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                const id = this.getAttribute('href').slice(1);
+                const target = document.getElementById(id);
+                if (target) {
+                    previewContainer.scrollTo({ top: target.offsetTop - previewContainer.offsetTop, behavior: 'smooth' });
+                }
+            });
+        });
     }
 
     function renderMermaidBlocks() {
