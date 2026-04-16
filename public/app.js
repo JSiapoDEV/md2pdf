@@ -1485,9 +1485,6 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     }
 
     function applyTheme(t) {
-        // Force CSS variable re-evaluation by briefly removing the attribute
-        document.documentElement.removeAttribute('data-theme');
-        void document.documentElement.offsetHeight; // force reflow
         document.documentElement.setAttribute('data-theme', t);
         localStorage.setItem('md2pdf-theme', t);
 
@@ -1506,10 +1503,14 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             }
         } catch (_) {}
 
-        // Force editor repaint
-        editor.style.background = 'inherit';
-        void editor.offsetHeight;
-        editor.style.background = '';
+        // Force repaint on editor and preview to pick up new CSS variables
+        const bg = forceDark ? STYLES[currentStyle].bg : (t === 'dark' ? '#0d1117' : '#ffffff');
+        editor.style.background = bg;
+        previewContainer.style.background = bg;
+        requestAnimationFrame(() => {
+            editor.style.background = '';
+            previewContainer.style.background = '';
+        });
 
         render();
     }
