@@ -91,6 +91,8 @@
             imgDownloaded: 'Image downloaded', htmlDownloaded: 'HTML downloaded',
             exportFailed: 'Export failed.',
             replaced: 'Replaced {n} occurrences',
+            decryptFailed: 'Could not decrypt document. The link may be incomplete.',
+            encryptedShare: 'End-to-end encrypted',
             customCssPlaceholder: '/* Custom CSS — applied to preview & PDF */\n\n/* Example: colored headings */\n.markdown-body h1, .markdown-body h2 {\n  color: #6366f1;\n}\n\n/* Example: rounded code blocks */\n.markdown-body pre {\n  border-radius: 16px;\n}',
             editorPlaceholder: 'Write or drop your Markdown here...',
             // Skill tab
@@ -132,6 +134,8 @@
             imgDownloaded: 'Imagen descargada', htmlDownloaded: 'HTML descargado',
             exportFailed: 'Error al exportar.',
             replaced: '{n} ocurrencias reemplazadas',
+            decryptFailed: 'No se pudo descifrar el documento. El enlace puede estar incompleto.',
+            encryptedShare: 'Cifrado de extremo a extremo',
             customCssPlaceholder: '/* CSS personalizado — se aplica al preview y PDF */\n\n/* Ejemplo: titulos con color */\n.markdown-body h1, .markdown-body h2 {\n  color: #6366f1;\n}\n\n/* Ejemplo: bloques de codigo redondeados */\n.markdown-body pre {\n  border-radius: 16px;\n}',
             editorPlaceholder: 'Escribe o arrastra tu Markdown aqui...',
             // Skill tab
@@ -1778,6 +1782,53 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         return Array.from(new Uint8Array(buf).slice(0, 8), b => b.toString(16).padStart(2, '0')).join('');
     }
 
+    // ── E2EE (AES-256-GCM) ──────────────────────────
+
+    async function e2eeGenerateKey() {
+        const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+        const raw = await crypto.subtle.exportKey('raw', key);
+        // base64url encoding (no padding)
+        const b64 = btoa(String.fromCharCode(...new Uint8Array(raw)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        return { key, b64 };
+    }
+
+    function e2eeDecodeB64(b64) {
+        const str = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+        const raw = new Uint8Array(str.length);
+        for (let i = 0; i < str.length; i++) raw[i] = str.charCodeAt(i);
+        return raw;
+    }
+
+    async function e2eeImportKey(b64) {
+        return crypto.subtle.importKey('raw', e2eeDecodeB64(b64), { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    }
+
+    async function e2eeImportKeyFull(b64) {
+        return crypto.subtle.importKey('raw', e2eeDecodeB64(b64), { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    }
+
+    async function e2eeEncrypt(plaintext, cryptoKey) {
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encoded = new TextEncoder().encode(plaintext);
+        const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, cryptoKey, encoded);
+        // Prepend IV (12 bytes) to ciphertext, then base64
+        const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+        combined.set(iv);
+        combined.set(new Uint8Array(ciphertext), iv.length);
+        return btoa(String.fromCharCode(...combined));
+    }
+
+    async function e2eeDecrypt(encoded, cryptoKey) {
+        const binary = atob(encoded);
+        const combined = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) combined[i] = binary.charCodeAt(i);
+        const iv = combined.slice(0, 12);
+        const ciphertext = combined.slice(12);
+        const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cryptoKey, ciphertext);
+        return new TextDecoder().decode(decrypted);
+    }
+
     async function shareByURL() {
         const text = editor.value;
         if (!text.trim()) { showToast(t('nothingToShare')); return; }
@@ -1793,51 +1844,56 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
 
         try {
             const shares = getShareMap();
-            const docKey = currentFileName; // use filename as document identity
+            const docKey = currentFileName;
 
             // Check if we have an existing share for this document
             if (shares[docKey]) {
-                const { id, editKey } = shares[docKey];
+                const { id, editKey, encKey } = shares[docKey];
 
-                // Try to update existing document
+                // Re-encrypt with the same key for updates
+                const cryptoKey = await e2eeImportKeyFull(encKey);
+                const encrypted = await e2eeEncrypt(text, cryptoKey);
+
                 const updateRes = await fetch('/api/update/' + id, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'text/plain', 'X-Edit-Key': editKey },
-                    body: text,
+                    body: encrypted,
                 });
 
                 if (updateRes.ok) {
                     const data = await updateRes.json();
                     exportOverlay.classList.remove('active');
-                    showShareModal(data.url);
+                    showShareModal(data.url + '#k=' + encKey);
                     showToast(t('linkUpdated'));
                     return;
                 }
                 // If update fails (404 expired, 403 wrong key), create new below
             }
 
-            // Create new share
+            // Generate encryption key and encrypt content
+            const { key: cryptoKey, b64: encKeyB64 } = await e2eeGenerateKey();
+            const encrypted = await e2eeEncrypt(text, cryptoKey);
+
             const res = await fetch('/api/save', {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: text,
+                headers: { 'Content-Type': 'text/plain', 'X-Encrypted': 'aes-256-gcm' },
+                body: encrypted,
             });
 
             exportOverlay.classList.remove('active');
 
             if (res.ok) {
                 const data = await res.json();
-                // Save editKey for future updates
-                shares[docKey] = { id: data.id, editKey: data.editKey };
+                shares[docKey] = { id: data.id, editKey: data.editKey, encKey: encKeyB64 };
                 saveShareMap(shares);
-                showShareModal(data.url);
+                showShareModal(data.url + '#k=' + encKeyB64);
                 return;
             }
         } catch (_) {
             exportOverlay.classList.remove('active');
         }
 
-        // Fallback: LZ-string URL
+        // Fallback: LZ-string URL (unencrypted, client-only)
         try {
             const compressed = LZString.compressToEncodedURIComponent(text);
             const url = `${location.origin}/share?doc=${compressed}`;
@@ -1901,13 +1957,31 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         editor.focus();
     }
 
-    function loadFromURL() {
+    async function loadFromURL() {
         // Try embedded content (injected by Worker for /s/:id and /share?doc=)
         const sharedEl = document.getElementById('shared-content');
         if (sharedEl) {
             try {
-                const content = JSON.parse(sharedEl.textContent);
-                if (content) { loadSharedContent(content); return true; }
+                const raw = JSON.parse(sharedEl.textContent);
+                if (raw) {
+                    // Check if content is encrypted (has #k= in URL hash)
+                    const hash = location.hash;
+                    const keyMatch = hash.match(/[#&]k=([A-Za-z0-9_-]+)/);
+                    if (keyMatch) {
+                        try {
+                            const cryptoKey = await e2eeImportKey(keyMatch[1]);
+                            const content = await e2eeDecrypt(raw, cryptoKey);
+                            loadSharedContent(content);
+                        } catch (decErr) {
+                            showToast(t('decryptFailed'));
+                            return true; // still consumed the URL
+                        }
+                    } else {
+                        // Unencrypted (legacy) document
+                        loadSharedContent(raw);
+                    }
+                    return true;
+                }
             } catch (_) {}
         }
 
@@ -1922,9 +1996,9 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         }
 
         // Backward compat: try #doc= (hash)
-        const hash = location.hash;
-        if (hash.startsWith('#doc=')) {
-            const compressed = hash.slice(5);
+        const hashStr = location.hash;
+        if (hashStr.startsWith('#doc=')) {
+            const compressed = hashStr.slice(5);
             try {
                 const content = LZString.decompressFromEncodedURIComponent(compressed);
                 if (content) { loadSharedContent(content); return true; }
@@ -2349,7 +2423,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
 
     // ── Boot ─────────────────────────────────────────
 
-    function init() {
+    async function init() {
         initMarked();
         applyTheme(getTheme());
 
@@ -2367,7 +2441,8 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         if (savedCSS) { customCSSInput.value = savedCSS; applyCustomCSS(); }
 
         // Check for shared URL first, then draft, then sample
-        if (!loadFromURL()) {
+        const loaded = await loadFromURL();
+        if (!loaded) {
             if (!restoreDraft()) {
                 editor.value = SAMPLE;
             }

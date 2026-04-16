@@ -236,11 +236,12 @@ export default {
 
                 var id = generateId();
                 var editKey = generateEditKey();
+                var encrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
 
                 // Store with 90-day TTL + editKey in metadata
                 await env.DOCS.put(id, body, {
                     expirationTtl: 86400 * 90,
-                    metadata: { editKey: editKey, created: Date.now() },
+                    metadata: { editKey: editKey, created: Date.now(), encrypted: encrypted },
                 });
 
                 return new Response(JSON.stringify({
@@ -317,7 +318,7 @@ export default {
                 headers: {
                     'access-control-allow-origin': '*',
                     'access-control-allow-methods': 'POST, PUT, OPTIONS',
-                    'access-control-allow-headers': 'Content-Type, X-Edit-Key',
+                    'access-control-allow-headers': 'Content-Type, X-Edit-Key, X-Encrypted',
                 },
             });
         }
@@ -326,16 +327,29 @@ export default {
         if (url.pathname.startsWith('/s/') && url.pathname.length > 3) {
             try {
                 var id = url.pathname.slice(3);
-                var content = await env.DOCS.get(id);
+                var result = await env.DOCS.getWithMetadata(id);
 
-                if (!content) {
+                if (!result.value) {
                     return new Response('Document not found or expired.', {
                         status: 404,
                         headers: { 'content-type': 'text/plain' },
                     });
                 }
 
-                var meta = extractMeta(content);
+                var content = result.value;
+                var isEncrypted = result.metadata && result.metadata.encrypted;
+                var meta;
+
+                if (isEncrypted) {
+                    // Encrypted doc — use generic OG tags (server cannot read content)
+                    meta = {
+                        title: 'Encrypted Document — MD2PDF',
+                        description: 'This document is end-to-end encrypted. Open the full link to decrypt and view it.',
+                    };
+                } else {
+                    meta = extractMeta(content);
+                }
+
                 var html = await getIndexHtml(env, request);
                 html = injectContent(html, content, meta);
 
