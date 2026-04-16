@@ -1568,7 +1568,7 @@ body {
         const bodyFg = dark ? '#e6edf3' : '#1f2328';
 
         const html = `<!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
