@@ -1,103 +1,23 @@
 # MD2PDF
 
-> Convert Markdown documents to beautifully styled PDFs with multiple themes. Free, open-source, runs entirely in the browser.
+> Free online Markdown to PDF converter. Convert .md files to beautifully styled PDFs, HTML, and images with 11 visual styles. No signup, no server uploads — runs entirely in the browser. Includes a public REST API and an installable AI Skill for Claude, ChatGPT, and other AI agents.
 
-MD2PDF is a free web tool that converts `.md` (Markdown) files into clean, styled PDFs and HTML files. Choose from 11 visual styles and customize with your own CSS.
+## Main
 
-## Features
+- [MD2PDF App](https://md2pdf.studio/): Online Markdown editor with live preview, 11 visual styles, and export to PDF/HTML/image
+- [About MD2PDF](https://md2pdf.studio/about): Background, features, and how it works
+- [Full AI Documentation](https://md2pdf.studio/llms-full.txt): Complete reference for LLMs — features, API, AI Skill, styles, and usage
 
-- Live split-pane editor with real-time preview
-- GitHub-flavored Markdown (GFM) support
-- Syntax highlighting for 180+ programming languages
-- 11 visual styles: Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel
-- Custom CSS injection for full control over styling
-- One-click PDF export (continuous single-page)
-- HTML export with all styles inlined
-- Dark and light theme toggle
-- Drag and drop file upload
-- 5 document templates: CV/Resume, Report, Documentation, Changelog, Meeting Notes
-- Word count and reading time indicator
-- Split view or preview-only mode
-- Auto-save drafts to localStorage
-- Resizable editor/preview panes
-- Keyboard shortcuts
-- Runs entirely in the browser — no server, no data sent anywhere, no signup
+## API
 
-## Available Styles
+- [Create Document — POST /api/save](https://md2pdf.studio/llms-full.txt): Send Markdown as text/plain body, receive JSON with shareable URL and edit key
+- [Update Document — PUT /api/update/{id}](https://md2pdf.studio/llms-full.txt): Update an existing document using X-Edit-Key header
 
-| Style | Description |
-|-------|-------------|
-| Notion | Clean, modern sans-serif (default) |
-| GitHub | Classic GitHub markdown rendering |
-| Minimal | Elegant serif, no decorations |
-| Academic | Formal justified text, scholarly feel |
-| Corporate | Professional with blue accents and styled table headers |
-| LaTeX | Simulates academic papers with serif typography |
-| Dracula | Vibrant purple/pink/green color palette |
-| Newspaper | Editorial typography with Playfair Display |
-| Handwritten | Cursive font with notebook-lined background |
-| Terminal | Green-on-black monospace, hacker aesthetic |
-| Pastel | Soft pink/purple/teal with rounded elements |
+## AI Integration
 
-## Usage
+- [AI Skill (Claude Skills format)](https://md2pdf.studio/llms-full.txt): Installable skill for Claude, Custom GPTs, Gemini, and compatible agents to create and share styled documents
+- [WebMCP Forms](https://md2pdf.studio/): In-page declarative tool forms for direct browser-based AI agent integration
 
-1. Visit https://md2pdf.studio
-2. Write or paste Markdown in the editor, or drag and drop a `.md` file
-3. Choose a style from the dropdown in the preview panel
-4. Optionally add custom CSS for further customization
-5. Click "Export" to download as PDF or HTML
+## Styles
 
-## AI Agent Integration (Skill)
-
-MD2PDF provides an installable **Skill** for AI agents (Claude, Custom GPTs, Gemini, etc.) in the Claude Skills format. Agents can create, update, and share styled documents programmatically.
-
-Install the skill by copying or downloading `SKILL.md` from the "AI Skill" section in the app, or use the REST API directly:
-
-- **Create document:** `POST https://md2pdf.studio/api/save` with the markdown as body (`Content-Type: text/plain`). Returns `{ id, editKey, url }`.
-- **Update document:** `PUT https://md2pdf.studio/api/update/{id}` with the updated markdown, requires `X-Edit-Key` header.
-- **Response:** shareable URL that displays the document with the chosen style.
-- **Limits:** 500 KB max, 10 req/min per IP, links expire 90 days after last update.
-- **No authentication required.**
-
-The skill is intentionally written in English as it is the technical standard for AI agent instructions.
-
-## Templates
-
-Pre-built document templates available:
-- CV / Resume
-- Monthly Report
-- Project Documentation
-- Changelog
-- Meeting Notes
-
-## Keyboard Shortcuts
-
-- `Ctrl+S` / `Cmd+S` — Export to PDF
-- `Ctrl+Shift+L` / `Cmd+Shift+L` — Toggle dark/light theme
-- `Tab` — Insert tab in editor
-
-## Supported Markdown
-
-- Headings, paragraphs, bold, italic, strikethrough
-- Ordered and unordered lists, task lists
-- Code blocks with syntax highlighting (JavaScript, Python, Go, Rust, SQL, etc.)
-- Tables
-- Blockquotes
-- Images
-- Horizontal rules
-- Links
-
-## Tech Stack
-
-- Pure HTML, CSS, JavaScript (no framework, no build step)
-- marked.js for Markdown parsing
-- highlight.js for syntax highlighting
-- GitHub Markdown CSS as base styling
-- Browser native print-to-PDF for export
-
-## Author
-
-Built by JSiapoDev
-- Website: https://jsiapo.dev
-- GitHub: https://github.com/JSiapoDEV
-- LinkedIn: https://www.linkedin.com/in/jsiapo/
+- [Style Gallery](https://md2pdf.studio/llms-full.txt): 11 visual styles — Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel

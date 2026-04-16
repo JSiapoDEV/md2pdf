@@ -1,26 +1,67 @@
 User-agent: *
 Allow: /
 
-# AI Crawlers
+# Google
+User-agent: Googlebot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# OpenAI
 User-agent: GPTBot
 Allow: /
 
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+# Anthropic
 User-agent: ClaudeBot
 Allow: /
 
 User-agent: Claude-Web
 Allow: /
 
-User-agent: Google-Extended
+User-agent: anthropic-ai
 Allow: /
 
+# Perplexity
 User-agent: PerplexityBot
 Allow: /
 
-User-agent: Bytespider
+# Apple
+User-agent: Applebot-Extended
 Allow: /
 
+# Meta
+User-agent: meta-externalagent
+Allow: /
+
+# Cohere
+User-agent: Cohere-ai
+Allow: /
+
+# Common Crawl
 User-agent: CCBot
 Allow: /
 
+# ByteDance
+User-agent: Bytespider
+Allow: /
+
+# You.com
+User-agent: YouBot
+Allow: /
+
+# Diffbot
+User-agent: Diffbot
+Allow: /
+
 Sitemap: https://md2pdf.studio/sitemap.xml
+
+# LLM context files (llmstxt.org standard)
+# llms.txt: https://md2pdf.studio/llms.txt
+# llms-full.txt: https://md2pdf.studio/llms-full.txt

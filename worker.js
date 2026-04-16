@@ -370,6 +370,18 @@ export default {
             }
         }
 
+        // --- Serve llms.txt / llms-full.txt with correct Content-Type ---
+        if (url.pathname === '/llms.txt' || url.pathname === '/llms-full.txt') {
+            var llmsRes = await env.ASSETS.fetch(request);
+            return new Response(llmsRes.body, {
+                status: llmsRes.status,
+                headers: {
+                    'content-type': 'text/markdown; charset=UTF-8',
+                    'cache-control': 'public, max-age=86400',
+                },
+            });
+        }
+
         // --- Serve static assets for everything else ---
         return env.ASSETS.fetch(request);
     },
