@@ -269,10 +269,10 @@ Follow those instructions exactly.
         var html = '<p class="api-desc">' + t('apiDesc') + '</p>';
 
         var sections = [
-            { title: t('apiCreate'), code: 'POST https://md2pdf.studio/api/save\nContent-Type: text/plain\n\n# Your markdown here\n\n---\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3"\n}' },
-            { title: t('apiUpdate'), code: 'PUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\n\n# Updated markdown\n\n---\nResponse 200:\n{ "id": "BrOrr0N3", "url": "https://md2pdf.studio/s/BrOrr0N3" }\n\nResponse 403: { "error": "Unauthorized" }\nResponse 404: { "error": "Document not found" }' },
-            { title: t('apiCurl'), code: '# Create\ncurl -X POST https://md2pdf.studio/api/save \\\n  -H "Content-Type: text/plain" \\\n  -d "# Hello World"\n\n# Update\ncurl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \\\n  -H "Content-Type: text/plain" \\\n  -H "X-Edit-Key: your-edit-key-here" \\\n  -d "# Updated content"' },
-            { title: t('apiLimits'), code: 'Max document size: 500 KB\nRate limit: 10 requests/minute per IP\nExpiration: 90 days (resets on update)\nResponse: 429 Too Many Requests' },
+            { title: t('apiCreate'), code: 'POST https://md2pdf.studio/api/save\nContent-Type: text/plain\n\n# Your markdown here\n\n---\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3",\n  "key": "xY9kL2m..."\n}\n\nShareable link: {url}#k={key}\nThe #k= hash is the decryption key (never sent to server).' },
+            { title: t('apiUpdate'), code: 'PUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\nX-Enc-Key: {key}\n\n# Updated markdown\n\n---\nResponse 200:\n{ "id": "BrOrr0N3", "url": "https://md2pdf.studio/s/BrOrr0N3" }\n\nResponse 403: { "error": "Unauthorized" }\nResponse 404: { "error": "Document not found" }' },
+            { title: t('apiCurl'), code: '# Create\ncurl -X POST https://md2pdf.studio/api/save \\\n  -H "Content-Type: text/plain" \\\n  -d "# Hello World"\n# Response: {"id":"abc","editKey":"...","url":"...","key":"xY9..."}\n# Share: {url}#k={key}\n\n# Update\ncurl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \\\n  -H "Content-Type: text/plain" \\\n  -H "X-Edit-Key: your-edit-key-here" \\\n  -H "X-Enc-Key: xY9kL2m..." \\\n  -d "# Updated content"' },
+            { title: t('apiLimits'), code: 'Max document size: 500 KB\nRate limit: 10 requests/minute per IP\nExpiration: 90 days (resets on update)\nEncryption: AES-256-GCM (all documents)\nResponse: 429 Too Many Requests' },
         ];
 
         sections.forEach(function (s) {
