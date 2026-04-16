@@ -49,7 +49,7 @@ GitHub: https://github.com/JSiapoDEV/md2pdf
 
 ## REST API Reference
 
-No authentication required. All endpoints accept and serve standard HTTP.
+No authentication required. All endpoints accept and serve standard HTTP. All documents are encrypted at rest using AES-256-GCM.
 
 ### Create a Document
 
@@ -67,12 +67,22 @@ Tables, code blocks, images, and all GFM syntax are supported.
 {
   "id": "BrOrr0N3",
   "editKey": "a1b2c3d4e5f6...",
-  "url": "https://md2pdf.studio/s/BrOrr0N3"
+  "url": "https://md2pdf.studio/s/BrOrr0N3",
+  "key": "xY9kL2mN..."
 }
 ```
 
-- `url` — Shareable link to view the styled document
+- `url` — Base URL for the document
 - `editKey` — Secret key required to update the document later (save it!)
+- `key` — AES-256-GCM decryption key (save it!)
+
+**IMPORTANT:** Build the shareable link by appending the key to the URL hash:
+```
+{url}#k={key}
+```
+Example: `https://md2pdf.studio/s/BrOrr0N3#k=xY9kL2mN...`
+
+The `#k=` hash fragment is never sent to the server. Without it, the document cannot be decrypted. Only people with the full link can read the content.
 
 ### Update a Document
 
@@ -80,11 +90,12 @@ Tables, code blocks, images, and all GFM syntax are supported.
 PUT https://md2pdf.studio/api/update/{id}
 Content-Type: text/plain
 X-Edit-Key: {editKey}
+X-Enc-Key: {key}
 
 # Updated Markdown content
 ```
 
-The URL stays the same — only the content changes. The 90-day expiration timer resets on update.
+The URL and encryption key stay the same — only the content is re-encrypted and updated. The 90-day expiration timer resets on update.
 
 ### cURL Examples
 
@@ -95,6 +106,8 @@ curl -X POST https://md2pdf.studio/api/save \
   -d "# Hello World
 
 This is a styled document created via the API."
+# Response includes: id, editKey, url, key
+# Share: {url}#k={key}
 ```
 
 **Update:**
@@ -102,10 +115,18 @@ This is a styled document created via the API."
 curl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \
   -H "Content-Type: text/plain" \
   -H "X-Edit-Key: a1b2c3d4e5f6" \
+  -H "X-Enc-Key: xY9kL2mN..." \
   -d "# Updated Document
 
 New content goes here."
 ```
+
+### Security
+
+- All documents are encrypted at rest using **AES-256-GCM**
+- The decryption key (`key`) is returned in the API response and placed in the URL hash fragment (`#k=`)
+- The hash fragment is never sent to the server — only the person with the full link can decrypt
+- Cloudflare KV stores only ciphertext — the server cannot read document content
 
 ### Limits
 
@@ -139,16 +160,20 @@ Use this skill when the user asks you to:
 2. POST the markdown to the API:
    POST https://md2pdf.studio/api/save
    Content-Type: text/plain
-3. You will receive: { "id": "...", "editKey": "...", "url": "..." }
-4. Share the url with the user. Save id and editKey for future updates.
+3. You will receive: { "id": "...", "editKey": "...", "url": "...", "key": "..." }
+4. Build the shareable link: {url}#k={key}
+5. Share the full link (with #k=) with the user. Save id, editKey, and key for future updates.
+
+IMPORTANT: The document is encrypted at rest. The #k= hash contains the decryption key and is never sent to the server. Without it, the document is unreadable.
 
 ## How to update a document
 
 PUT https://md2pdf.studio/api/update/{id}
 Content-Type: text/plain
 X-Edit-Key: {editKey}
+X-Enc-Key: {key}
 
-The URL stays the same — only the content is updated.
+The URL and encryption key stay the same — content is re-encrypted.
 
 ## Available styles
 

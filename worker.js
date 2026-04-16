@@ -174,6 +174,48 @@ function generateEditKey() {
     return Array.from(arr, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
 }
 
+// ── Server-side E2EE (AES-256-GCM) ──────────────────
+
+function toBase64url(buf) {
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function fromBase64url(b64) {
+    var str = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+    var arr = new Uint8Array(str.length);
+    for (var i = 0; i < str.length; i++) arr[i] = str.charCodeAt(i);
+    return arr;
+}
+
+async function serverEncrypt(plaintext) {
+    var key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var encoded = new TextEncoder().encode(plaintext);
+    var ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, encoded);
+    // Combine IV + ciphertext, then base64
+    var combined = new Uint8Array(iv.length + ciphertext.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(ciphertext), iv.length);
+    var encData = btoa(String.fromCharCode.apply(null, combined));
+    // Export key as base64url
+    var rawKey = await crypto.subtle.exportKey('raw', key);
+    var encKey = toBase64url(rawKey);
+    return { encData: encData, encKey: encKey };
+}
+
+async function serverReencrypt(plaintext, encKeyB64) {
+    var rawKey = fromBase64url(encKeyB64);
+    var key = await crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var encoded = new TextEncoder().encode(plaintext);
+    var ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, encoded);
+    var combined = new Uint8Array(iv.length + ciphertext.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(ciphertext), iv.length);
+    return btoa(String.fromCharCode.apply(null, combined));
+}
+
 function injectContent(html, content, meta) {
     var safeTitle = escapeHtml(meta.title);
     var safeDesc = escapeHtml(meta.description);
@@ -236,19 +278,34 @@ export default {
 
                 var id = generateId();
                 var editKey = generateEditKey();
-                var encrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
+                var clientEncrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
 
-                // Store with 90-day TTL + editKey in metadata
-                await env.DOCS.put(id, body, {
+                var storedBody, encKey;
+
+                if (clientEncrypted) {
+                    // Client already encrypted — store as-is
+                    storedBody = body;
+                    encKey = null; // key is in the client's URL hash
+                } else {
+                    // Server-side encryption for API consumers
+                    var enc = await serverEncrypt(body);
+                    storedBody = enc.encData;
+                    encKey = enc.encKey;
+                }
+
+                await env.DOCS.put(id, storedBody, {
                     expirationTtl: 86400 * 90,
-                    metadata: { editKey: editKey, created: Date.now(), encrypted: encrypted },
+                    metadata: { editKey: editKey, created: Date.now(), encrypted: true },
                 });
 
-                return new Response(JSON.stringify({
+                var responseBody = {
                     id: id,
                     editKey: editKey,
                     url: url.origin + '/s/' + id,
-                }), {
+                };
+                if (encKey) responseBody.key = encKey;
+
+                return new Response(JSON.stringify(responseBody), {
                     headers: {
                         'content-type': 'application/json',
                         'access-control-allow-origin': '*',
@@ -296,13 +353,33 @@ export default {
                     });
                 }
 
-                // Update with fresh 90-day TTL, keep same editKey
-                await env.DOCS.put(updateId, updateBody, {
+                var clientEncrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
+                var encKeyHeader = request.headers.get('x-enc-key');
+                var updatedBody;
+
+                if (clientEncrypted) {
+                    // Client already encrypted
+                    updatedBody = updateBody;
+                } else if (encKeyHeader) {
+                    // API consumer sent the encryption key — re-encrypt server-side
+                    updatedBody = await serverReencrypt(updateBody, encKeyHeader);
+                } else {
+                    // No encryption key provided — encrypt with a new key
+                    var enc = await serverEncrypt(updateBody);
+                    updatedBody = enc.encData;
+                    encKeyHeader = enc.encKey;
+                }
+
+                var updatedMeta = Object.assign({}, existing.metadata, { encrypted: true });
+                await env.DOCS.put(updateId, updatedBody, {
                     expirationTtl: 86400 * 90,
-                    metadata: existing.metadata,
+                    metadata: updatedMeta,
                 });
 
-                return new Response(JSON.stringify({ id: updateId, url: url.origin + '/s/' + updateId }), {
+                var updateResponse = { id: updateId, url: url.origin + '/s/' + updateId };
+                if (encKeyHeader && !clientEncrypted) updateResponse.key = encKeyHeader;
+
+                return new Response(JSON.stringify(updateResponse), {
                     headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
                 });
             } catch (e) {
@@ -318,7 +395,7 @@ export default {
                 headers: {
                     'access-control-allow-origin': '*',
                     'access-control-allow-methods': 'POST, PUT, OPTIONS',
-                    'access-control-allow-headers': 'Content-Type, X-Edit-Key, X-Encrypted',
+                    'access-control-allow-headers': 'Content-Type, X-Edit-Key, X-Encrypted, X-Enc-Key',
                 },
             });
         }

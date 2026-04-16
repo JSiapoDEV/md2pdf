@@ -178,25 +178,35 @@ Use this skill when the user asks you to:
    {
      "id": "BrOrr0N3",
      "editKey": "a1b2c3...",
-     "url": "https://md2pdf.studio/s/BrOrr0N3"
+     "url": "https://md2pdf.studio/s/BrOrr0N3",
+     "key": "xY9kL2m..."
    }
    \`\`\`
 
-4. Share the \`url\` with the user. Save the \`id\` and \`editKey\` in your context in case the user wants to update it later.
+4. **IMPORTANT:** The document is encrypted at rest (AES-256-GCM). Build the shareable link by appending the \`key\` to the URL hash:
+   \`\`\`
+   {url}#k={key}
+   \`\`\`
+   Example: \`https://md2pdf.studio/s/BrOrr0N3#k=xY9kL2m...\`
+
+5. Share the full link (with \`#k=\`) with the user. Save \`id\`, \`editKey\`, and \`key\` in your context in case the user wants to update it later.
+
+> **Why the #k= matters:** The hash fragment is never sent to the server. Without it, the document cannot be decrypted. Only people with the full link can read the content.
 
 ## How to update a document
 
-If the user asks to modify a previously created document, use the saved \`id\` and \`editKey\`:
+If the user asks to modify a previously created document, use the saved \`id\`, \`editKey\`, and \`key\`:
 
 \`\`\`
 PUT https://md2pdf.studio/api/update/{id}
 Content-Type: text/plain
 X-Edit-Key: {editKey}
+X-Enc-Key: {key}
 
 # Updated markdown content
 \`\`\`
 
-The URL stays the same — only the content is updated.
+The URL and encryption key stay the same — only the content is re-encrypted and updated.
 
 ## Available visual styles
 
@@ -228,11 +238,16 @@ curl -X POST https://md2pdf.studio/api/save \\
   -d "# Hello World
 
 This is my first document."
+# Response: {"id":"abc","editKey":"...","url":"https://md2pdf.studio/s/abc","key":"xY9..."}
+# Share: https://md2pdf.studio/s/abc#k=xY9...
 \`\`\`
 
 ## Notes
 
 - No authentication required
+- All documents are encrypted at rest (AES-256-GCM) — the server cannot read stored content
+- The decryption key is in the URL hash fragment (\`#k=\`) and never reaches the server
+- Always share the full URL including \`#k=\` — without it the document is unreadable
 - The user can export the document as PDF, HTML, or image
 - Shared links show rich previews in WhatsApp, Teams, and Slack
 `;
@@ -1850,14 +1865,11 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             if (shares[docKey]) {
                 const { id, editKey, encKey } = shares[docKey];
 
-                // Re-encrypt with the same key for updates
-                const cryptoKey = await e2eeImportKeyFull(encKey);
-                const encrypted = await e2eeEncrypt(text, cryptoKey);
-
+                // Send plaintext + encryption key — server re-encrypts
                 const updateRes = await fetch('/api/update/' + id, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'text/plain', 'X-Edit-Key': editKey },
-                    body: encrypted,
+                    headers: { 'Content-Type': 'text/plain', 'X-Edit-Key': editKey, 'X-Enc-Key': encKey },
+                    body: text,
                 });
 
                 if (updateRes.ok) {
@@ -1870,23 +1882,20 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                 // If update fails (404 expired, 403 wrong key), create new below
             }
 
-            // Generate encryption key and encrypt content
-            const { key: cryptoKey, b64: encKeyB64 } = await e2eeGenerateKey();
-            const encrypted = await e2eeEncrypt(text, cryptoKey);
-
+            // Server encrypts and returns the key
             const res = await fetch('/api/save', {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain', 'X-Encrypted': 'aes-256-gcm' },
-                body: encrypted,
+                headers: { 'Content-Type': 'text/plain' },
+                body: text,
             });
 
             exportOverlay.classList.remove('active');
 
             if (res.ok) {
                 const data = await res.json();
-                shares[docKey] = { id: data.id, editKey: data.editKey, encKey: encKeyB64 };
+                shares[docKey] = { id: data.id, editKey: data.editKey, encKey: data.key };
                 saveShareMap(shares);
-                showShareModal(data.url + '#k=' + encKeyB64);
+                showShareModal(data.url + '#k=' + data.key);
                 return;
             }
         } catch (_) {
