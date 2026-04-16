@@ -93,6 +93,7 @@
             replaced: 'Replaced {n} occurrences',
             decryptFailed: 'Could not decrypt document. The link may be incomplete.',
             encryptedShare: 'End-to-end encrypted',
+            tocTitle: 'Table of Contents',
             customCssPlaceholder: '/* Custom CSS — applied to preview & PDF */\n\n/* Example: colored headings */\n.markdown-body h1, .markdown-body h2 {\n  color: #6366f1;\n}\n\n/* Example: rounded code blocks */\n.markdown-body pre {\n  border-radius: 16px;\n}',
             editorPlaceholder: 'Write or drop your Markdown here...',
             // Skill tab
@@ -136,6 +137,7 @@
             replaced: '{n} ocurrencias reemplazadas',
             decryptFailed: 'No se pudo descifrar el documento. El enlace puede estar incompleto.',
             encryptedShare: 'Cifrado de extremo a extremo',
+            tocTitle: 'Tabla de Contenido',
             customCssPlaceholder: '/* CSS personalizado — se aplica al preview y PDF */\n\n/* Ejemplo: titulos con color */\n.markdown-body h1, .markdown-body h2 {\n  color: #6366f1;\n}\n\n/* Ejemplo: bloques de codigo redondeados */\n.markdown-body pre {\n  border-radius: 16px;\n}',
             editorPlaceholder: 'Escribe o arrastra tu Markdown aqui...',
             // Skill tab
@@ -319,6 +321,10 @@ Follow those instructions exactly.
 .markdown-body a { text-decoration: underline; text-underline-offset: 3px; }
 .markdown-body hr { border: none; border-top: 1px solid var(--border, #e5e7eb); }
 .markdown-body pre { border-radius: 8px; }
+.md-toc { border: none; background: transparent; padding: 0; }
+.md-toc a { font-family: 'Iowan Old Style', Georgia, serif; }
+.code-block-wrapper { border: none; }
+.code-block-header { background: transparent; border-bottom: 1px solid var(--border, #e5e7eb); }
 `},
 
         academic: { name: 'Academic', dark: false, bg: '#fff', css: `
@@ -347,6 +353,12 @@ Follow those instructions exactly.
 }
 .markdown-body pre { border-radius: 4px; }
 .markdown-body table { font-size: 14px; }
+.md-toc { border-radius: 2px; border-color: currentColor; }
+.md-toc a { font-family: Cambria, Georgia, serif; }
+.md-toc-title { text-transform: uppercase; letter-spacing: 0.1em; }
+.code-block-wrapper { border-radius: 4px; }
+.code-block-header { border-bottom-color: currentColor; }
+.code-block-lang { font-family: Cambria, Georgia, serif; }
 `},
 
         corporate: { name: 'Corporate', dark: false, bg: '#fff', css: `
@@ -375,6 +387,14 @@ Follow those instructions exactly.
 [data-theme="dark"] .markdown-body table th {
   background: #1e40af !important;
 }
+.md-toc { border-left: 4px solid #2563eb; border-radius: 0 8px 8px 0; }
+[data-theme="dark"] .md-toc { border-left-color: #60a5fa; }
+.md-toc-title { color: #2563eb; }
+[data-theme="dark"] .md-toc-title { color: #60a5fa; }
+.code-block-header { background: #2563eb0d; }
+[data-theme="dark"] .code-block-header { background: #60a5fa0d; }
+.code-block-lang { color: #2563eb; }
+[data-theme="dark"] .code-block-lang { color: #60a5fa; }
 `},
 
         notion: { name: 'Notion', dark: false, bg: '#fff', css: `
@@ -412,6 +432,8 @@ Follow those instructions exactly.
 .markdown-body pre { border-radius: 6px; border: none !important; }
 .markdown-body blockquote { border-left: 3px solid currentColor; }
 .markdown-body hr { border: none; border-top: 1px solid var(--border, #e5e7eb); }
+.md-toc { border-radius: 8px; }
+.md-toc a { color: var(--text-2); }
 `},
 
         latex: { name: 'LaTeX', dark: false, bg: '#fff', css: `
@@ -475,6 +497,15 @@ Follow those instructions exactly.
   font-weight: 700;
 }
 .markdown-body a { color: inherit; text-decoration: underline; }
+.md-toc { border: 1px solid #ccc; border-radius: 2px; background: transparent; }
+[data-theme="dark"] .md-toc { border-color: #444; }
+.md-toc a { font-family: 'Libre Baskerville', Georgia, serif; color: inherit; text-decoration: none; }
+.md-toc a:hover { text-decoration: underline; }
+.md-toc-title { font-family: 'Libre Baskerville', Georgia, serif; font-variant: small-caps; letter-spacing: 0.1em; }
+.code-block-wrapper { border: 1px solid #ccc; border-radius: 2px; }
+[data-theme="dark"] .code-block-wrapper { border-color: #444; }
+.code-block-header { background: transparent; }
+.code-block-lang { font-family: 'Inconsolata', monospace; }
 `},
 
         dracula: { name: 'Dracula', dark: true, bg: '#282a36', css: `
@@ -526,6 +557,15 @@ Follow those instructions exactly.
 }
 .markdown-body hr { border-color: #44475a !important; }
 .markdown-body li::marker { color: #bd93f9; }
+.md-toc { background: #1e1f29; border-color: #44475a; }
+.md-toc-title { color: #ff79c6; }
+.md-toc a { color: #f8f8f2; }
+.md-toc a:hover { color: #8be9fd; }
+.code-block-wrapper { border-color: #44475a; }
+.code-block-header { background: #1e1f29; border-bottom-color: #44475a; }
+.code-block-lang { color: #bd93f9; }
+.code-copy-btn { color: #6272a4; }
+.code-copy-btn:hover { color: #f8f8f2; border-color: #44475a; background: #44475a; }
 `},
 
         newspaper: { name: 'Newspaper', dark: false, bg: '#fff', css: `
@@ -584,6 +624,13 @@ Follow those instructions exactly.
   font-size: 0.85em;
   letter-spacing: 0.05em;
 }
+.md-toc { border: none; border-top: 1px solid currentColor; border-bottom: 1px solid currentColor; border-radius: 0; background: transparent; }
+.md-toc a { font-family: 'Source Serif 4', Georgia, serif; }
+.md-toc-title { font-family: 'Playfair Display', Georgia, serif; text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.75em; }
+.code-block-wrapper { border-radius: 0; border-color: #999; }
+[data-theme="dark"] .code-block-wrapper { border-color: #555; }
+.code-block-header { background: transparent; }
+.code-block-lang { font-family: 'Source Serif 4', Georgia, serif; text-transform: none; font-style: italic; }
 `},
 
         handwritten: { name: 'Handwritten', dark: false, bg: '#fff', css: `
@@ -642,6 +689,16 @@ Follow those instructions exactly.
 }
 [data-theme="dark"] .markdown-body hr { border-top-color: #444; }
 .markdown-body table { font-size: 18px; }
+.md-toc { border: 2px dashed #bbb; border-radius: 0; background: transparent; }
+[data-theme="dark"] .md-toc { border-color: #555; }
+.md-toc a { font-family: 'Caveat', cursive; font-size: 1.1em; }
+.md-toc-title { font-family: 'Caveat', cursive; font-size: 1em; }
+.code-block-wrapper { border: 2px dashed #bbb; border-radius: 0; }
+[data-theme="dark"] .code-block-wrapper { border-color: #555; }
+.code-block-header { background: transparent; border-bottom: 2px dashed #bbb; }
+[data-theme="dark"] .code-block-header { border-bottom-color: #555; }
+.code-block-lang { font-family: 'Caveat', cursive; font-size: 1em; text-transform: none; }
+.code-copy-btn { font-family: 'Caveat', cursive; font-size: 1em; }
 `},
 
         terminal: { name: 'Terminal', dark: true, bg: '#0a0a0a', css: `
@@ -697,6 +754,16 @@ Follow those instructions exactly.
 }
 .markdown-body hr { border-color: #333 !important; }
 .markdown-body li::marker { color: #00ff41; }
+.md-toc { background: #111; border: 1px solid #333; border-radius: 0; }
+.md-toc-title { color: #00ff41; font-family: 'Fira Code', monospace; }
+.md-toc-title::before { content: '> '; }
+.md-toc a { color: #00ff41; font-family: 'Fira Code', monospace; font-size: 0.85em; }
+.md-toc a:hover { color: #00bcd4; }
+.code-block-wrapper { border: 1px solid #333; border-radius: 0; }
+.code-block-header { background: #111; border-bottom-color: #333; }
+.code-block-lang { color: #00ff41; font-family: 'Fira Code', monospace; }
+.code-copy-btn { color: #00ff41; font-family: 'Fira Code', monospace; }
+.code-copy-btn:hover { color: #00bcd4; background: #1a1a1a; border-color: #333; }
 `},
 
         pastel: { name: 'Pastel', dark: false, bg: '#fff', css: `
@@ -769,6 +836,18 @@ Follow those instructions exactly.
   background: linear-gradient(90deg, #f0c4d8, #c4bef0, #a8e0d8);
 }
 .markdown-body img { border-radius: 12px; }
+.md-toc { border: 2px solid #e8d4f0; border-radius: 16px; background: rgba(184,169,232,0.05); }
+[data-theme="dark"] .md-toc { border-color: #3d2850; }
+.md-toc-title { color: #e879a8; }
+.md-toc a { color: #7c6dd8; font-family: 'Nunito', sans-serif; }
+.md-toc a:hover { color: #e879a8; }
+.code-block-wrapper { border: 2px solid #e8d4f0; border-radius: 16px; }
+[data-theme="dark"] .code-block-wrapper { border-color: #3d2850; }
+.code-block-header { background: rgba(184,169,232,0.05); border-bottom-color: #e8d4f0; }
+[data-theme="dark"] .code-block-header { border-bottom-color: #3d2850; }
+.code-block-lang { color: #7c6dd8; font-family: 'Nunito', sans-serif; }
+.code-copy-btn { font-family: 'Nunito', sans-serif; }
+.code-copy-btn:hover { color: #e879a8; }
 `},
     };
 
@@ -1060,7 +1139,7 @@ All notable changes to this project will be documented in this file.
 
 > Free, open-source Markdown to PDF converter — runs in your browser, no signup required.
 
-[TOC]
+[TOC title="Table of Contents"]
 
 ---
 
@@ -1075,7 +1154,7 @@ All notable changes to this project will be documented in this file.
 | **End-to-End Encryption** | Shared documents encrypted with AES-256-GCM |
 | **AI Skill** | Installable skill for Claude, ChatGPT, Gemini |
 | **Custom CSS** | Full control over the output styling |
-| **Auto Table of Contents** | Write \`[TOC]\` to generate one automatically |
+| **Auto Table of Contents** | Write \`[TOC]\` or \`[TOC title="..."]\` to generate one |
 
 ---
 
@@ -1163,7 +1242,7 @@ sequenceDiagram
 
 ## Blockquote & Formatting
 
-> **Tip:** You can use \`[TOC]\` anywhere in your document to insert an auto-generated table of contents.
+> **Tip:** Write \`[TOC]\` for a clean list, or \`[TOC title="Table of Contents"]\` to add a heading.
 
 Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [links](https://md2pdf.studio).
 
@@ -1175,7 +1254,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
 - [x] 11 visual styles with custom CSS
 - [x] Syntax highlighting for 180+ languages
 - [x] Mermaid diagrams (flowchart, sequence, Gantt...)
-- [x] Auto table of contents with \`[TOC]\`
+- [x] Auto table of contents with \`[TOC]\` or \`[TOC title="..."]\`
 - [x] End-to-end encrypted sharing
 - [x] AI Skill for Claude, ChatGPT, Gemini
 - [ ] Your next document starts here
@@ -1237,9 +1316,10 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         if (!src) {
             preview.innerHTML = '<div class="preview-empty"><p>Start typing to see the preview...</p></div>';
         } else {
-            // Replace [TOC] / [toc] with a placeholder before marked parses it
-            // (marked interprets [TOC] as a link reference)
-            const processed = src.replace(/^\[toc\]$/gim, TOC_PLACEHOLDER);
+            // Replace [TOC] / [TOC title="..."] with a placeholder before marked parses it
+            const processed = src.replace(/^\[toc(?:\s+title="([^"]*)")?\]$/gim, function (_, title) {
+                return title ? TOC_PLACEHOLDER + ':' + title : TOC_PLACEHOLDER;
+            });
             preview.innerHTML = marked.parse(processed);
             injectTOC();
             preview.querySelectorAll('pre code').forEach(block => {
@@ -1256,25 +1336,29 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         const html = preview.innerHTML;
         if (!html.includes(TOC_PLACEHOLDER)) return;
 
-        const headings = preview.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        // H2–H6 only — H1 is the document title, not a section
+        const headings = preview.querySelectorAll('h2, h3, h4, h5, h6');
+
+        // Match placeholder with optional title: «TOC_PLACEHOLDER»:My Title or just «TOC_PLACEHOLDER»
+        const tocRegex = new RegExp('<p>' + TOC_PLACEHOLDER + '(?::([^<]*))?</p>|' + TOC_PLACEHOLDER + '(?::([^<]*))?', 'g');
+
         if (!headings.length) {
-            preview.innerHTML = html.replace(TOC_PLACEHOLDER, '');
+            preview.innerHTML = html.replace(tocRegex, '');
             return;
         }
 
-        let toc = '<nav class="md-toc"><p class="md-toc-title">Table of Contents</p><ul>';
-        headings.forEach(h => {
-            const level = parseInt(h.tagName[1]);
-            const text = h.textContent;
-            const id = h.id;
-            toc += '<li class="md-toc-h' + level + '"><a href="#' + id + '">' + text + '</a></li>';
+        preview.innerHTML = html.replace(tocRegex, function (_, t1, t2) {
+            const title = t1 || t2 || '';
+            let toc = '<nav class="md-toc">';
+            if (title) toc += '<p class="md-toc-title">' + title + '</p>';
+            toc += '<ul>';
+            headings.forEach(h => {
+                const level = parseInt(h.tagName[1]);
+                toc += '<li class="md-toc-h' + level + '"><a href="#' + h.id + '">' + h.textContent + '</a></li>';
+            });
+            toc += '</ul></nav>';
+            return toc;
         });
-        toc += '</ul></nav>';
-
-        // Replace placeholder (may be wrapped in <p> or not)
-        preview.innerHTML = html
-            .replace('<p>' + TOC_PLACEHOLDER + '</p>', toc)
-            .replace(TOC_PLACEHOLDER, toc);
 
         // Intercept TOC clicks — scroll inside the preview container, not the page
         preview.querySelectorAll('.md-toc a').forEach(a => {
@@ -1289,15 +1373,32 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         });
     }
 
+    // Per-style mermaid theme variables
+    const MERMAID_THEMES = {
+        github:     { theme: 'default' },
+        notion:     { theme: 'default', themeVariables: { primaryColor: '#e8e8e8', primaryTextColor: '#1f2328', lineColor: '#656d76', secondaryColor: '#f6f8fa' } },
+        minimal:    { theme: 'default', themeVariables: { primaryColor: '#f0ece4', primaryTextColor: '#333', lineColor: '#999', secondaryColor: '#faf8f4', fontFamily: 'Georgia, serif' } },
+        academic:   { theme: 'default', themeVariables: { primaryColor: '#e8e4dc', primaryTextColor: '#1a1a1a', lineColor: '#666', secondaryColor: '#f5f3ef', fontFamily: 'Cambria, Georgia, serif' } },
+        corporate:  { theme: 'default', themeVariables: { primaryColor: '#dbeafe', primaryTextColor: '#1e3a5f', lineColor: '#2563eb', secondaryColor: '#eff6ff', tertiaryColor: '#f0f7ff' } },
+        latex:      { theme: 'default', themeVariables: { primaryColor: '#e8e4d8', primaryTextColor: '#1a1a1a', lineColor: '#666', secondaryColor: '#f5f3ed', fontFamily: "'Libre Baskerville', Georgia, serif" } },
+        dracula:    { theme: 'dark',    themeVariables: { primaryColor: '#44475a', primaryTextColor: '#f8f8f2', lineColor: '#6272a4', secondaryColor: '#3c3f58', tertiaryColor: '#282a36', primaryBorderColor: '#6272a4' } },
+        newspaper:  { theme: 'default', themeVariables: { primaryColor: '#e8e4dc', primaryTextColor: '#1a1a1a', lineColor: '#555', secondaryColor: '#f5f3ef', fontFamily: "'Source Serif 4', Georgia, serif" } },
+        handwritten:{ theme: 'default', themeVariables: { primaryColor: '#fce4ec', primaryTextColor: '#333', lineColor: '#e88', secondaryColor: '#fff5f5', fontFamily: "'Caveat', cursive" } },
+        terminal:   { theme: 'dark',    themeVariables: { primaryColor: '#1a1a1a', primaryTextColor: '#00ff41', lineColor: '#00ff41', secondaryColor: '#111', tertiaryColor: '#0a0a0a', primaryBorderColor: '#333', fontFamily: "'Fira Code', monospace" } },
+        pastel:     { theme: 'default', themeVariables: { primaryColor: '#f0d4f8', primaryTextColor: '#5a3878', lineColor: '#b8a9e8', secondaryColor: '#fce4ec', tertiaryColor: '#e0f4f0' } },
+    };
+
     function renderMermaidBlocks() {
         if (typeof mermaid === 'undefined') return;
         const blocks = preview.querySelectorAll('pre code.language-mermaid');
         if (!blocks.length) return;
 
-        // Mermaid needs re-init to clear internal state between renders
+        var mermaidCfg = MERMAID_THEMES[currentStyle] || MERMAID_THEMES.github;
+        var isDark = STYLES[currentStyle]?.dark || getTheme() === 'dark';
         mermaid.initialize({
             startOnLoad: false,
-            theme: (STYLES[currentStyle]?.dark || getTheme() === 'dark') ? 'dark' : 'default',
+            theme: mermaidCfg.theme || (isDark ? 'dark' : 'default'),
+            themeVariables: mermaidCfg.themeVariables || {},
             securityLevel: 'loose',
         });
 
