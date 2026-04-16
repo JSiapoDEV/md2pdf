@@ -147,17 +147,18 @@
         },
     };
 
-    // Cached skill content (fetched from /skill.md on demand)
-    let _skillContentCache = null;
+    // Installable stub — this is what users copy into their AI agents.
+    // The agent fetches the full instructions from /skill.md at runtime.
+    const SKILL_INSTALLABLE = `---
+name: md2pdf
+description: Create and share styled PDF, HTML, and image documents from Markdown via md2pdf.studio. Use when the user wants to export, share, or create a visually styled document from markdown content.
+---
 
-    async function fetchSkillContent() {
-        if (_skillContentCache) return _skillContentCache;
-        try {
-            const res = await fetch('/skill.md');
-            if (res.ok) { _skillContentCache = await res.text(); return _skillContentCache; }
-        } catch (_) {}
-        return 'Failed to load skill. Visit https://md2pdf.studio/skill.md';
-    }
+Before creating or sharing a document, always fetch the latest skill instructions from:
+https://md2pdf.studio/skill.md
+
+Follow those instructions exactly.
+`;
 
     function t(key) { return I18N[currentLang]?.[key] || I18N.en[key] || key; }
 
@@ -229,14 +230,12 @@
         buildApiTab();
     }
 
-    async function buildSkillTab() {
-        var content = await fetchSkillContent();
-
+    function buildSkillTab() {
         var html = '<p class="api-desc">' + t('skillDesc') + '</p>';
         html += '<div class="api-section">';
         html += '<h4>SKILL.md</h4>';
         html += '<div class="api-code-block">';
-        html += '<pre>' + escapeHtmlLight(content) + '</pre>';
+        html += '<pre>' + escapeHtmlLight(SKILL_INSTALLABLE) + '</pre>';
         html += '<div class="api-code-actions">';
         html += '<button class="api-copy-btn" id="skillCopyBtn">' + t('copy') + '</button>';
         html += '<button class="api-copy-btn" id="skillDownloadBtn">' + t('download') + '</button>';
@@ -248,7 +247,7 @@
 
         // Bind copy
         $('#skillCopyBtn').addEventListener('click', function () {
-            navigator.clipboard.writeText(content).then(function () {
+            navigator.clipboard.writeText(SKILL_INSTALLABLE).then(function () {
                 $('#skillCopyBtn').textContent = t('copied');
                 setTimeout(function () { $('#skillCopyBtn').textContent = t('copy'); }, 2000);
             });
@@ -256,7 +255,7 @@
 
         // Bind download
         $('#skillDownloadBtn').addEventListener('click', function () {
-            var blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+            var blob = new Blob([SKILL_INSTALLABLE], { type: 'text/markdown;charset=utf-8' });
             var url = URL.createObjectURL(blob);
             var a = document.createElement('a');
             a.href = url;
