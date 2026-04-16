@@ -92,6 +92,13 @@ This is my first document."
 # Share: https://md2pdf.studio/s/abc#k=xY9...
 ```
 
+## Supported content
+
+- Full GitHub-Flavored Markdown (GFM): headings, tables, task lists, blockquotes, images, links
+- **Mermaid diagrams**: use ` ```mermaid ` code blocks for flowcharts, sequence diagrams, Gantt charts, etc.
+- **Table of contents**: write `[TOC]` on its own line to auto-generate a linked TOC
+- Syntax highlighting for 180+ programming languages
+
 ## Notes
 
 - No authentication required

@@ -1058,69 +1058,164 @@ All notable changes to this project will be documented in this file.
 
     const SAMPLE = `# Welcome to MD2PDF
 
-Convert your Markdown documents to beautifully styled PDFs with GitHub-flavored rendering.
+> Free, open-source Markdown to PDF converter — runs in your browser, no signup required.
+
+[TOC]
+
+---
 
 ## Features
 
-- **Live Preview** — See changes as you type
-- **Multiple Styles** — GitHub, Minimal, Academic, Corporate, Notion
-- **PDF & HTML Export** — Download your document in either format
-- **Dark & Light Mode** — Toggle your preferred theme
-- **Drag & Drop** — Drop \`.md\` files into the editor
-- **Templates** — Start with pre-made document templates
-- **Custom CSS** — Inject your own styles
+| Feature | Description |
+|---|---|
+| **Live Preview** | See changes in real time as you type |
+| **11 Visual Styles** | Notion, GitHub, LaTeX, Dracula, Terminal & more |
+| **Mermaid Diagrams** | Flowcharts, sequences, Gantt charts, and more |
+| **PDF / HTML / Image** | Export in any format with one click |
+| **End-to-End Encryption** | Shared documents encrypted with AES-256-GCM |
+| **AI Skill** | Installable skill for Claude, ChatGPT, Gemini |
+| **Custom CSS** | Full control over the output styling |
+| **Auto Table of Contents** | Write \`[TOC]\` to generate one automatically |
 
-## Code Example
+---
 
-\`\`\`javascript
-function fibonacci(n) {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
+## Code Highlighting
+
+Syntax highlighting for **180+ languages** with copy button on every block.
+
+\`\`\`typescript
+interface Document {
+  id: string;
+  content: string;
+  style: "notion" | "github" | "latex" | "dracula";
+  encrypted: boolean;
 }
 
-const seq = Array.from({ length: 10 }, (_, i) => fibonacci(i));
-console.log(seq); // [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+async function createDocument(md: string): Promise<Document> {
+  const res = await fetch("https://md2pdf.studio/api/save", {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: md,
+  });
+  return res.json();
+}
 \`\`\`
 
 \`\`\`python
-def quicksort(arr):
-    if len(arr) <= 1:
-        return arr
-    pivot = arr[len(arr) // 2]
-    left  = [x for x in arr if x < pivot]
-    mid   = [x for x in arr if x == pivot]
-    right = [x for x in arr if x > pivot]
-    return quicksort(left) + mid + quicksort(right)
+from dataclasses import dataclass
+
+@dataclass
+class Style:
+    name: str
+    dark: bool
+    font: str
+
+styles = [
+    Style("Notion", False, "system-ui"),
+    Style("Dracula", True, "system-ui"),
+    Style("Terminal", True, "Fira Code"),
+    Style("LaTeX", False, "Libre Baskerville"),
+]
+
+for s in styles:
+    print(f"{s.name}: {'dark' if s.dark else 'light'} theme")
 \`\`\`
 
-## Table
+---
+
+## Mermaid Diagrams
+
+Write diagrams as code — they render automatically.
+
+### Flowchart
+
+\`\`\`mermaid
+graph TD
+    A[Write Markdown] --> B{Choose Style}
+    B --> C[Notion]
+    B --> D[GitHub]
+    B --> E[LaTeX]
+    B --> F[Dracula]
+    C & D & E & F --> G[Export]
+    G --> H[PDF]
+    G --> I[HTML]
+    G --> J[Image]
+\`\`\`
+
+### Sequence Diagram
+
+\`\`\`mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant API
+    participant KV
+
+    User->>Browser: Write Markdown
+    Browser->>API: POST /api/save
+    API->>API: Encrypt (AES-256-GCM)
+    API->>KV: Store ciphertext
+    API-->>Browser: { url, key }
+    Browser-->>User: Share link with #k=key
+\`\`\`
+
+---
+
+## Blockquote & Formatting
+
+> **Tip:** You can use \`[TOC]\` anywhere in your document to insert an auto-generated table of contents.
+
+Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [links](https://md2pdf.studio).
+
+---
+
+## Task List
+
+- [x] Live preview with split/preview modes
+- [x] 11 visual styles with custom CSS
+- [x] Syntax highlighting for 180+ languages
+- [x] Mermaid diagrams (flowchart, sequence, Gantt...)
+- [x] Auto table of contents with \`[TOC]\`
+- [x] End-to-end encrypted sharing
+- [x] AI Skill for Claude, ChatGPT, Gemini
+- [ ] Your next document starts here
+
+---
+
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 |---|---|
 | \`Ctrl + S\` | Export to PDF |
-| \`Ctrl + Shift + L\` | Toggle theme |
-| \`Tab\` | Insert tab |
-
-## Task List
-
-- [x] Markdown parsing with GFM
-- [x] Syntax highlighting
-- [x] Multiple export styles
-- [x] Custom CSS support
-- [ ] Your next document starts here
-
-> *"The art of writing is the art of discovering what you believe."*
-> — Gustave Flaubert
+| \`Ctrl + F\` | Find in editor |
+| \`Ctrl + H\` | Find & replace |
+| \`Ctrl + Shift + L\` | Toggle dark/light theme |
 
 ---
 
-Start writing on the left, or drag and drop a \`.md\` file.
+*Start writing on the left, or drag and drop a \`.md\` file.*
 `;
 
     // ── Markdown setup ───────────────────────────────
 
+    let _mermaidId = 0;
+
     function initMarked() {
         marked.setOptions({ breaks: true, gfm: true });
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: getTheme() === 'dark' ? 'dark' : 'default',
+            securityLevel: 'loose',
+        });
+
+        // Custom renderer: add id anchors to headings for TOC links
+        const renderer = new marked.Renderer();
+        renderer.heading = function ({ text, depth }) {
+            const raw = text.replace(/<[^>]+>/g, '');
+            const slug = raw.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+            return '<h' + depth + ' id="' + slug + '">' + text + '</h' + depth + '>';
+        };
+        marked.use({ renderer });
     }
 
     // ── Render ───────────────────────────────────────
@@ -1131,12 +1226,55 @@ Start writing on the left, or drag and drop a \`.md\` file.
             preview.innerHTML = '<div class="preview-empty"><p>Start typing to see the preview...</p></div>';
         } else {
             preview.innerHTML = marked.parse(src);
+            injectTOC();
             preview.querySelectorAll('pre code').forEach(block => {
+                if (block.classList.contains('language-mermaid')) return;
                 hljs.highlightElement(block);
             });
+            renderMermaidBlocks();
             addCodeCopyButtons();
         }
         updateCounter();
+    }
+
+    function injectTOC() {
+        // Find [TOC] or [[toc]] placeholder (rendered as <p>[TOC]</p> by marked)
+        const tocPlaceholder = Array.from(preview.querySelectorAll('p')).find(p => {
+            const text = p.textContent.trim();
+            return text === '[TOC]' || text === '[[toc]]' || text === '[toc]' || text === '[[TOC]]';
+        });
+        if (!tocPlaceholder) return;
+
+        // Collect all headings
+        const headings = preview.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        if (!headings.length) { tocPlaceholder.remove(); return; }
+
+        let html = '<nav class="md-toc"><p class="md-toc-title">Table of Contents</p><ul>';
+        headings.forEach(h => {
+            const level = parseInt(h.tagName[1]);
+            const text = h.textContent;
+            const id = h.id;
+            html += '<li class="md-toc-h' + level + '"><a href="#' + id + '">' + text + '</a></li>';
+        });
+        html += '</ul></nav>';
+
+        tocPlaceholder.outerHTML = html;
+    }
+
+    function renderMermaidBlocks() {
+        preview.querySelectorAll('pre code.language-mermaid').forEach(code => {
+            const pre = code.parentElement;
+            const diagram = code.textContent;
+            const id = 'mermaid-' + (++_mermaidId);
+            const container = document.createElement('div');
+            container.className = 'mermaid-block';
+            pre.parentNode.replaceChild(container, pre);
+            mermaid.render(id, diagram).then(({ svg }) => {
+                container.innerHTML = svg;
+            }).catch(() => {
+                container.innerHTML = '<pre class="mermaid-error">Invalid Mermaid diagram</pre>';
+            });
+        });
     }
 
     function addCodeCopyButtons() {
@@ -1217,6 +1355,10 @@ Start writing on the left, or drag and drop a \`.md\` file.
         $('#md-css-light').disabled   = forceDark ? true  : t !== 'light';
         $('#hljs-css-dark').disabled  = forceDark ? false : t !== 'dark';
         $('#hljs-css-light').disabled = forceDark ? true  : t !== 'light';
+
+        // Update mermaid theme
+        const forceDarkMermaid = forceDark || t === 'dark';
+        mermaid.initialize({ startOnLoad: false, theme: forceDarkMermaid ? 'dark' : 'default', securityLevel: 'loose' });
 
         // Force editor repaint
         editor.style.background = 'inherit';

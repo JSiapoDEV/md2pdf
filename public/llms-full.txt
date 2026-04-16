@@ -1,6 +1,6 @@
 # MD2PDF — Complete Documentation for AI Agents
 
-> MD2PDF is a free, open-source online tool that converts Markdown (.md) files into beautifully styled PDFs, HTML files, and PNG images. It runs entirely in the browser with no signup, no server processing, and no tracking. It includes a public REST API and an installable AI Skill.
+> MD2PDF is a free, open-source online tool that converts Markdown (.md) files into beautifully styled PDFs, HTML files, and PNG images. Features include Mermaid diagram rendering, auto table of contents, syntax highlighting for 180+ languages, and end-to-end encryption (AES-256-GCM). Runs entirely in the browser with no signup, no server processing, and no tracking. Includes a public REST API and an installable AI Skill.
 
 Website: https://md2pdf.studio
 GitHub: https://github.com/JSiapoDEV/md2pdf
@@ -12,9 +12,12 @@ GitHub: https://github.com/JSiapoDEV/md2pdf
 - Live split-pane editor with real-time Markdown preview
 - GitHub-Flavored Markdown (GFM) support
 - Syntax highlighting for 180+ programming languages (via highlight.js)
+- **Mermaid diagram rendering** (flowcharts, sequence diagrams, Gantt charts, pie charts, etc.)
+- **Auto table of contents** — write `[TOC]` anywhere to generate a linked TOC from headings
 - 11 visual styles for document rendering
 - Custom CSS injection for full styling control
 - Export to PDF (continuous single page), HTML (standalone with inlined styles), and PNG image
+- **End-to-end encryption** — all shared documents encrypted with AES-256-GCM
 - Share documents via URL with rich OG previews for WhatsApp, Teams, and Slack
 - Dark and light theme toggle
 - Drag-and-drop .md file upload
@@ -22,6 +25,7 @@ GitHub: https://github.com/JSiapoDEV/md2pdf
 - Word count and reading time indicator
 - Auto-save drafts to browser localStorage
 - Find and replace (Ctrl+F / Ctrl+H)
+- Copy button on every code block
 - Installable AI Skill in Claude Skills format
 - Public REST API for programmatic access
 - WebMCP declarative forms for browser-based AI agent integration
@@ -203,20 +207,22 @@ Pre-built templates available in the editor:
 
 ## Supported Markdown Syntax
 
-MD2PDF supports full GitHub-Flavored Markdown (GFM):
+MD2PDF supports full GitHub-Flavored Markdown (GFM) plus extensions:
 
-- Headings (H1–H6)
+- Headings (H1–H6) with auto-generated anchor IDs
 - Paragraphs with line breaks
 - **Bold**, *italic*, ~~strikethrough~~
 - Ordered and unordered lists
 - Task lists (checkboxes)
-- Code blocks with language-specific syntax highlighting
+- Code blocks with language-specific syntax highlighting (180+ languages)
 - Inline code
 - Tables with alignment
 - Blockquotes
 - Images (inline and reference)
 - Horizontal rules
 - Links (inline and reference)
+- **Mermaid diagrams** — use ` ```mermaid ` code blocks for flowcharts, sequence diagrams, Gantt charts, pie charts, class diagrams, state diagrams, ER diagrams, and more
+- **Auto table of contents** — write `[TOC]` on its own line to generate a linked table of contents from all headings
 
 ---
 

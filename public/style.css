@@ -748,6 +748,80 @@ body {
 }
 
 /* =========================================
+   Mermaid diagrams
+   ========================================= */
+
+.mermaid-block {
+    margin: 16px 0;
+    text-align: center;
+    overflow-x: auto;
+}
+
+.mermaid-block svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.mermaid-error {
+    color: #ef4444;
+    font-size: 0.85em;
+    padding: 12px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* =========================================
+   Table of Contents
+   ========================================= */
+
+.md-toc {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    background: var(--bg-raised);
+}
+
+.md-toc-title {
+    font-size: 0.8em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-3);
+    margin: 0 0 8px;
+}
+
+.md-toc ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.md-toc li {
+    margin: 0;
+    line-height: 1.7;
+}
+
+.md-toc a {
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: color var(--t-fast);
+}
+
+.md-toc a:hover {
+    color: var(--accent);
+}
+
+.md-toc-h1 { padding-left: 0; font-weight: 600; }
+.md-toc-h2 { padding-left: 16px; }
+.md-toc-h3 { padding-left: 32px; font-size: 0.88em; }
+.md-toc-h4 { padding-left: 48px; font-size: 0.85em; }
+.md-toc-h5 { padding-left: 64px; font-size: 0.82em; }
+.md-toc-h6 { padding-left: 80px; font-size: 0.8em; }
+
+/* =========================================
    Footer
    ========================================= */
 

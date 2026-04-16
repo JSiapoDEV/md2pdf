@@ -55,7 +55,7 @@
         "sameAs": ["https://github.com/JSiapoDEV","https://www.linkedin.com/in/jsiapo/"]
       },
       "screenshot": "https://md2pdf.studio/og-image.png",
-      "featureList": ["Convert Markdown to PDF online","Live Markdown preview","GitHub-flavored Markdown (GFM)","Syntax highlighting for 180+ languages","PDF export","HTML export","Image export (PNG)","11 visual styles (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel)","Custom CSS injection","5 document templates","Dark and light theme","Drag and drop .md file upload","Auto-save drafts","Word count and reading time","Split and preview-only view modes","Installable AI Skill (Claude Skills format)","Public REST API for agents","Share by URL with dynamic OG previews"]
+      "featureList": ["Convert Markdown to PDF online","Live Markdown preview","GitHub-flavored Markdown (GFM)","Syntax highlighting for 180+ languages","Mermaid diagram rendering (flowcharts, sequence, Gantt, pie charts)","Auto table of contents generation","End-to-end encryption (AES-256-GCM)","PDF export","HTML export","Image export (PNG)","11 visual styles (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel)","Custom CSS injection","Copy button on code blocks","5 document templates","Dark and light theme","Drag and drop .md file upload","Auto-save drafts","Word count and reading time","Split and preview-only view modes","Installable AI Skill (Claude Skills format)","Public REST API for agents","Share by URL with dynamic OG previews"]
     }
     </script>
 
@@ -334,10 +334,13 @@
                 <li><strong>Live preview</strong> — See your rendered document in real-time as you type</li>
                 <li><strong>11 visual styles</strong> — From clean Notion to dark Dracula, formal Academic to fun Handwritten</li>
                 <li><strong>PDF, HTML, and image export</strong> — Download in any format with one click</li>
-                <li><strong>Syntax highlighting</strong> — 180+ programming languages with automatic detection</li>
+                <li><strong>Syntax highlighting</strong> — 180+ programming languages with automatic detection and copy button</li>
+                <li><strong>Mermaid diagrams</strong> — Flowcharts, sequence diagrams, Gantt charts, pie charts, and more — rendered as SVG from code blocks</li>
+                <li><strong>Auto table of contents</strong> — Write [TOC] to generate a linked table of contents from your headings</li>
                 <li><strong>Custom CSS</strong> — Inject your own styles for complete control over the output</li>
                 <li><strong>Document templates</strong> — Start with pre-built CV, Report, Documentation, Changelog, or Meeting Notes</li>
                 <li><strong>Dark and light mode</strong> — Toggle your preferred theme</li>
+                <li><strong>End-to-end encryption</strong> — All shared documents encrypted with AES-256-GCM. The decryption key stays in the URL hash and never reaches the server</li>
                 <li><strong>Share by URL</strong> — Generate shareable links with preview support for Teams, Slack, and WhatsApp</li>
                 <li><strong>Find and replace</strong> — Search and replace text in the editor with Ctrl+F / Ctrl+H</li>
                 <li><strong>Auto-save</strong> — Your work is saved automatically to your browser</li>
@@ -346,7 +349,7 @@
             </ul>
 
             <h2>Supported Markdown Syntax</h2>
-            <p>MD2PDF supports GitHub-Flavored Markdown (GFM) including headings, paragraphs, bold, italic, strikethrough, ordered and unordered lists, task lists, code blocks with syntax highlighting, tables, blockquotes, images, horizontal rules, and links.</p>
+            <p>MD2PDF supports GitHub-Flavored Markdown (GFM) including headings, paragraphs, bold, italic, strikethrough, ordered and unordered lists, task lists, code blocks with syntax highlighting, tables, blockquotes, images, horizontal rules, links, and Mermaid diagram code blocks. Write [TOC] on its own line to auto-generate a linked table of contents.</p>
 
             <h2>Available Styles</h2>
             <p>Choose from 11 carefully designed visual styles to match your document's purpose:</p>
@@ -388,7 +391,13 @@
 
             <details><summary>Can AI agents use MD2PDF?</summary><p>Yes. MD2PDF provides an installable Skill in the Claude Skills format (SKILL.md) that works with Claude, Custom GPTs, Gemini, and any compatible agent. It also exposes a public REST API for programmatic access and supports WebMCP for direct browser integration.</p></details>
 
-            <details><summary>What programming languages are supported for syntax highlighting?</summary><p>MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, Bash, TypeScript, and many more.</p></details>
+            <details><summary>Does MD2PDF support Mermaid diagrams?</summary><p>Yes. Write Mermaid code inside a ```mermaid code block and it renders automatically as an SVG diagram. Supported types include flowcharts, sequence diagrams, Gantt charts, pie charts, class diagrams, state diagrams, and more.</p></details>
+
+            <details><summary>Can I generate a table of contents?</summary><p>Yes. Write [TOC] on its own line anywhere in your document. MD2PDF will auto-generate a linked table of contents from all your headings.</p></details>
+
+            <details><summary>Are shared documents encrypted?</summary><p>Yes. All shared documents are encrypted with AES-256-GCM. The decryption key lives in the URL hash fragment (#k=) and is never sent to the server. Only people with the full link can read the content.</p></details>
+
+            <details><summary>What programming languages are supported for syntax highlighting?</summary><p>MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, Bash, TypeScript, and many more. Every code block has a copy button.</p></details>
 
             <details><summary>How long do shared links last?</summary><p>Shared links expire 90 days after the last update. You can update the content without changing the URL.</p></details>
 
@@ -443,7 +452,10 @@
         {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "The editor and preview work offline after the initial page load. Export and sharing features require an internet connection."}},
         {"@type": "Question", "name": "What export formats are available?", "acceptedAnswer": {"@type": "Answer", "text": "PDF (continuous single page), HTML (standalone file with inlined styles), and PNG image. All formats preserve your chosen style."}},
         {"@type": "Question", "name": "Can AI agents use MD2PDF?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF provides an installable Skill in the Claude Skills format plus a public REST API, so Claude, Custom GPTs, Gemini, and other agents can create, update, and share styled documents on the user's behalf."}},
-        {"@type": "Question", "name": "What programming languages are supported?", "acceptedAnswer": {"@type": "Answer", "text": "MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, and more."}},
+        {"@type": "Question", "name": "Does MD2PDF support Mermaid diagrams?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Write Mermaid code inside a ```mermaid code block and it renders automatically as an SVG diagram. Supported types include flowcharts, sequence diagrams, Gantt charts, pie charts, class diagrams, and more."}},
+        {"@type": "Question", "name": "Can I generate a table of contents?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Write [TOC] on its own line anywhere in your document. MD2PDF will auto-generate a linked table of contents from all your headings."}},
+        {"@type": "Question", "name": "Are shared documents encrypted?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. All shared documents are encrypted with AES-256-GCM. The decryption key lives in the URL hash fragment and is never sent to the server."}},
+        {"@type": "Question", "name": "What programming languages are supported?", "acceptedAnswer": {"@type": "Answer", "text": "MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, and more. Every code block has a copy button."}},
         {"@type": "Question", "name": "How long do shared links last?", "acceptedAnswer": {"@type": "Answer", "text": "Shared links expire 90 days after the last update. You can update the content without changing the URL."}},
         {"@type": "Question", "name": "Is MD2PDF open source?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF is MIT licensed and available on GitHub. Contributions are welcome."}}
       ]
@@ -590,6 +602,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 
     <!-- App -->
     <script src="/app.js"></script>

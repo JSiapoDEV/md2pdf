@@ -1,10 +1,10 @@
 # MD2PDF
 
-> Free online Markdown to PDF converter. Convert .md files to beautifully styled PDFs, HTML, and images with 11 visual styles. No signup, no server uploads — runs entirely in the browser. Includes a public REST API and an installable AI Skill for Claude, ChatGPT, and other AI agents.
+> Free online Markdown to PDF converter. Convert .md files to beautifully styled PDFs, HTML, and images with 11 visual styles, Mermaid diagrams, auto table of contents, and syntax highlighting for 180+ languages. All documents encrypted at rest (AES-256-GCM). No signup, no server uploads — runs entirely in the browser. Includes a public REST API and an installable AI Skill for Claude, ChatGPT, and other AI agents.
 
 ## Main
 
-- [MD2PDF App](https://md2pdf.studio/): Online Markdown editor with live preview, 11 visual styles, and export to PDF/HTML/image
+- [MD2PDF App](https://md2pdf.studio/): Online Markdown editor with live preview, 11 visual styles, Mermaid diagrams, TOC, and export to PDF/HTML/image
 - [About MD2PDF](https://md2pdf.studio/about): Background, features, and how it works
 - [Full AI Documentation](https://md2pdf.studio/llms-full.txt): Complete reference for LLMs — features, API, AI Skill, styles, and usage
 
