@@ -4,6 +4,8 @@
 
 Website: https://md2pdf.studio
 GitHub: https://github.com/JSiapoDEV/md2pdf
+Last updated: 2026-04-16
+API version: 1.0 (stable)
 
 ---
 
@@ -138,6 +140,16 @@ New content goes here."
 - **Rate limit:** 10 requests per minute per IP
 - **Link expiration:** 90 days after last update
 
+### Error Responses
+
+| Status | Meaning | Body |
+|--------|---------|------|
+| 400 | Empty content | `{"error": "Empty content"}` |
+| 413 | Document too large (>500KB) | `{"error": "Document too large (max 500KB)"}` |
+| 429 | Rate limit exceeded | `{"error": "Too many requests. Try again in a minute."}` |
+| 403 | Invalid edit key on update | `{"error": "Unauthorized"}` |
+| 404 | Document not found or expired | `{"error": "Document not found"}` |
+
 ---
 
 ## AI Skill (Claude Skills Format)
@@ -157,6 +169,13 @@ Use this skill when the user asks you to:
 - Save or export markdown as a PDF, HTML, or image
 - Share a styled version of written content
 - Generate a shareable link for a document
+
+Example user prompts that trigger this skill:
+- "Export this as a PDF"
+- "Make this into a shareable document"
+- "Create a styled report from this markdown"
+- "Generate a shareable link for this content"
+- "Turn my notes into a nice PDF"
 
 ## How to create a document
 

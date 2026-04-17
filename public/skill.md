@@ -11,6 +11,13 @@ Use this skill when the user asks you to:
 - Share a styled version of written content
 - Generate a shareable link for a document
 
+Example user prompts that trigger this skill:
+- "Export this as a PDF"
+- "Make this into a shareable document"
+- "Create a styled report from this markdown"
+- "Generate a shareable link for this content"
+- "Turn my notes into a nice PDF"
+
 ## How to create a document
 
 1. Write the content in Markdown format (GitHub-Flavored Markdown supported: headings, tables, task lists, code blocks with syntax highlighting, blockquotes, images, links).
