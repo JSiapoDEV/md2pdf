@@ -1402,6 +1402,8 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             securityLevel: 'loose',
         });
 
+        const isMermaidDark = mermaidCfg.theme === 'dark';
+
         blocks.forEach(code => {
             const pre = code.parentElement;
             // Skip if already inside a wrapper (re-render guard)
@@ -1409,7 +1411,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             const diagram = code.textContent;
             const id = 'mermaid-' + (++_mermaidId);
             const container = document.createElement('div');
-            container.className = 'mermaid-block';
+            container.className = 'mermaid-block ' + (isMermaidDark ? 'mermaid-block-dark' : 'mermaid-block-light');
             pre.parentNode.replaceChild(container, pre);
             mermaid.render(id, diagram).then(function (result) {
                 container.innerHTML = result.svg;
@@ -2638,17 +2640,28 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         applyLanguage(savedLang);
 
         // Restore saved style (default: notion) — ?style= query param overrides
-        const urlStyle = new URLSearchParams(location.search).get('style');
+        const urlParams = new URLSearchParams(location.search);
+        const urlStyle = urlParams.get('style');
         const savedStyle = (urlStyle && STYLES[urlStyle]) ? urlStyle : (localStorage.getItem('md2pdf-style') || 'notion');
         applyStyle(savedStyle);
+
+        // ?template= query param — maps SEO-friendly slugs to internal keys
+        const urlTemplate = urlParams.get('template');
+        const TEMPLATE_SLUG_MAP = { 'documentation': 'docs', 'meeting-notes': 'meeting' };
+        const resolvedTemplate = urlTemplate && (TEMPLATE_SLUG_MAP[urlTemplate] || urlTemplate);
+        const hasValidTemplate = resolvedTemplate && TEMPLATES[resolvedTemplate] !== undefined;
 
         // Restore custom CSS
         const savedCSS = localStorage.getItem('md2pdf-custom-css');
         if (savedCSS) { customCSSInput.value = savedCSS; applyCustomCSS(); }
 
-        // Check for shared URL first, then draft, then sample
+        // Check for shared URL first, then ?template=, then draft, then sample
         let loaded = false;
         try { loaded = await loadFromURL(); } catch (_) {}
+        if (!loaded && hasValidTemplate) {
+            loadTemplate(resolvedTemplate);
+            loaded = true;
+        }
         if (!loaded) {
             if (!restoreDraft()) {
                 editor.value = SAMPLE;

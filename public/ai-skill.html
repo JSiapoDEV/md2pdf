@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Skill for Markdown to PDF — AI Agents | MD2PDF</title>
+    <meta name="description" content="Installable Claude Skill, WebMCP, and REST API. Let AI agents create, update, and share styled Markdown documents.">
+    <meta name="keywords" content="claude skill, markdown claude skill, ai markdown to pdf, webmcp, mcp server, ai document generator, anthropic skill">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <meta name="author" content="JSiapoDev">
+    <link rel="canonical" href="https://md2pdf.studio/ai-skill">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://md2pdf.studio/ai-skill">
+    <meta property="og:title" content="Claude Skill for Markdown to PDF — AI Agents | MD2PDF">
+    <meta property="og:description" content="Installable Claude Skill, WebMCP, and REST API. Let AI agents create, update, and share styled Markdown documents.">
+    <meta property="og:image" content="https://md2pdf.studio/og-image.png">
+    <meta property="og:site_name" content="MD2PDF">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Claude Skill for Markdown to PDF — AI Agents | MD2PDF">
+    <meta name="twitter:description" content="Installable Claude Skill, WebMCP, and REST API. Let AI agents create, update, and share styled Markdown documents.">
+    <meta name="twitter:image" content="https://md2pdf.studio/og-image.png">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f0883e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><polyline points='10 9 9 9 8 9'/></svg>">
+
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "MD2PDF Claude Skill",
+  "description": "Installable Claude Skill that lets AI agents create, update, and share styled Markdown documents via MD2PDF.",
+  "url": "https://md2pdf.studio/ai-skill",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "isPartOf": {
+    "@type": "WebApplication",
+    "name": "MD2PDF",
+    "url": "https://md2pdf.studio"
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "MD2PDF",
+        "item": "https://md2pdf.studio/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "AI Skill",
+        "item": "https://md2pdf.studio/ai-skill"
+      }
+    ]
+  }
+}
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0d1117; color: #e6edf3; line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: #f0883e; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .container { max-width: 720px; margin: 0 auto; padding: 60px 24px 64px; }
+        .breadcrumb { font-size: 0.85em; color: #8b949e; margin-bottom: 24px; }
+        .breadcrumb a { color: #8b949e; }
+        .breadcrumb a:hover { color: #f0883e; }
+        .breadcrumb span { color: #e6edf3; }
+        h1 { font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; color: #e6edf3; }
+        h1 .accent { color: #f0883e; }
+        .tagline { font-size: 1.15em; color: #8b949e; margin-bottom: 32px; }
+        h2 { font-size: 1.3em; font-weight: 700; color: #f0883e; margin: 40px 0 16px; }
+        h3 { font-size: 1.05em; font-weight: 700; margin: 24px 0 8px; color: #e6edf3; }
+        p { color: #c9d1d9; margin-bottom: 16px; }
+        code { background: #161b22; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+        pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; overflow-x: auto; margin: 16px 0; }
+        pre code { background: none; padding: 0; font-size: 0.85em; line-height: 1.5; color: #c9d1d9; }
+        .cta-row { margin: 32px 0; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .cta { display: inline-block; background: #f0883e; color: #0d1117; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 1em; transition: background 0.2s; }
+        .cta:hover { background: #f4a261; text-decoration: none; }
+        .cta-secondary { display: inline-block; color: #c9d1d9; border: 1px solid #30363d; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 1em; transition: border-color 0.2s, color 0.2s; }
+        .cta-secondary:hover { border-color: #f0883e; color: #f0883e; text-decoration: none; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+        .info-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 16px; }
+        .info-card .label { font-size: 0.8em; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .info-card .value { font-size: 0.95em; color: #e6edf3; }
+        .use-cases { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+        .use-cases li { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 6px 16px; font-size: 0.88em; color: #c9d1d9; }
+        .browser { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+        .tag { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.85em; font-weight: 500; border: 1px solid #30363d; background: #161b22; color: #c9d1d9; transition: border-color 0.2s, color 0.2s; }
+        .tag:hover { border-color: #f0883e; color: #f0883e; text-decoration: none; }
+        .tag.current { border-color: #f0883e; color: #f0883e; background: rgba(240, 136, 62, 0.1); font-weight: 700; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9em; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #30363d; }
+        th { color: #8b949e; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { color: #c9d1d9; }
+        td.yes { color: #3fb950; font-weight: 600; }
+        td.no { color: #f85149; }
+        td.mid { color: #d29922; }
+        details { border: 1px solid #30363d; border-radius: 8px; margin-bottom: 8px; }
+        details:hover, details[open] { border-color: #f0883e; }
+        summary { padding: 12px 16px; font-size: 0.95em; font-weight: 600; cursor: pointer; color: #e6edf3; list-style: none; }
+        summary::before { content: '+ '; color: #f0883e; font-weight: 700; }
+        details[open] summary::before { content: '- '; }
+        details p { padding: 0 16px 14px; margin: 0; font-size: 0.9em; color: #8b949e; }
+        .footer { border-top: 1px solid #30363d; margin-top: 48px; padding-top: 24px; font-size: 0.85em; color: #6e7681; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .footer a { color: #8b949e; }
+        .footer a:hover { color: #f0883e; }
+        @media (max-width: 600px) { h1 { font-size: 1.7em; } .info-grid { grid-template-columns: 1fr; } .container { padding: 40px 16px 48px; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <nav class="breadcrumb"><a href="/">MD2PDF</a> / <span>AI Skill</span></nav>
+
+        <h1><span class="accent">AI Skill</span> for Markdown</h1>
+        <p class="tagline">Let AI agents create, update, and share styled documents.</p>
+
+        <p>MD2PDF is built for the AI era. Install the Claude Skill, use WebMCP, or call the public REST API — agents produce beautifully styled PDFs, HTML, and images and hand recipients a shareable link.</p>
+
+        <div class="cta-row">
+            <a href="/skill.md" class="cta">Install Skill</a>
+            <a href="/api" class="cta-secondary">REST API</a>
+            <a href="/llms-full.txt" class="cta-secondary">llms-full.txt</a>
+        </div>
+
+        <h2>Integration Options</h2>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="label">Claude Skill</div>
+                <div class="value"><a href="/skill.md">/skill.md</a> — Skills format manifest</div>
+            </div>
+            <div class="info-card">
+                <div class="label">WebMCP</div>
+                <div class="value">Inline MCP in the app — agents call tools directly</div>
+            </div>
+            <div class="info-card">
+                <div class="label">REST API</div>
+                <div class="value"><a href="/api">/api</a> — anonymous, rate-limited</div>
+            </div>
+            <div class="info-card">
+                <div class="label">LLM Docs</div>
+                <div class="value"><a href="/llms.txt">llms.txt</a> / <a href="/llms-full.txt">llms-full.txt</a></div>
+            </div>
+            <div class="info-card">
+                <div class="label">AI Plugin</div>
+                <div class="value"><a href="/.well-known/ai-plugin.json">ai-plugin.json</a></div>
+            </div>
+            <div class="info-card">
+                <div class="label">JSON-LD</div>
+                <div class="value">SoftwareApplication schema</div>
+            </div>
+        </div>
+
+        <h2>Install in Claude</h2>
+        <ol style="padding-left: 24px; color: #c9d1d9;">
+            <li style="margin-bottom: 8px;">Open Claude and go to <strong>Skills</strong>.</li>
+            <li style="margin-bottom: 8px;">Add a new skill and paste the URL <code>https://md2pdf.studio/skill.md</code>.</li>
+            <li style="margin-bottom: 8px;">Claude can now create Markdown documents and share them as <code>/s/{id}</code> links.</li>
+        </ol>
+
+        <h2>Example Prompts</h2>
+
+        <h3>Generate a CV</h3>
+        <p style="color:#8b949e;">"Create a CV for a senior frontend engineer with 8 years of experience. Use the Minimal style and share the link."</p>
+
+        <h3>Release notes</h3>
+        <p style="color:#8b949e;">"Take this changelog and produce a styled PDF in the GitHub style, then share the link in Slack format."</p>
+
+        <h3>Meeting notes to PDF</h3>
+        <p style="color:#8b949e;">"From today's transcript, produce meeting notes with action items in the Notion style, and give me the shareable URL."</p>
+
+        <h2>All Templates Agents Can Use</h2>
+        <div class="browser">
+            <a href="/templates/cv" class="tag">CV / Resume</a>
+            <a href="/templates/report" class="tag">Report</a>
+            <a href="/templates/documentation" class="tag">Documentation</a>
+            <a href="/templates/changelog" class="tag">Changelog</a>
+            <a href="/templates/meeting-notes" class="tag">Meeting Notes</a>
+        </div>
+
+        <h2>FAQ</h2>
+        <details>
+            <summary>Does MD2PDF support MCP?</summary>
+            <p>Yes — WebMCP (in-browser MCP) lets agents interact with the editor directly. A remote MCP server is on the roadmap.</p>
+        </details>
+        <details>
+            <summary>Do agents need an API key?</summary>
+            <p>No. The public API is anonymous, rate-limited by IP. For higher limits, self-host via <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a>.</p>
+        </details>
+        <details>
+            <summary>Can agents update previously-created documents?</summary>
+            <p>Yes. Agents receive an <code>editKey</code> when saving, which authorizes subsequent <code>PUT /api/update/:id</code> calls.</p>
+        </details>
+        <details>
+            <summary>Are agent-created documents encrypted?</summary>
+            <p>Yes — all documents are AES-256-GCM encrypted at rest. Keys are returned in the API response and must be kept by the caller.</p>
+        </details>
+
+        <div class="footer">
+            <span>Built by <a href="https://jsiapo.dev">JSiapoDev</a></span>
+            <span><a href="/">MD2PDF</a> &middot; <a href="/about">About</a> &middot; <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a></span>
+        </div>
+    </div>
+</body>
+</html>

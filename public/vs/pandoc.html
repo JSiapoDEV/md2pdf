@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MD2PDF vs Pandoc — Which to Use | MD2PDF</title>
+    <meta name="description" content="Compare MD2PDF and Pandoc. MD2PDF vs Pandoc — which to use. Features, pricing, and when to use each.">
+    <meta name="keywords" content="md2pdf vs pandoc, pandoc alternative, markdown to pdf no install, pandoc browser, pandoc online">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <meta name="author" content="JSiapoDev">
+    <link rel="canonical" href="https://md2pdf.studio/vs/pandoc">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://md2pdf.studio/vs/pandoc">
+    <meta property="og:title" content="MD2PDF vs Pandoc — Which to Use | MD2PDF">
+    <meta property="og:description" content="Compare MD2PDF and Pandoc. MD2PDF vs Pandoc — which to use. Features, pricing, and when to use each.">
+    <meta property="og:image" content="https://md2pdf.studio/og-image.png">
+    <meta property="og:site_name" content="MD2PDF">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="MD2PDF vs Pandoc — Which to Use | MD2PDF">
+    <meta name="twitter:description" content="Compare MD2PDF and Pandoc. MD2PDF vs Pandoc — which to use. Features, pricing, and when to use each.">
+    <meta name="twitter:image" content="https://md2pdf.studio/og-image.png">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f0883e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><polyline points='10 9 9 9 8 9'/></svg>">
+
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "MD2PDF vs Pandoc",
+  "description": "Pandoc is the Swiss-army knife of document conversion — but it requires installation, command-line knowledge, and often a LaTeX toolchain for PDF output. MD2PDF is a browser-based alternative: no install, live preview, 11 visual styles, and instant PDF export.",
+  "url": "https://md2pdf.studio/vs/pandoc",
+  "isPartOf": {
+    "@type": "WebApplication",
+    "name": "MD2PDF",
+    "url": "https://md2pdf.studio"
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "MD2PDF",
+        "item": "https://md2pdf.studio/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Compare",
+        "item": "https://md2pdf.studio/vs/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Pandoc",
+        "item": "https://md2pdf.studio/vs/pandoc"
+      }
+    ]
+  }
+}
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0d1117; color: #e6edf3; line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: #f0883e; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .container { max-width: 720px; margin: 0 auto; padding: 60px 24px 64px; }
+        .breadcrumb { font-size: 0.85em; color: #8b949e; margin-bottom: 24px; }
+        .breadcrumb a { color: #8b949e; }
+        .breadcrumb a:hover { color: #f0883e; }
+        .breadcrumb span { color: #e6edf3; }
+        h1 { font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; color: #e6edf3; }
+        h1 .accent { color: #f0883e; }
+        .tagline { font-size: 1.15em; color: #8b949e; margin-bottom: 32px; }
+        h2 { font-size: 1.3em; font-weight: 700; color: #f0883e; margin: 40px 0 16px; }
+        h3 { font-size: 1.05em; font-weight: 700; margin: 24px 0 8px; color: #e6edf3; }
+        p { color: #c9d1d9; margin-bottom: 16px; }
+        code { background: #161b22; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+        pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; overflow-x: auto; margin: 16px 0; }
+        pre code { background: none; padding: 0; font-size: 0.85em; line-height: 1.5; color: #c9d1d9; }
+        .cta-row { margin: 32px 0; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .cta { display: inline-block; background: #f0883e; color: #0d1117; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 1em; transition: background 0.2s; }
+        .cta:hover { background: #f4a261; text-decoration: none; }
+        .cta-secondary { display: inline-block; color: #c9d1d9; border: 1px solid #30363d; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 1em; transition: border-color 0.2s, color 0.2s; }
+        .cta-secondary:hover { border-color: #f0883e; color: #f0883e; text-decoration: none; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+        .info-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 16px; }
+        .info-card .label { font-size: 0.8em; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .info-card .value { font-size: 0.95em; color: #e6edf3; }
+        .use-cases { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+        .use-cases li { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 6px 16px; font-size: 0.88em; color: #c9d1d9; }
+        .browser { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+        .tag { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.85em; font-weight: 500; border: 1px solid #30363d; background: #161b22; color: #c9d1d9; transition: border-color 0.2s, color 0.2s; }
+        .tag:hover { border-color: #f0883e; color: #f0883e; text-decoration: none; }
+        .tag.current { border-color: #f0883e; color: #f0883e; background: rgba(240, 136, 62, 0.1); font-weight: 700; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9em; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #30363d; }
+        th { color: #8b949e; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { color: #c9d1d9; }
+        td.yes { color: #3fb950; font-weight: 600; }
+        td.no { color: #f85149; }
+        td.mid { color: #d29922; }
+        details { border: 1px solid #30363d; border-radius: 8px; margin-bottom: 8px; }
+        details:hover, details[open] { border-color: #f0883e; }
+        summary { padding: 12px 16px; font-size: 0.95em; font-weight: 600; cursor: pointer; color: #e6edf3; list-style: none; }
+        summary::before { content: '+ '; color: #f0883e; font-weight: 700; }
+        details[open] summary::before { content: '- '; }
+        details p { padding: 0 16px 14px; margin: 0; font-size: 0.9em; color: #8b949e; }
+        .footer { border-top: 1px solid #30363d; margin-top: 48px; padding-top: 24px; font-size: 0.85em; color: #6e7681; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .footer a { color: #8b949e; }
+        .footer a:hover { color: #f0883e; }
+        @media (max-width: 600px) { h1 { font-size: 1.7em; } .info-grid { grid-template-columns: 1fr; } .container { padding: 40px 16px 48px; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <nav class="breadcrumb"><a href="/">MD2PDF</a> / <a href="/vs/">Compare</a> / <span>Pandoc</span></nav>
+
+        <h1>MD2PDF <span class="accent">vs</span> Pandoc</h1>
+        <p class="tagline">MD2PDF vs Pandoc — which to use</p>
+
+        <p>Pandoc is the Swiss-army knife of document conversion — but it requires installation, command-line knowledge, and often a LaTeX toolchain for PDF output. MD2PDF is a browser-based alternative: no install, live preview, 11 visual styles, and instant PDF export.</p>
+
+        <div class="cta-row">
+            <a href="/" class="cta">Try MD2PDF</a>
+            <a href="/about" class="cta-secondary">Learn More</a>
+        </div>
+
+        <h2>Feature Comparison</h2>
+        <table>
+            <thead>
+                <tr><th>Feature</th><th>MD2PDF</th><th>Pandoc</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong style="color:#e6edf3;">Install required</strong></td>
+                    <td class="yes">No — runs in browser</td>
+                    <td class="no">Yes — CLI + LaTeX for PDF</td>
+                </tr>
+                <tr>
+                    <td><strong style="color:#e6edf3;">Live preview</strong></td>
+                    <td class="yes">Yes</td>
+                    <td class="no">No</td>
+                </tr>
+                <tr>
+                    <td><strong style="color:#e6edf3;">Visual styles out of the box</strong></td>
+                    <td class="yes">11 styles</td>
+                    <td class="mid">Via templates / LaTeX</td>
+                </tr>
+                <tr>
+                    <td><strong style="color:#e6edf3;">Mermaid diagrams</strong></td>
+                    <td class="yes">Built-in</td>
+                    <td class="mid">Via filter/plugin</td>
+                </tr>
+                <tr>
+                    <td><strong style="color:#e6edf3;">CLI / scripting</strong></td>
+                    <td class="mid">REST API</td>
+                    <td class="yes">Native CLI</td>
+                </tr>
+                <tr>
+                    <td><strong style="color:#e6edf3;">Output formats</strong></td>
+                    <td class="mid">PDF, HTML, PNG</td>
+                    <td class="yes">Everything (40+)</td>
+                </tr>
+                <tr>
+                    <td><strong style="color:#e6edf3;">Custom CSS</strong></td>
+                    <td class="yes">Yes, inline in browser</td>
+                    <td class="yes">Yes, via templates</td>
+                </tr>
+                <tr>
+                    <td><strong style="color:#e6edf3;">Free</strong></td>
+                    <td class="yes">Yes</td>
+                    <td class="yes">Yes (open source)</td>
+                </tr>
+                <tr>
+                    <td><strong style="color:#e6edf3;">AI-agent ready</strong></td>
+                    <td class="yes">Yes — Claude Skill + API</td>
+                    <td class="no">No</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>When to Use MD2PDF</h2>
+        <p>You want to preview and export a Markdown document quickly, with a polished visual style, without installing anything. Ideal for CVs, reports, docs, and sharing with non-technical recipients.</p>
+
+        <h2>When to Use Pandoc</h2>
+        <p>You need batch conversions, EPUB/DOCX/ODT output, or tight integration into a build pipeline. Pandoc is unbeatable for heavy document processing.</p>
+
+        <h2>Other Comparisons</h2>
+        <div class="browser">
+            <a href="/vs/typora" class="tag">vs Typora</a>
+            <a href="/vs/stackedit" class="tag">vs StackEdit</a>
+        </div>
+
+        <h2>FAQ</h2>
+        <details>
+            <summary>Is MD2PDF open source?</summary>
+            <p>Yes. Source code is on <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a> under the MIT license.</p>
+        </details>
+        <details>
+            <summary>Does MD2PDF work offline?</summary>
+            <p>Once the page loads, the editor and export run entirely in your browser. Sharing by URL requires network access to save to Cloudflare KV.</p>
+        </details>
+        <details>
+            <summary>Can AI agents use MD2PDF?</summary>
+            <p>Yes. MD2PDF exposes a <a href="/api">REST API</a>, an installable <a href="/ai-skill">Claude Skill</a>, and WebMCP for direct agent interaction.</p>
+        </details>
+
+        <div class="footer">
+            <span>Built by <a href="https://jsiapo.dev">JSiapoDev</a></span>
+            <span><a href="/">MD2PDF</a> &middot; <a href="/about">About</a> &middot; <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a></span>
+        </div>
+    </div>
+</body>
+</html>

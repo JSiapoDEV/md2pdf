@@ -755,6 +755,16 @@ body {
     margin: 16px 0;
     text-align: center;
     overflow-x: auto;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.mermaid-block-light {
+    background: #ffffff;
+}
+
+.mermaid-block-dark {
+    background: #1a1a1a;
 }
 
 .mermaid-block svg {
