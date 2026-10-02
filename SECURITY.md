@@ -7,7 +7,7 @@ Conversion and export (PDF, HTML, PNG) run **in the browser**. Nothing is upload
 - Drafts are stored only in the browser's `localStorage` (auto-save).
 - **Share links** are the only server-side storage. The app encrypts the document in the browser with AES-256-GCM and uploads ciphertext to Cloudflare KV. The key lives only in the link's `#k=` fragment, which browsers never send to the server.
 - The REST API also accepts plaintext (path 2). In that case the server sees the content during the request, encrypts it, and does not keep the key. Use the end-to-end path for anything private.
-- Share links expire 30 days after creation (links created before October 2, 2026: 90 days after their last update) and can be deleted with their edit key (`DELETE /api/delete/{id}`) or from Export > My links.
+- Share links expire 30 days after creation (links created before the October 2, 2026 update: 90 days after their last update) and can be deleted with their edit key (`DELETE /api/delete/{id}`) or from Export > My links.
 - No cookies and no accounts.
 
 ## Reporting a Vulnerability

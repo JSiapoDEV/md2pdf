@@ -222,10 +222,11 @@ var MAX_DOC_BYTES = 512000;
 var MAX_CIPHERTEXT_CHARS = Math.ceil((MAX_DOC_BYTES + 28) / 3) * 4;
 var BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
-// Tools like `base64` and `openssl enc -base64` wrap lines; atob() ignores the
-// whitespace, so accept it and store the compact form.
+// Tools like `base64` and `openssl enc -base64` wrap lines; accept that and
+// store the compact form. Only line breaks: stripping spaces too would let
+// plain prose pass as base64.
 function stripBase64Whitespace(body) {
-    return body.replace(/[\t\n\f\r ]+/g, '');
+    return body.replace(/[\r\n]+/g, '');
 }
 
 // Returns an error response, or null when the body can be stored.

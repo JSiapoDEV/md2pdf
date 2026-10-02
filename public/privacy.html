@@ -59,7 +59,7 @@
         <table>
             <tr><th>Data</th><th>Where</th><th>Why</th><th>Kept</th></tr>
             <tr><td>Your drafts, settings, and the links you created with their keys</td><td>Your browser's local storage only</td><td>Auto-save and editing your own links</td><td>Until you clear your browser data</td></tr>
-            <tr><td>Share links: the encrypted document, its ID, an edit key, creation and expiry dates</td><td>Cloudflare KV</td><td>Serving the link</td><td>30 days from creation, or until you delete it. Links created before October 2, 2026: 90 days after their last update</td></tr>
+            <tr><td>Share links: the encrypted document, its ID, an edit key, creation and expiry dates</td><td>Cloudflare KV</td><td>Serving the link</td><td>30 days from creation, or until you delete it. Links created before the October 2, 2026 update: 90 days after their last update</td></tr>
             <tr><td>Documents sent to the REST API in plain text (API "path 2")</td><td>Our server, in memory during the request</td><td>Encrypting them before storage</td><td>Only stored encrypted, as above. We do not keep the key</td></tr>
             <tr><td>Your IP address, when you create, update or delete a link</td><td>Cloudflare's rate limiter, in memory</td><td>Preventing abuse of share links</td><td>About 60 seconds; we do not store it</td></tr>
             <tr><td>Older <code>/share?doc=…</code> links, which carry the whole document unencrypted in the address</td><td>Our server, in memory, each time such a link is opened</td><td>Showing the document</td><td>Not stored. The link itself never expires and cannot be deleted</td></tr>

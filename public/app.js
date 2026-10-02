@@ -56,6 +56,7 @@
     let saveTimer       = null;
     let isSharedView    = false;
     let currentDocId    = null;   // see startNewDoc()
+    let linkDecryptFailed = false;
 
     // ── i18n ─────────────────────────────────────────
 
@@ -77,7 +78,7 @@
             linkDeleted: 'Link deleted', deleteFailed: 'Could not delete the link',
             reportAbuse: 'Report abuse', terms: 'Terms', privacy: 'Privacy',
             shareLinkTitle: 'Share link', updateLink: 'Update link with current content',
-            myLinks: 'My links', allLinks: 'Links created in this browser ({n})', noLinks: 'No links created in this browser yet.',
+            draftTooLarge: 'Draft too large to autosave in this browser', myLinks: 'My links', allLinks: 'Links created in this browser ({n})', noLinks: 'No links created in this browser yet.',
             yourLinks: 'Your other links on this browser ({n})', expiresShort: 'expires {date}',
             linkExpiredNew: 'The previous link had expired. Creating a new one.',
             tooManyShares: 'Too many shares in a minute. Try again shortly.',
@@ -130,7 +131,7 @@
             linkDeleted: 'Enlace borrado', deleteFailed: 'No se pudo borrar el enlace',
             reportAbuse: 'Reportar abuso', terms: 'Términos', privacy: 'Privacidad',
             shareLinkTitle: 'Enlace para compartir', updateLink: 'Actualizar el enlace con el contenido actual',
-            myLinks: 'Mis enlaces', allLinks: 'Enlaces creados en este navegador ({n})', noLinks: 'Aún no creaste enlaces en este navegador.',
+            draftTooLarge: 'El borrador es demasiado grande para guardarse en este navegador', myLinks: 'Mis enlaces', allLinks: 'Enlaces creados en este navegador ({n})', noLinks: 'Aún no creaste enlaces en este navegador.',
             yourLinks: 'Tus otros enlaces en este navegador ({n})', expiresShort: 'vence el {date}',
             linkExpiredNew: 'El enlace anterior venció. Creando uno nuevo.',
             tooManyShares: 'Demasiados enlaces en un minuto. Intenta en un momento.',
@@ -1340,12 +1341,17 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     // marked parses the source. Blank lines around it keep it a paragraph of its
     // own even next to other text; lines inside fenced code are left alone.
     function markTOC(src) {
-        let fence = null;
+        let fence = null;   // { char, len } of the open code fence
         return src.split('\n').map(line => {
-            const f = line.match(/^ {0,3}(`{3,}|~{3,})/);
+            const f = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
             if (f) {
-                if (!fence) fence = f[1][0];
-                else if (f[1][0] === fence) fence = null;
+                const char = f[1][0], len = f[1].length, rest = f[2];
+                if (!fence) {
+                    // A backtick fence's info string may not contain backticks.
+                    if (char === '~' || !rest.includes('`')) fence = { char, len };
+                } else if (char === fence.char && len >= fence.len && !rest.trim()) {
+                    fence = null;
+                }
                 return line;
             }
             if (fence) return line;
@@ -1694,6 +1700,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     // even with several tabs open.
 
     const DRAFT_KEY = 'md2pdf-draft-v2';
+    let draftTooLargeShown = false;
 
     function saveDraft() {
         clearTimeout(saveTimer);
@@ -1701,8 +1708,15 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             // A shared document belongs to its author, not to this browser's draft.
             if (isSharedView) return;
             if (!currentDocId) startNewDoc();
-            localStorage.setItem(DRAFT_KEY, JSON.stringify({ id: currentDocId, text: editor.value, name: currentFileName }));
+            // Drop the pre-record keys first: their copy would count against the quota.
             ['md2pdf-draft', 'md2pdf-filename', 'md2pdf-doc-id'].forEach(k => localStorage.removeItem(k));
+            try {
+                localStorage.setItem(DRAFT_KEY, JSON.stringify({ id: currentDocId, text: editor.value, name: currentFileName }));
+                draftTooLargeShown = false;
+            } catch (_) {
+                if (!draftTooLargeShown) showToast(t('draftTooLarge'));
+                draftTooLargeShown = true;
+            }
         }, 800);
     }
 
@@ -1731,7 +1745,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         if (!draft || !draft.text) return false;
         editor.value = draft.text;
         currentDocId = draft.id || null;
-        if (!currentDocId) startNewDoc();
+        if (!currentDocId) { startNewDoc(); saveDraft(); }
         currentFileName = draft.name || 'untitled.md';
         fileNameEl.value = currentFileName;
         showToast(t('draftRestored'));
@@ -2405,6 +2419,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                 hash: await contentHash(text), name: currentFileName,
             };
             saveShareMap(shares);
+            saveDraft();   // persist the draft id this link is keyed to
             const url = shareUrlOf(shares[currentDocId]);
             exportOverlay.classList.remove('active');
             showShareModal(url, currentDocId, true);
@@ -2548,8 +2563,12 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                             const content = await e2eeDecrypt(raw, cryptoKey);
                             loadSharedContent(content);
                         } catch (decErr) {
-                            showToast(t('decryptFailed'));
-                            return true; // still consumed the URL
+                            // Fall back to the user's own draft; an empty, editable
+                            // editor here would autosave over it. init() reports the
+                            // failure last, so "Draft restored" doesn't hide it.
+                            linkDecryptFailed = true;
+                            history.replaceState(null, '', '/');
+                            return false;
                         }
                     } else {
                         // Unencrypted (legacy) document
@@ -3031,6 +3050,11 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         if (!loaded && hasValidTemplate) {
             loadTemplate(resolvedTemplate);
             loaded = true;
+            // Load the template once: a reload must restore the user's draft,
+            // not wipe it with the blank template again.
+            urlParams.delete('template');
+            const qs = urlParams.toString();
+            history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
         }
         if (!loaded) {
             if (!restoreDraft()) {
@@ -3038,6 +3062,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                 startNewDoc();
             }
         }
+        if (linkDecryptFailed) showToast(t('decryptFailed'));
 
         render();
         initEditor();
