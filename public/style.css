@@ -1021,6 +1021,11 @@ body {
 .share-links li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .share-link-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .share-link-meta { color: var(--text-3); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) {
+    /* The name gets its own line; meta and buttons share the next one. */
+    .share-link-name { flex: 1 1 100%; }
+    .share-link-meta { flex: 1 1 0; }
+}
 .share-delete-btn.confirm { color: #e5534b; }
 
 .fork-modal .share-title {

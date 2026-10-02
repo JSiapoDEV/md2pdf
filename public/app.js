@@ -57,6 +57,7 @@
     let isSharedView    = false;
     let currentDocId    = null;   // see startNewDoc()
     let linkDecryptFailed = false;
+    let linkKeyMissing = false;
 
     // ── i18n ─────────────────────────────────────────
 
@@ -78,7 +79,8 @@
             linkDeleted: 'Link deleted', deleteFailed: 'Could not delete the link',
             reportAbuse: 'Report abuse', terms: 'Terms', privacy: 'Privacy',
             shareLinkTitle: 'Share link', updateLink: 'Update link with current content',
-            draftTooLarge: 'Draft too large to autosave in this browser', myLinks: 'My links', allLinks: 'Links created in this browser ({n})', noLinks: 'No links created in this browser yet.',
+            draftTooLarge: 'Draft too large to autosave in this browser',
+            keyMissing: 'This link is missing its key (the part after #k=). Ask the sender for the full link.', myLinks: 'My links', allLinks: 'Links created in this browser ({n})', noLinks: 'No links created in this browser yet.',
             yourLinks: 'Your other links on this browser ({n})', expiresShort: 'expires {date}',
             linkExpiredNew: 'The previous link had expired. Creating a new one.',
             tooManyShares: 'Too many shares in a minute. Try again shortly.',
@@ -131,7 +133,8 @@
             linkDeleted: 'Enlace borrado', deleteFailed: 'No se pudo borrar el enlace',
             reportAbuse: 'Reportar abuso', terms: 'Términos', privacy: 'Privacidad',
             shareLinkTitle: 'Enlace para compartir', updateLink: 'Actualizar el enlace con el contenido actual',
-            draftTooLarge: 'El borrador es demasiado grande para guardarse en este navegador', myLinks: 'Mis enlaces', allLinks: 'Enlaces creados en este navegador ({n})', noLinks: 'Aún no creaste enlaces en este navegador.',
+            draftTooLarge: 'El borrador es demasiado grande para guardarse en este navegador',
+            keyMissing: 'A este enlace le falta su clave (lo que va después de #k=). Pide el enlace completo.', myLinks: 'Mis enlaces', allLinks: 'Enlaces creados en este navegador ({n})', noLinks: 'Aún no creaste enlaces en este navegador.',
             yourLinks: 'Tus otros enlaces en este navegador ({n})', expiresShort: 'vence el {date}',
             linkExpiredNew: 'El enlace anterior venció. Creando uno nuevo.',
             tooManyShares: 'Demasiados enlaces en un minuto. Intenta en un momento.',
@@ -1708,16 +1711,37 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             // A shared document belongs to its author, not to this browser's draft.
             if (isSharedView) return;
             if (!currentDocId) startNewDoc();
-            // Drop the pre-record keys first: their copy would count against the quota.
-            ['md2pdf-draft', 'md2pdf-filename', 'md2pdf-doc-id'].forEach(k => localStorage.removeItem(k));
+            const record = JSON.stringify({ id: currentDocId, text: editor.value, name: currentFileName });
             try {
-                localStorage.setItem(DRAFT_KEY, JSON.stringify({ id: currentDocId, text: editor.value, name: currentFileName }));
+                writeDraftRecord(record);
                 draftTooLargeShown = false;
             } catch (_) {
                 if (!draftTooLargeShown) showToast(t('draftTooLarge'));
                 draftTooLargeShown = true;
             }
         }, 800);
+    }
+
+    // Writes the draft record and then drops the pre-record keys. If the write
+    // doesn't fit, it retries without the old copy, and puts that copy back if
+    // it still doesn't fit: the stored draft is never lost to a failed write.
+    const LEGACY_DRAFT_KEYS = ['md2pdf-draft', 'md2pdf-filename', 'md2pdf-doc-id'];
+
+    function writeDraftRecord(record) {
+        try {
+            localStorage.setItem(DRAFT_KEY, record);
+        } catch (err) {
+            const old = LEGACY_DRAFT_KEYS.map(k => [k, localStorage.getItem(k)]);
+            if (old.every(([, v]) => v === null)) throw err;
+            LEGACY_DRAFT_KEYS.forEach(k => localStorage.removeItem(k));
+            try {
+                localStorage.setItem(DRAFT_KEY, record);
+            } catch (retryErr) {
+                old.forEach(([k, v]) => { if (v !== null) localStorage.setItem(k, v); });
+                throw retryErr;
+            }
+        }
+        LEGACY_DRAFT_KEYS.forEach(k => localStorage.removeItem(k));
     }
 
     // Called on every keystroke; saveDraft() debounces.
@@ -2570,8 +2594,14 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                             history.replaceState(null, '', '/');
                             return false;
                         }
+                    } else if (location.pathname.startsWith('/s/')) {
+                        // Every /s/ document is encrypted: without #k= there is
+                        // nothing readable. Same fallback as a failed decrypt.
+                        linkKeyMissing = true;
+                        history.replaceState(null, '', '/');
+                        return false;
                     } else {
-                        // Unencrypted (legacy) document
+                        // Unencrypted legacy /share?doc= document
                         loadSharedContent(raw);
                     }
                     return true;
@@ -3063,6 +3093,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             }
         }
         if (linkDecryptFailed) showToast(t('decryptFailed'));
+        if (linkKeyMissing) showToast(t('keyMissing'));
 
         render();
         initEditor();
