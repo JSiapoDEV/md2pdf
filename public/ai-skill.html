@@ -210,7 +210,7 @@
         </details>
         <details>
             <summary>Are agent-created documents encrypted?</summary>
-            <p>Yes — all documents are AES-256-GCM encrypted at rest. Keys are returned in the API response and must be kept by the caller.</p>
+            <p>Yes — all documents are AES-256-GCM encrypted at rest. The skill supports two paths: end-to-end encrypted (agent encrypts locally and sends <code>X-Encrypted: aes-256-gcm</code> — server never sees key or plaintext; recommended for non-public content such as logs or internal notes) and server-side (agent sends plaintext and receives a key in the response — only for content that is already public). See <a href="/skill.md">skill.md</a> for worked examples.</p>
         </details>
 
         <div class="footer">

@@ -298,6 +298,9 @@
         <footer class="app-footer">
             <span class="footer-brand">Built by <a href="https://jsiapo.dev" target="_blank" rel="noopener">JSiapoDev</a></span>
             <div class="footer-links">
+                <a href="#" id="reportAbuseLink" class="footer-text-link" hidden>Report abuse</a>
+                <a href="/terms" class="footer-text-link" id="termsLink">Terms</a>
+                <a href="/privacy" class="footer-text-link" id="privacyLink">Privacy</a>
                 <a href="https://github.com/JSiapoDEV/md2pdf" target="_blank" rel="noopener" class="star-link" title="Star on GitHub">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     <span id="starText">Star on GitHub</span>
@@ -320,7 +323,7 @@
     <section class="seo-content">
         <div class="seo-container">
             <h1>Markdown to PDF Converter — Free Online Tool</h1>
-            <p>MD2PDF is a free, open-source Markdown to PDF converter that runs entirely in your browser. Convert any .md file to beautifully styled PDF, HTML, or PNG image. No signup, no server uploads, no tracking — your data stays private.</p>
+            <p>MD2PDF is a free, open-source Markdown to PDF converter that runs entirely in your browser. Convert any .md file to beautifully styled PDF, HTML, or PNG image. No signup, no cookies, and nothing is uploaded to convert your file.</p>
 
             <h2>How to Convert Markdown to PDF</h2>
             <ol>
@@ -345,7 +348,7 @@
                 <li><strong>Find and replace</strong> — Search and replace text in the editor with Ctrl+F / Ctrl+H</li>
                 <li><strong>Auto-save</strong> — Your work is saved automatically to your browser</li>
                 <li><strong>AI agent ready</strong> — Public REST API for programmatic access by Claude, ChatGPT, Gemini, and other AI agents</li>
-                <li><strong>Privacy first</strong> — No cookies, no analytics scripts, no server processing. Your data never leaves your browser</li>
+                <li><strong>Privacy first</strong> — Conversion happens in your browser. Share links are encrypted before upload. No cookies, no account</li>
             </ul>
 
             <h2>Supported Markdown Syntax</h2>
@@ -381,7 +384,7 @@
 
             <details><summary>Can I customize the PDF styling?</summary><p>Yes. Choose from 11 built-in styles or inject your own custom CSS. Your CSS is applied to both the preview and the exported document.</p></details>
 
-            <details><summary>Is my data safe?</summary><p>Yes. MD2PDF runs entirely in your browser. Your documents are never sent to a server. No cookies, no tracking, no analytics.</p></details>
+            <details><summary>Is my data safe?</summary><p>Conversion runs in your browser: your Markdown is never uploaded to convert it. Only if you create a share link is the document uploaded, and it is encrypted in your browser first, so the server stores ciphertext it cannot read. No cookies, no account.</p></details>
 
             <details><summary>Can I share my documents?</summary><p>Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document in their browser. Links show rich previews in WhatsApp, Teams, and Slack.</p></details>
 
@@ -395,11 +398,11 @@
 
             <details><summary>Can I generate a table of contents?</summary><p>Yes. Write [TOC] on its own line anywhere in your document. MD2PDF will auto-generate a linked table of contents from all your headings.</p></details>
 
-            <details><summary>Are shared documents encrypted?</summary><p>Yes. All shared documents are encrypted with AES-256-GCM. The decryption key lives in the URL hash fragment (#k=) and is never sent to the server. Only people with the full link can read the content.</p></details>
+            <details><summary>Are shared documents encrypted?</summary><p>Yes. All shared documents are encrypted with AES-256-GCM. When you share from the app, the document is encrypted in your browser and the key lives only in the link's #k= fragment, which browsers never send to the server. Only people with the full link can read it.</p></details>
 
             <details><summary>What programming languages are supported for syntax highlighting?</summary><p>MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, Bash, TypeScript, and many more. Every code block has a copy button.</p></details>
 
-            <details><summary>How long do shared links last?</summary><p>Shared links expire 90 days after the last update. You can update the content without changing the URL.</p></details>
+            <details><summary>How long do shared links last?</summary><p>Shared links last 30 days from when they are created. You can update the content without changing the URL, and delete the link at any time from the share dialog.</p></details>
 
             <details><summary>Is MD2PDF open source?</summary><p>Yes. MD2PDF is MIT licensed and available on <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a>. Contributions are welcome.</p></details>
         </div>
@@ -447,7 +450,7 @@
         {"@type": "Question", "name": "How do I convert a Markdown file to PDF?", "acceptedAnswer": {"@type": "Answer", "text": "Open md2pdf.studio, paste your Markdown or drag and drop a .md file, choose a style, and click Export > Export PDF. The PDF downloads instantly."}},
         {"@type": "Question", "name": "Does it support GitHub-Flavored Markdown?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF fully supports GFM including tables, task lists, strikethrough, code blocks with syntax highlighting, and more."}},
         {"@type": "Question", "name": "Can I customize the PDF styling?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Choose from 11 built-in styles or inject your own custom CSS. Your CSS is applied to both the preview and the exported document."}},
-        {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF runs entirely in your browser. Your documents are never sent to a server. No cookies, no tracking."}},
+        {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Conversion runs in your browser: your Markdown is never uploaded to convert it. Only if you create a share link is the document uploaded, and it is encrypted in your browser first, so the server stores ciphertext it cannot read. No cookies, no account."}},
         {"@type": "Question", "name": "Can I share my documents?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document. Links show rich previews in WhatsApp, Teams, and Slack."}},
         {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "The editor and preview work offline after the initial page load. Export and sharing features require an internet connection."}},
         {"@type": "Question", "name": "What export formats are available?", "acceptedAnswer": {"@type": "Answer", "text": "PDF (continuous single page), HTML (standalone file with inlined styles), and PNG image. All formats preserve your chosen style."}},
@@ -456,7 +459,7 @@
         {"@type": "Question", "name": "Can I generate a table of contents?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Write [TOC] on its own line anywhere in your document. MD2PDF will auto-generate a linked table of contents from all your headings."}},
         {"@type": "Question", "name": "Are shared documents encrypted?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. All shared documents are encrypted with AES-256-GCM. The decryption key lives in the URL hash fragment and is never sent to the server."}},
         {"@type": "Question", "name": "What programming languages are supported?", "acceptedAnswer": {"@type": "Answer", "text": "MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, and more. Every code block has a copy button."}},
-        {"@type": "Question", "name": "How long do shared links last?", "acceptedAnswer": {"@type": "Answer", "text": "Shared links expire 90 days after the last update. You can update the content without changing the URL."}},
+        {"@type": "Question", "name": "How long do shared links last?", "acceptedAnswer": {"@type": "Answer", "text": "Shared links last 30 days from when they are created. You can update the content without changing the URL, and delete the link at any time from the share dialog."}},
         {"@type": "Question", "name": "Is MD2PDF open source?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF is MIT licensed and available on GitHub. Contributions are welcome."}}
       ]
     }
@@ -504,7 +507,10 @@
                 <input type="text" id="shareUrlInput" class="share-url-input" readonly>
                 <button class="btn btn-primary btn-sm" id="shareCopyBtn">Copy</button>
             </div>
-            <p class="share-hint">Link expires 90 days after last update.</p>
+            <div class="share-footer">
+                <p class="share-hint" id="shareHint">Anyone with the full link can read this document.</p>
+                <button class="btn btn-ghost btn-sm share-delete-btn" id="shareDeleteBtn" type="button" hidden>Delete link</button>
+            </div>
         </div>
     </div>
 
@@ -598,6 +604,7 @@
     </noscript>
 
     <!-- Libraries -->
+    <script src="/vendor/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

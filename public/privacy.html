@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — MD2PDF</title>
+    <meta name="description" content="What md2pdf.studio stores, what it never sees, and for how long. Conversion runs in your browser; share links are encrypted before upload.">
+    <meta name="author" content="JSiapoDev">
+    <link rel="canonical" href="https://md2pdf.studio/privacy">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0d1117; color: #e6edf3;
+            line-height: 1.7; -webkit-font-smoothing: antialiased;
+        }
+        a { color: #f0883e; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+        h1 { font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+        .subtitle { color: #8b949e; margin-bottom: 40px; }
+        h2 { font-size: 1.25em; font-weight: 700; margin: 36px 0 12px; color: #f0883e; }
+        p, li { color: #c9d1d9; margin-bottom: 12px; }
+        ul { padding-left: 24px; margin-bottom: 16px; }
+        li { margin-bottom: 6px; }
+        table { width: 100%; border-collapse: collapse; margin: 8px 0 20px; font-size: 0.92em; }
+        th, td { text-align: left; padding: 8px 10px; border: 1px solid #30363d; vertical-align: top; color: #c9d1d9; }
+        th { background: #161b22; color: #e6edf3; }
+        footer {
+            border-top: 1px solid #30363d;
+            margin-top: 48px; padding-top: 24px;
+            font-size: 0.85em; color: #6e7681;
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+        }
+        @media (max-width: 600px) { h1 { font-size: 1.7em; } table { font-size: 0.85em; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy</h1>
+        <p class="subtitle">Effective October 2, 2026</p>
+
+        <p>md2pdf.studio is operated by JSiapoDev, an individual developer based in Peru, who is responsible for the processing described here. Contact: <a href="mailto:jsiapo.dev@gmail.com">jsiapo.dev@gmail.com</a>.</p>
+
+        <h2>The short version</h2>
+        <ul>
+            <li>Converting a file happens in your browser. Your Markdown is not uploaded to convert it.</li>
+            <li>A document reaches our server only when you create a share link, and the app encrypts it in your browser first. The key stays in the link's <code>#k=</code> fragment, which browsers do not send to servers, so we cannot read it.</li>
+            <li>No accounts, no cookies, no advertising.</li>
+        </ul>
+
+        <h2>What is processed, and for how long</h2>
+        <table>
+            <tr><th>Data</th><th>Where</th><th>Why</th><th>Kept</th></tr>
+            <tr><td>Your drafts, settings, and the keys of links you created</td><td>Your browser's local storage only</td><td>Auto-save and editing your own links</td><td>Until you clear your browser data</td></tr>
+            <tr><td>Share links: the encrypted document, its ID, an edit key, creation and expiry dates</td><td>Cloudflare KV</td><td>Serving the link</td><td>30 days from creation, or until you delete it (links created before October 2026: up to 90 days)</td></tr>
+            <tr><td>Documents sent to the REST API in plain text (API "path 2")</td><td>Our server, in memory during the request</td><td>Encrypting them before storage</td><td>Only stored encrypted, as above. We do not keep the key</td></tr>
+            <tr><td>Your IP address</td><td>Cloudflare KV, as a rate-limit counter</td><td>Preventing abuse of share links</td><td>60 seconds</td></tr>
+            <tr><td>Standard request data (IP address, browser, page, referring site)</td><td>Cloudflare, which hosts the site</td><td>Delivering and protecting the site; we see aggregate counts such as visits per page and country</td><td>Under Cloudflare's retention policies; we keep no logs of our own</td></tr>
+        </table>
+        <p>We also use Cloudflare Web Analytics, which counts page views without cookies and without identifying you.</p>
+
+        <h2>Third parties</h2>
+        <ul>
+            <li><strong>Cloudflare, Inc.</strong> hosts the site, the API and the share-link storage, on servers in many countries, including the United States.</li>
+            <li>Open-source libraries load from <strong>cdnjs</strong> (Cloudflare) and <strong>jsDelivr</strong>, and fonts from <strong>Google Fonts</strong>. Those providers receive your IP address when your browser downloads the files.</li>
+        </ul>
+        <p>We do not sell or share data with anyone else, and we do not use it for advertising.</p>
+
+        <h2>Your rights</h2>
+        <p>You can delete any link you created from the share dialog, or with its edit key through the API. Because there are no accounts, we usually cannot tell which documents are yours. If you need anything else, such as access, correction, deletion or objection under Peru's Personal Data Protection Law (Law 29733), the GDPR or similar laws, email us and we will answer within the legal deadlines. In Peru you can also complain to the Autoridad Nacional de Protección de Datos Personales.</p>
+
+        <h2>Children</h2>
+        <p>The service is not directed to children under 14.</p>
+
+        <h2>Changes</h2>
+        <p>If this policy changes, we will update the date at the top. See also the <a href="/terms">Terms of Use</a>.</p>
+
+        <footer>
+            <span>Built by <a href="https://jsiapo.dev">JSiapoDev</a></span>
+            <span>
+                <a href="/">Open Editor</a> &middot;
+                <a href="/about">About</a> &middot;
+                <a href="/terms">Terms</a>
+            </span>
+        </footer>
+    </div>
+</body>
+</html>

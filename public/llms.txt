@@ -1,6 +1,6 @@
 # MD2PDF
 
-> Free online Markdown to PDF converter. Convert .md files to beautifully styled PDFs, HTML, and images with 11 visual styles, Mermaid diagrams, auto table of contents, and syntax highlighting for 180+ languages. All documents encrypted at rest (AES-256-GCM). No signup, no server uploads — runs entirely in the browser. Includes a public REST API and an installable AI Skill for Claude, ChatGPT, and other AI agents.
+> Free online Markdown to PDF converter. Convert .md files to beautifully styled PDFs, HTML, and images with 11 visual styles, Mermaid diagrams, auto table of contents, and syntax highlighting for 180+ languages. All documents encrypted at rest (AES-256-GCM). No signup; conversion runs entirely in the browser and share links are encrypted before upload. Includes a public REST API and an installable AI Skill for Claude, ChatGPT, and other AI agents.
 
 Last updated: 2026-04-16
 
@@ -13,8 +13,9 @@ Last updated: 2026-04-16
 
 ## API
 
-- [Create Document — POST /api/save](https://md2pdf.studio/llms-full.txt): Send Markdown as text/plain body, receive JSON with shareable URL, edit key, and encryption key
-- [Update Document — PUT /api/update/{id}](https://md2pdf.studio/llms-full.txt): Update an existing document using X-Edit-Key and X-Enc-Key headers
+- [Create Document — POST /api/save (E2EE path, recommended)](https://md2pdf.studio/llms-full.txt): Encrypt locally with AES-256-GCM, send ciphertext with header X-Encrypted: aes-256-gcm. Server never sees plaintext or key.
+- [Create Document — POST /api/save (plaintext path, public content only)](https://md2pdf.studio/llms-full.txt): Send Markdown plaintext; server encrypts and returns the key. Server sees plaintext during the request.
+- [Update Document — PUT /api/update/{id}](https://md2pdf.studio/llms-full.txt): Reuse editKey. Send X-Encrypted: aes-256-gcm with fresh ciphertext for E2EE docs, or X-Enc-Key for plaintext-path docs.
 
 ## Styles
 

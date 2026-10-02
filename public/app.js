@@ -70,7 +70,11 @@
             replaceBtn: 'Replace', replaceAll: 'All',
             builtBy: 'Built by', starGithub: 'Star on GitHub',
             apiPrompts: 'AI Skill',
-            linkCreated: 'Link created!', linkHint: 'Link expires 90 days after last update.',
+            linkCreated: 'Link created!', linkHint: 'Anyone with the full link can read this document.',
+            linkExpires: 'Link expires on {date}. Anyone with the full link can read it.',
+            deleteLink: 'Delete link', deleteConfirm: 'Click again to delete',
+            linkDeleted: 'Link deleted', deleteFailed: 'Could not delete the link',
+            reportAbuse: 'Report abuse', terms: 'Terms', privacy: 'Privacy',
             copy: 'Copy', copied: 'Copied!',
             download: 'Download',
             tabSkill: 'Skill', tabApi: 'API',
@@ -114,7 +118,11 @@
             replaceBtn: 'Reemplazar', replaceAll: 'Todo',
             builtBy: 'Creado por', starGithub: 'Estrella en GitHub',
             apiPrompts: 'Skill de IA',
-            linkCreated: 'Enlace creado!', linkHint: 'El enlace expira 90 dias despues de la ultima actualizacion.',
+            linkCreated: 'Enlace creado!', linkHint: 'Cualquiera con el enlace completo puede leer este documento.',
+            linkExpires: 'El enlace vence el {date}. Cualquiera con el enlace completo puede leerlo.',
+            deleteLink: 'Borrar enlace', deleteConfirm: 'Clic otra vez para borrar',
+            linkDeleted: 'Enlace borrado', deleteFailed: 'No se pudo borrar el enlace',
+            reportAbuse: 'Reportar abuso', terms: 'Términos', privacy: 'Privacidad',
             copy: 'Copiar', copied: 'Copiado!',
             download: 'Descargar',
             tabSkill: 'Skill', tabApi: 'API',
@@ -206,8 +214,12 @@ Follow those instructions exactly.
         // Share modal
         $('#shareModalTitle').textContent = t('linkCreated');
         $('#apiModalTitle').textContent = t('apiPrompts');
-        $('.share-hint').textContent = t('linkHint');
+        updateShareHint();
+        $('#reportAbuseLink').textContent = t('reportAbuse');
+        $('#termsLink').textContent = t('terms');
+        $('#privacyLink').textContent = t('privacy');
         shareCopyBtn.textContent = t('copy');
+        shareDeleteBtn.textContent = t('deleteLink');
 
         // Fork (editable copy) modal
         $('#forkModalTitle').textContent = t('readOnlyTitle');
@@ -271,10 +283,10 @@ Follow those instructions exactly.
         var html = '<p class="api-desc">' + t('apiDesc') + '</p>';
 
         var sections = [
-            { title: t('apiCreate'), code: 'POST https://md2pdf.studio/api/save\nContent-Type: text/plain\n\n# Your markdown here\n\n---\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3",\n  "key": "xY9kL2m..."\n}\n\nShareable link: {url}#k={key}\nThe #k= hash is the decryption key (never sent to server).' },
-            { title: t('apiUpdate'), code: 'PUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\nX-Enc-Key: {key}\n\n# Updated markdown\n\n---\nResponse 200:\n{ "id": "BrOrr0N3", "url": "https://md2pdf.studio/s/BrOrr0N3" }\n\nResponse 403: { "error": "Unauthorized" }\nResponse 404: { "error": "Document not found" }' },
-            { title: t('apiCurl'), code: '# Create\ncurl -X POST https://md2pdf.studio/api/save \\\n  -H "Content-Type: text/plain" \\\n  -d "# Hello World"\n# Response: {"id":"abc","editKey":"...","url":"...","key":"xY9..."}\n# Share: {url}#k={key}\n\n# Update\ncurl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \\\n  -H "Content-Type: text/plain" \\\n  -H "X-Edit-Key: your-edit-key-here" \\\n  -H "X-Enc-Key: xY9kL2m..." \\\n  -d "# Updated content"' },
-            { title: t('apiLimits'), code: 'Max document size: 500 KB\nRate limit: 10 requests/minute per IP\nExpiration: 90 days (resets on update)\nEncryption: AES-256-GCM (all documents)\nResponse: 429 Too Many Requests' },
+            { title: t('apiCreate'), code: 'Path 1 — End-to-end encrypted (recommended for any non-public content)\n\n  1. Generate a 256-bit key and a 12-byte IV.\n  2. Encrypt markdown with AES-256-GCM.\n  3. Send base64(IV ‖ ciphertext ‖ tag) as the body.\n\nPOST https://md2pdf.studio/api/save\nContent-Type: text/plain\nX-Encrypted: aes-256-gcm\n\n<base64 ciphertext>\n\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3"\n}\n\nBuild the share link yourself: {url}#k={your base64url key}\nThe server never sees the key.\n\n---\n\nPath 2 — Server-side encryption (legacy, public content only)\n\nPOST https://md2pdf.studio/api/save\nContent-Type: text/plain\n\n# Your markdown here\n\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3",\n  "key": "xY9kL2m..."\n}\n\nShareable link: {url}#k={key}\nThe server sees the plaintext during this request.' },
+            { title: t('apiUpdate'), code: 'Path 1 — Update an end-to-end encrypted document\n\nReuse the same key; generate a fresh IV. Do NOT send X-Enc-Key.\n\nPUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\nX-Encrypted: aes-256-gcm\n\n<base64 ciphertext>\n\nResponse 200:\n{ "id": "BrOrr0N3", "url": "https://md2pdf.studio/s/BrOrr0N3" }\n\n---\n\nPath 2 — Update a server-side encrypted document\n\nPUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\nX-Enc-Key: {key}\n\n# Updated markdown\n\nResponse 403: { "error": "Unauthorized" }\nResponse 404: { "error": "Document not found" }' },
+            { title: t('apiCurl'), code: '# Path 1 — End-to-end encrypted (Python example)\npython3 <<\'PY\'\nimport os, json, base64, urllib.request\nfrom cryptography.hazmat.primitives.ciphers.aead import AESGCM\n\nmarkdown = "# Hello World\\n\\nThis is my first document."\n\nkey = AESGCM.generate_key(bit_length=256)\niv  = os.urandom(12)\nct  = AESGCM(key).encrypt(iv, markdown.encode(), None)\nbody = base64.b64encode(iv + ct).decode()\nkey_b64url = base64.urlsafe_b64encode(key).rstrip(b"=").decode()\n\nreq = urllib.request.Request(\n    "https://md2pdf.studio/api/save",\n    data=body.encode(),\n    headers={"Content-Type": "text/plain", "X-Encrypted": "aes-256-gcm"},\n    method="POST",\n)\ndata = json.loads(urllib.request.urlopen(req).read())\nprint(f"{data[\'url\']}#k={key_b64url}")\nPY\n\n# Path 2 — Plaintext (server sees content)\ncurl -X POST https://md2pdf.studio/api/save \\\n  -H "Content-Type: text/plain" \\\n  -d "# Public release notes"\n# Response includes "key"; share link is {url}#k={key}\n\n# Update (path 2)\ncurl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \\\n  -H "Content-Type: text/plain" \\\n  -H "X-Edit-Key: your-edit-key" \\\n  -H "X-Enc-Key: xY9kL2m..." \\\n  -d "# Updated content"' },
+            { title: t('apiLimits'), code: 'Max document size: 500 KB (body size, ciphertext included)\nRate limit: 10 requests/minute per IP\nExpiration: 30 days after creation (updates do not extend it)\nDelete: DELETE /api/delete/{id} with X-Edit-Key\nEncryption at rest: AES-256-GCM (every document)\nE2EE path: X-Encrypted: aes-256-gcm — server never sees key or plaintext\nResponse: 429 Too Many Requests' },
         ];
 
         sections.forEach(function (s) {
@@ -1301,7 +1313,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
                 mermaid.initialize({
                     startOnLoad: false,
                     theme: getTheme() === 'dark' ? 'dark' : 'default',
-                    securityLevel: 'loose',
+                    securityLevel: 'strict',
                 });
             }
         } catch (_) {}
@@ -1310,6 +1322,37 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     // ── Render ───────────────────────────────────────
 
     const TOC_PLACEHOLDER = '\u00ABTOC_PLACEHOLDER\u00BB';
+
+    // Markdown may carry raw HTML, and shared links render someone else's
+    // document on this origin. Everything marked emits goes through DOMPurify.
+    // No forms, frames, embeds or <style> (it would restyle the whole app);
+    // <input> survives only as the disabled checkbox of a GFM task list.
+    const PURIFY_CONFIG = {
+        FORBID_TAGS: ['style', 'form', 'button', 'textarea', 'select', 'option', 'iframe', 'frame', 'frameset', 'object', 'embed', 'base', 'link', 'meta'],
+        FORBID_ATTR: ['action', 'formaction'],
+        RETURN_DOM_FRAGMENT: true,
+    };
+
+    function sanitizeMarkdownHTML(html) {
+        if (typeof DOMPurify === 'undefined') {
+            // Never render unsanitized HTML: fall back to plain text.
+            const pre = document.createElement('pre');
+            pre.textContent = html;
+            return pre;
+        }
+        const frag = DOMPurify.sanitize(html, PURIFY_CONFIG);
+        frag.querySelectorAll('input').forEach(el => {
+            if ((el.getAttribute('type') || '').toLowerCase() !== 'checkbox') { el.remove(); return; }
+            el.setAttribute('disabled', '');
+            el.removeAttribute('name');
+        });
+        return frag;
+    }
+
+    function escapeHtmlFull(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
 
     function render() {
         const src = editor.value.trim();
@@ -1320,7 +1363,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             const processed = src.replace(/^\[toc(?:\s+title="([^"]*)")?\]$/gim, function (_, title) {
                 return title ? TOC_PLACEHOLDER + ':' + title : TOC_PLACEHOLDER;
             });
-            preview.innerHTML = marked.parse(processed);
+            preview.replaceChildren(sanitizeMarkdownHTML(marked.parse(processed)));
             injectTOC();
             preview.querySelectorAll('pre code').forEach(block => {
                 if (block.classList.contains('language-mermaid')) return;
@@ -1350,11 +1393,12 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         preview.innerHTML = html.replace(tocRegex, function (_, t1, t2) {
             const title = t1 || t2 || '';
             let toc = '<nav class="md-toc">';
-            if (title) toc += '<p class="md-toc-title">' + title + '</p>';
+            if (title) toc += '<p class="md-toc-title">' + escapeHtmlFull(title) + '</p>';
             toc += '<ul>';
+            // Headings may come from raw HTML in the document: escape id and text.
             headings.forEach(h => {
                 const level = parseInt(h.tagName[1]);
-                toc += '<li class="md-toc-h' + level + '"><a href="#' + h.id + '">' + h.textContent + '</a></li>';
+                toc += '<li class="md-toc-h' + level + '"><a href="#' + escapeHtmlFull(h.id) + '">' + escapeHtmlFull(h.textContent) + '</a></li>';
             });
             toc += '</ul></nav>';
             return toc;
@@ -1399,7 +1443,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             startOnLoad: false,
             theme: mermaidCfg.theme || (isDark ? 'dark' : 'default'),
             themeVariables: mermaidCfg.themeVariables || {},
-            securityLevel: 'loose',
+            securityLevel: 'strict',
         });
 
         const isMermaidDark = mermaidCfg.theme === 'dark';
@@ -1435,7 +1479,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             const header = document.createElement('div');
             header.className = 'code-block-header';
             header.innerHTML =
-                '<span class="code-block-lang">' + (lang ? lang : '') + '</span>' +
+                '<span class="code-block-lang">' + escapeHtmlFull(lang) + '</span>' +
                 '<button class="code-copy-btn" type="button" aria-label="' + t('copy') + '">' +
                     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
                         '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>' +
@@ -1501,7 +1545,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         try {
             if (typeof mermaid !== 'undefined') {
                 const forceDarkMermaid = forceDark || t === 'dark';
-                mermaid.initialize({ startOnLoad: false, theme: forceDarkMermaid ? 'dark' : 'default', securityLevel: 'loose' });
+                mermaid.initialize({ startOnLoad: false, theme: forceDarkMermaid ? 'dark' : 'default', securityLevel: 'strict' });
             }
         } catch (_) {}
 
@@ -1958,8 +2002,66 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
     const shareUrlInput = $('#shareUrlInput');
     const shareCopyBtn  = $('#shareCopyBtn');
     const shareCloseBtn = $('#shareCloseBtn');
+    const shareDeleteBtn = $('#shareDeleteBtn');
 
-    function showShareModal(url) {
+    // What the open share modal refers to: { docKey, expiresAt } for links this
+    // browser created (it holds their editKey); null when viewing someone else's.
+    let shareModalDoc = null;
+    let deleteArmed = null;
+
+    function updateShareHint() {
+        const hint = $('#shareHint');
+        const expiresAt = shareModalDoc && shareModalDoc.expiresAt;
+        if (expiresAt) {
+            const date = new Date(expiresAt).toLocaleDateString(currentLang, { year: 'numeric', month: 'short', day: 'numeric' });
+            hint.textContent = t('linkExpires').replace('{date}', date);
+        } else {
+            hint.textContent = t('linkHint');
+        }
+    }
+
+    function resetDeleteBtn() {
+        clearTimeout(deleteArmed);
+        deleteArmed = null;
+        shareDeleteBtn.classList.remove('confirm');
+        shareDeleteBtn.textContent = t('deleteLink');
+    }
+
+    // Two clicks to delete: the first arms the button for 3 seconds.
+    async function deleteShare() {
+        if (!shareModalDoc) return;
+        if (!deleteArmed) {
+            shareDeleteBtn.classList.add('confirm');
+            shareDeleteBtn.textContent = t('deleteConfirm');
+            deleteArmed = setTimeout(resetDeleteBtn, 3000);
+            return;
+        }
+        resetDeleteBtn();
+        const shares = getShareMap();
+        const entry = shares[shareModalDoc.docKey];
+        if (!entry) { closeShareModal(); return; }
+        try {
+            const res = await fetch('/api/delete/' + entry.id, {
+                method: 'DELETE',
+                headers: { 'X-Edit-Key': entry.editKey },
+            });
+            // 404 means it already expired: forget it locally too.
+            if (res.ok || res.status === 404) {
+                delete shares[shareModalDoc.docKey];
+                saveShareMap(shares);
+                closeShareModal();
+                showToast(t('linkDeleted'));
+                return;
+            }
+        } catch (_) {}
+        showToast(t('deleteFailed'));
+    }
+
+    function showShareModal(url, doc) {
+        shareModalDoc = doc || null;
+        updateShareHint();
+        resetDeleteBtn();
+        shareDeleteBtn.hidden = !shareModalDoc;
         shareUrlInput.value = url;
         shareOverlay.classList.add('active');
         shareUrlInput.focus();
@@ -1998,11 +2100,21 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
 
     // ── E2EE (AES-256-GCM) ──────────────────────────
 
+    // Spreading a large Uint8Array into String.fromCharCode overflows the call
+    // stack on big documents, so encode in chunks.
+    function bytesToBase64(bytes) {
+        let binary = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        }
+        return btoa(binary);
+    }
+
     async function e2eeGenerateKey() {
         const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
         const raw = await crypto.subtle.exportKey('raw', key);
         // base64url encoding (no padding)
-        const b64 = btoa(String.fromCharCode(...new Uint8Array(raw)))
+        const b64 = bytesToBase64(new Uint8Array(raw))
             .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         return { key, b64 };
     }
@@ -2030,7 +2142,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         const combined = new Uint8Array(iv.length + ciphertext.byteLength);
         combined.set(iv);
         combined.set(new Uint8Array(ciphertext), iv.length);
-        return btoa(String.fromCharCode(...combined));
+        return bytesToBase64(combined);
     }
 
     async function e2eeDecrypt(encoded, cryptoKey) {
@@ -2060,57 +2172,61 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             const shares = getShareMap();
             const docKey = currentFileName;
 
-            // Check if we have an existing share for this document
+            // Update path: reuse the locally-stored key, encrypt in the browser,
+            // send ciphertext only. The server never sees plaintext or the key.
             if (shares[docKey]) {
                 const { id, editKey, encKey } = shares[docKey];
+                const cryptoKey = await e2eeImportKeyFull(encKey);
+                const ciphertext = await e2eeEncrypt(text, cryptoKey);
 
-                // Send plaintext + encryption key — server re-encrypts
                 const updateRes = await fetch('/api/update/' + id, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'text/plain', 'X-Edit-Key': editKey, 'X-Enc-Key': encKey },
-                    body: text,
+                    headers: {
+                        'Content-Type': 'text/plain',
+                        'X-Edit-Key': editKey,
+                        'X-Encrypted': 'aes-256-gcm',
+                    },
+                    body: ciphertext,
                 });
 
                 if (updateRes.ok) {
                     const data = await updateRes.json();
                     exportOverlay.classList.remove('active');
-                    showShareModal(data.url + '#k=' + encKey);
+                    if (data.expiresAt) { shares[docKey].expiresAt = data.expiresAt; saveShareMap(shares); }
+                    showShareModal(data.url + '#k=' + encKey, { docKey, expiresAt: shares[docKey].expiresAt });
                     showToast(t('linkUpdated'));
                     return;
                 }
                 // If update fails (404 expired, 403 wrong key), create new below
             }
 
-            // Server encrypts and returns the key
+            // Create path: generate the AES-256-GCM key in the browser, encrypt,
+            // send ciphertext. Key stays local and is placed in the URL fragment.
+            const { key: cryptoKey, b64: encKey } = await e2eeGenerateKey();
+            const ciphertext = await e2eeEncrypt(text, cryptoKey);
+
             const res = await fetch('/api/save', {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: text,
+                headers: {
+                    'Content-Type': 'text/plain',
+                    'X-Encrypted': 'aes-256-gcm',
+                },
+                body: ciphertext,
             });
 
             exportOverlay.classList.remove('active');
 
             if (res.ok) {
                 const data = await res.json();
-                shares[docKey] = { id: data.id, editKey: data.editKey, encKey: data.key };
+                shares[docKey] = { id: data.id, editKey: data.editKey, encKey, expiresAt: data.expiresAt };
                 saveShareMap(shares);
-                showShareModal(data.url + '#k=' + data.key);
+                showShareModal(data.url + '#k=' + encKey, { docKey, expiresAt: data.expiresAt });
                 return;
             }
+
+            showToast(t('shareFailed'));
         } catch (_) {
             exportOverlay.classList.remove('active');
-        }
-
-        // Fallback: LZ-string URL (unencrypted, client-only)
-        try {
-            const compressed = LZString.compressToEncodedURIComponent(text);
-            const url = `${location.origin}/share?doc=${compressed}`;
-            if (url.length > 8000) {
-                showToast(t('docTooLarge'));
-                return;
-            }
-            showShareModal(url);
-        } catch (e) {
             showToast(t('shareFailed'));
         }
     }
@@ -2130,6 +2246,14 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         if (previewBtn) previewBtn.classList.add('active');
         const lockBtn = document.getElementById('sharedLock');
         if (lockBtn) { lockBtn.hidden = false; lockBtn.title = t('sharedLockTip'); }
+
+        // Shared docs are encrypted, so moderation depends on readers reporting them.
+        const report = document.getElementById('reportAbuseLink');
+        if (report) {
+            report.href = 'mailto:jsiapo.dev@gmail.com?subject=' + encodeURIComponent('Abuse report: ' + location.pathname) +
+                '&body=' + encodeURIComponent('Link: ' + location.href + '\n\nWhat is wrong with it:\n');
+            report.hidden = false;
+        }
     }
 
     function openForkModal() {
@@ -2152,6 +2276,8 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         fileNameEl.value = currentFileName;
         const lockBtn = document.getElementById('sharedLock');
         if (lockBtn) lockBtn.hidden = true;
+        const report = document.getElementById('reportAbuseLink');
+        if (report) report.hidden = true;
         // Drop the /s/:id URL so F5 no longer re-fetches the original over local edits.
         history.replaceState(null, '', '/');
         // Switch toolbar back to split view.
@@ -2414,6 +2540,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         // Share modal
         shareCopyBtn.addEventListener('click', copyShareUrl);
         shareCloseBtn.addEventListener('click', closeShareModal);
+        shareDeleteBtn.addEventListener('click', deleteShare);
         shareOverlay.addEventListener('click', (e) => { if (e.target === shareOverlay) closeShareModal(); });
 
         // Fork (read-only → editable copy) modal

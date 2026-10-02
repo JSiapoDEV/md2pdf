@@ -303,7 +303,7 @@ function buildTemplate(t) {
         </details>
         <details>
             <summary>Where is my document stored?</summary>
-            <p>Drafts are auto-saved to your browser's localStorage. Shared documents are encrypted (AES-256-GCM) and stored on Cloudflare KV for 90 days.</p>
+            <p>Drafts are auto-saved to your browser's localStorage. Shared documents are encrypted (AES-256-GCM) and stored on Cloudflare KV for 30 days.</p>
         </details>
 
         ${FOOTER}
@@ -593,23 +593,60 @@ function buildApi() {
             <a href="/llms-full.txt" class="cta-secondary">llms-full.txt</a>
         </div>
 
+        <h2>Two paths, different threat models</h2>
+        <p><strong>Path 1 — End-to-end encrypted (recommended).</strong> Encrypt locally with AES-256-GCM and send ciphertext with header <code>X-Encrypted: aes-256-gcm</code>. The server stores the blob as-is and never sees the key or plaintext. Use this for anything non-public.</p>
+        <p><strong>Path 2 — Server-side encryption (legacy).</strong> Send plaintext; the server generates the key, encrypts, and returns the key. The server sees plaintext during the request. Only suitable for content that is already public.</p>
+
         <h2>Endpoints</h2>
 
-        <h3>POST /api/save</h3>
-        <p>Save a Markdown document. Returns a short URL and an edit key.</p>
+        <h3>POST /api/save — Path 1 (E2EE, recommended)</h3>
+        <p>Python example. Generates a 256-bit key locally, encrypts, POSTs ciphertext.</p>
+<pre><code>import os, json, base64, urllib.request
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+markdown = "# Hello\\n\\nThis is a shared document."
+
+key = AESGCM.generate_key(bit_length=256)
+iv  = os.urandom(12)
+ct  = AESGCM(key).encrypt(iv, markdown.encode(), None)
+body = base64.b64encode(iv + ct).decode()
+key_b64url = base64.urlsafe_b64encode(key).rstrip(b"=").decode()
+
+req = urllib.request.Request(
+    "https://md2pdf.studio/api/save",
+    data=body.encode(),
+    headers={"Content-Type": "text/plain", "X-Encrypted": "aes-256-gcm"},
+    method="POST",
+)
+data = json.loads(urllib.request.urlopen(req).read())
+print(f"{data['url']}#k={key_b64url}")</code></pre>
+        <p>Response (no <code>key</code> field — the server does not have it):</p>
+<pre><code>{
+  "id": "aB3xY9zK",
+  "editKey": "…",
+  "url": "https://md2pdf.studio/s/aB3xY9zK"
+}</code></pre>
+
+        <h3>POST /api/save — Path 2 (plaintext, public content only)</h3>
 <pre><code>curl -X POST https://md2pdf.studio/api/save \\
   -H "Content-Type: text/plain" \\
-  --data-binary "# Hello\\n\\nThis is a shared document."</code></pre>
+  --data-binary "# Public release notes"</code></pre>
         <p>Response:</p>
 <pre><code>{
   "id": "aB3xY9zK",
   "editKey": "…",
   "url": "https://md2pdf.studio/s/aB3xY9zK",
-  "key": "…"   // AES-256-GCM key (server-encrypted docs)
+  "key": "…"   // AES-256-GCM key generated server-side after reading your plaintext
 }</code></pre>
 
         <h3>PUT /api/update/:id</h3>
-        <p>Update a previously-saved document. Requires the <code>X-Edit-Key</code> header.</p>
+        <p>Path 1 (E2EE): reuse the same key, generate a fresh IV, send ciphertext. Do <strong>not</strong> send <code>X-Enc-Key</code>.</p>
+<pre><code>curl -X PUT https://md2pdf.studio/api/update/aB3xY9zK \\
+  -H "Content-Type: text/plain" \\
+  -H "X-Edit-Key: YOUR_EDIT_KEY" \\
+  -H "X-Encrypted: aes-256-gcm" \\
+  --data-binary "&lt;base64 ciphertext&gt;"</code></pre>
+        <p>Path 2 (plaintext):</p>
 <pre><code>curl -X PUT https://md2pdf.studio/api/update/aB3xY9zK \\
   -H "Content-Type: text/plain" \\
   -H "X-Edit-Key: YOUR_EDIT_KEY" \\
@@ -617,7 +654,7 @@ function buildApi() {
   --data-binary "# Hello (updated)"</code></pre>
 
         <h3>GET /s/:id</h3>
-        <p>Load a shared document. HTML response includes dynamic Open Graph tags so link previews show the document's title and description on Slack, WhatsApp, Teams, and Discord.</p>
+        <p>Load a shared document. For Path 2 docs the HTML response includes dynamic Open Graph tags so link previews show the document's title and description. Path 1 docs render a generic "encrypted document" preview because the server cannot read them.</p>
 
         <h2>Rate Limits</h2>
         <div class="info-grid">
@@ -631,7 +668,7 @@ function buildApi() {
             </div>
             <div class="info-card">
                 <div class="label">Retention</div>
-                <div class="value">90 days from last update</div>
+                <div class="value">30 days from creation</div>
             </div>
             <div class="info-card">
                 <div class="label">Auth</div>
@@ -640,7 +677,8 @@ function buildApi() {
         </div>
 
         <h2>Encryption</h2>
-        <p>All documents are encrypted at rest (AES-256-GCM). When you save via the API without client-side encryption, MD2PDF encrypts the document server-side and returns the key in the response. Keep the key to decrypt or re-update the document later.</p>
+        <p>All documents are encrypted at rest with AES-256-GCM. Path 1 is true end-to-end encryption: the key is generated by the caller and never reaches the server. Path 2 is server-side encryption: the server sees plaintext during the request and the key during the response. Pick based on the sensitivity of the content — the web editor uses Path 1 by default.</p>
+        <p>The full URL, including <code>#k=</code>, is a bearer token. Treat it like a password: never paste it in channels that may log or cache URLs.</p>
 
         <h2>For AI Agents</h2>
         <p>See <a href="/ai-skill">/ai-skill</a> for the installable Claude Skill, <a href="/llms-full.txt">/llms-full.txt</a> for the full LLM documentation, and <a href="/skill.md">/skill.md</a> for the skill manifest.</p>
@@ -656,7 +694,7 @@ function buildApi() {
         </details>
         <details>
             <summary>Can I delete a document?</summary>
-            <p>Not currently. Documents expire automatically 90 days after their last update.</p>
+            <p>Yes: <code>DELETE /api/delete/{id}</code> with the <code>X-Edit-Key</code> header. Otherwise documents expire automatically 30 days after creation.</p>
         </details>
 
         ${FOOTER}
@@ -770,7 +808,7 @@ function buildAiSkill() {
         </details>
         <details>
             <summary>Are agent-created documents encrypted?</summary>
-            <p>Yes — all documents are AES-256-GCM encrypted at rest. Keys are returned in the API response and must be kept by the caller.</p>
+            <p>Yes — all documents are AES-256-GCM encrypted at rest. The skill supports two paths: end-to-end encrypted (agent encrypts locally and sends <code>X-Encrypted: aes-256-gcm</code> — server never sees key or plaintext; recommended for non-public content such as logs or internal notes) and server-side (agent sends plaintext and receives a key in the response — only for content that is already public). See <a href="/skill.md">skill.md</a> for worked examples.</p>
         </details>
 
         ${FOOTER}

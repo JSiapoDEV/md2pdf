@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Use — MD2PDF</title>
+    <meta name="description" content="Terms of use and acceptable use policy for md2pdf.studio, including share links, abuse reports and copyright complaints.">
+    <meta name="author" content="JSiapoDev">
+    <link rel="canonical" href="https://md2pdf.studio/terms">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0d1117; color: #e6edf3;
+            line-height: 1.7; -webkit-font-smoothing: antialiased;
+        }
+        a { color: #f0883e; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+        h1 { font-size: 2.2em; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+        .subtitle { color: #8b949e; margin-bottom: 40px; }
+        h2 { font-size: 1.25em; font-weight: 700; margin: 36px 0 12px; color: #f0883e; }
+        p, li { color: #c9d1d9; margin-bottom: 12px; }
+        ul { padding-left: 24px; margin-bottom: 16px; }
+        li { margin-bottom: 6px; }
+        footer {
+            border-top: 1px solid #30363d;
+            margin-top: 48px; padding-top: 24px;
+            font-size: 0.85em; color: #6e7681;
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+        }
+        @media (max-width: 600px) { h1 { font-size: 1.7em; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Terms of Use</h1>
+        <p class="subtitle">Effective October 2, 2026</p>
+
+        <p>These terms apply to the hosted service at md2pdf.studio, including its share links and REST API. md2pdf.studio is operated by JSiapoDev, an individual developer based in Peru. The source code is published separately under the MIT license; these terms cover the service, not the code.</p>
+
+        <h2>1. The service</h2>
+        <p>MD2PDF converts Markdown into PDF, HTML and images in your browser. It is free and offered as is. Features may change, and the service may be suspended or discontinued.</p>
+
+        <h2>2. Your content</h2>
+        <p>What you write is yours. Nothing is uploaded to convert a file. When you create a share link, you give us permission to store and serve that encrypted document for as long as the link exists. You are responsible for what you share and for having the right to share it.</p>
+
+        <h2>3. Share links</h2>
+        <ul>
+            <li>A share link lasts <strong>30 days from creation</strong>. Updating the document does not extend it.</li>
+            <li>You can delete a link at any time from the share dialog, or with <code>DELETE /api/delete/{id}</code> and its edit key.</li>
+            <li>Links can disappear earlier if they break these terms or if the service is discontinued. Keep your own copy; a share link is not a backup.</li>
+            <li>Anyone with the full link (including the <code>#k=</code> part) can read the document. Treat it like a password.</li>
+        </ul>
+
+        <h2>4. Acceptable use</h2>
+        <p>Do not use md2pdf.studio to create or share:</p>
+        <ul>
+            <li>phishing pages, fake login or payment forms, or anything meant to obtain credentials or money by deception;</li>
+            <li>malware, or links to it;</li>
+            <li>child sexual abuse material, or any content that sexualizes minors;</li>
+            <li>content that infringes someone else's copyright or other rights;</li>
+            <li>harassment, threats, or someone else's personal data shared without a lawful reason;</li>
+            <li>spam, or content that is illegal where you or your readers are.</li>
+        </ul>
+        <p>Do not try to get around the rate limits, overload the service, or probe it for vulnerabilities outside the <a href="https://github.com/JSiapoDEV/md2pdf/blob/main/SECURITY.md">responsible disclosure policy</a>.</p>
+
+        <h2>5. Reporting abuse and copyright</h2>
+        <p>Shared documents are encrypted in the author's browser, so we cannot read or scan them. We rely on reports. To report a link, email <a href="mailto:jsiapo.dev@gmail.com?subject=Abuse%20report">jsiapo.dev@gmail.com</a> with the full link and what is wrong with it. For copyright complaints, also include the work you own, your contact details, and a statement that you are the owner or authorized to act for them.</p>
+        <p>We may delete any share link and block its source when we receive a credible report, without notice to its author.</p>
+
+        <h2>6. No warranty, limited liability</h2>
+        <p>The service is provided "as is" and "as available", without warranties of any kind. To the extent the law allows, JSiapoDev is not liable for lost data, expired or deleted links, or indirect damages arising from your use of the service.</p>
+
+        <h2>7. Changes and law</h2>
+        <p>We may update these terms; the date at the top changes when we do. Continuing to use the service means you accept the current version. These terms are governed by the laws of Peru.</p>
+
+        <h2>8. Contact</h2>
+        <p><a href="mailto:jsiapo.dev@gmail.com">jsiapo.dev@gmail.com</a>. See also the <a href="/privacy">Privacy Policy</a>.</p>
+
+        <footer>
+            <span>Built by <a href="https://jsiapo.dev">JSiapoDev</a></span>
+            <span>
+                <a href="/">Open Editor</a> &middot;
+                <a href="/about">About</a> &middot;
+                <a href="/privacy">Privacy</a>
+            </span>
+        </footer>
+    </div>
+</body>
+</html>

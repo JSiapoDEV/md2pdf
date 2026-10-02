@@ -664,6 +664,9 @@ body {
     max-width: 960px;
     margin: 0 auto;
     min-height: 100%;
+    /* Document HTML can't paint outside the preview: position:fixed inside it
+       becomes relative to this box, so a shared doc can't overlay the app UI. */
+    contain: paint;
 }
 
 .preview-empty {
@@ -863,6 +866,9 @@ body {
     transition: color var(--t-fast), transform 80ms ease;
 }
 .footer-links a:hover { color: var(--accent); transform: scale(1.15); }
+.footer-links a[hidden] { display: none; }
+.footer-links .footer-text-link { font-size: 11px; }
+.footer-links .footer-text-link:hover { transform: none; }
 
 .star-link {
     font-size: 11px;
@@ -996,6 +1002,16 @@ body {
     font-size: 11px;
     color: var(--text-3);
 }
+
+.share-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.share-delete-btn { flex-shrink: 0; }
+.share-delete-btn.confirm { color: #e5534b; }
 
 .fork-modal .share-title {
     display: inline-flex;

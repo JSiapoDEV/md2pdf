@@ -101,7 +101,7 @@
           "name": "Is MD2PDF free?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes, MD2PDF is completely free and open-source. It runs entirely in your browser with no server processing, no ads, and no tracking."
+            "text": "Yes, MD2PDF is completely free and open-source. Conversion runs in your browser, with no ads and no account; share links are encrypted before they are uploaded."
           }
         },
         {
@@ -117,7 +117,7 @@
           "name": "Can I share my documents?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document directly in their browser. Links are valid for 90 days."
+            "text": "Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document directly in their browser. Links are valid for 30 days."
           }
         },
         {
@@ -135,13 +135,13 @@
 <body>
     <div class="container">
         <h1>MD<span>2</span>PDF</h1>
-        <p class="subtitle">Free, open-source Markdown to PDF converter. No signup, no server, no tracking. Runs in your browser.</p>
+        <p class="subtitle">Free, open-source Markdown to PDF converter. No signup, no cookies. Converts in your browser.</p>
 
         <a href="/" class="cta">Open the Editor</a>
 
         <h2>What is MD2PDF?</h2>
         <p>MD2PDF is a web tool that converts Markdown (.md) files into beautifully styled PDFs, HTML files, and images. It supports GitHub-Flavored Markdown with syntax highlighting for 180+ programming languages.</p>
-        <p>Everything runs client-side in your browser. Your documents are never sent to a server. The tool is free, open-source, and requires no account or installation.</p>
+        <p>Conversion and export run client-side in your browser; nothing is uploaded to convert a file. Only share links are stored on the server, encrypted in your browser before upload. The tool is free, open-source, and requires no account or installation.</p>
 
         <h2>Features</h2>
         <div class="features-grid">
@@ -167,7 +167,7 @@
             </div>
             <div class="feature-card">
                 <h3>Privacy First</h3>
-                <p>No cookies, no analytics scripts, no server processing. Your data stays in your browser.</p>
+                <p>Converts in your browser. Share links are encrypted before upload, and the key never reaches the server. No cookies, no account.</p>
             </div>
         </div>
 
@@ -211,7 +211,7 @@
             <li><strong>POST /api/save</strong> — Create a document, returns <code>{ id, editKey, url }</code></li>
             <li><strong>PUT /api/update/{id}</strong> — Update an existing document (requires <code>X-Edit-Key</code> header)</li>
         </ul>
-        <p>No authentication required. Max 500 KB per document, 10 requests/minute per IP, links expire 90 days after last update.</p>
+        <p>No authentication required. Max 500 KB per document, 10 requests/minute per IP, links expire 30 days after creation and can be deleted with their edit key.</p>
 
         <h2>Open Source</h2>
         <p>MD2PDF is MIT licensed and fully open-source. Built with pure HTML, CSS, and JavaScript — no framework, no build step.</p>
@@ -222,7 +222,9 @@
             <span>
                 <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a> &middot;
                 <a href="https://www.linkedin.com/in/jsiapo/">LinkedIn</a> &middot;
-                <a href="/">Open Editor</a>
+                <a href="/">Open Editor</a> &middot;
+                <a href="/terms">Terms</a> &middot;
+                <a href="/privacy">Privacy</a>
             </span>
         </footer>
     </div>

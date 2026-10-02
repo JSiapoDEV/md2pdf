@@ -9,3 +9,15 @@ binding = "ASSETS"
 [[kv_namespaces]]
 binding = "DOCS"
 id = "a6b32dd5e339407998e719b0baa1dcb8"
+
+# ── Strict E2EE mode (corporate deployments) ─────────────────────
+# The public md2pdf.studio instance accepts both paths:
+#   - E2EE (client sends ciphertext + X-Encrypted: aes-256-gcm)
+#   - plaintext (server encrypts and returns the key)
+# For a fork running on a corporate Cloudflare account that handles
+# sensitive data (logs, PII, internal docs), set STRICT_E2EE="true"
+# below. Writes without X-Encrypted are rejected with 400, and the
+# legacy /share?doc= unencrypted read path returns 410. Uncomment:
+#
+# [vars]
+# STRICT_E2EE = "true"

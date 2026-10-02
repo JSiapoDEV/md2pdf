@@ -2,12 +2,13 @@
 
 ## Architecture
 
-MD2PDF runs **entirely in the browser**. No data is sent to any server. All processing (markdown parsing, PDF/HTML/image generation, sharing) happens client-side.
+Conversion and export (PDF, HTML, PNG) run **in the browser**. Nothing is uploaded to convert a file.
 
-- Markdown content is stored only in `localStorage` (auto-save)
-- Shared URLs contain compressed content in the URL hash (`#`), which is never sent to a server
-- No analytics, no tracking, no cookies
-- All CDN dependencies are loaded from `cdnjs.cloudflare.com`
+- Drafts are stored only in the browser's `localStorage` (auto-save).
+- **Share links** are the only server-side storage. The app encrypts the document in the browser with AES-256-GCM and uploads ciphertext to Cloudflare KV. The key lives only in the link's `#k=` fragment, which browsers never send to the server.
+- The REST API also accepts plaintext (path 2). In that case the server sees the content during the request, encrypts it, and does not keep the key. Use the end-to-end path for anything private.
+- Share links expire 30 days after creation and can be deleted with their edit key (`DELETE /api/delete/{id}`).
+- No cookies and no accounts.
 
 ## Reporting a Vulnerability
 
@@ -22,11 +23,12 @@ If you discover a security vulnerability, please report it responsibly:
 
 ## Scope
 
-Since MD2PDF is a client-side application with no backend, the main security concerns are:
+The main security concerns are:
 
-- **XSS via markdown input** — `marked.js` handles sanitization
+- **XSS via markdown input** — marked's output is sanitized with DOMPurify (no scripts, forms, frames or `<style>`), Mermaid runs with `securityLevel: 'strict'`, and every page is served with a Content Security Policy
+- **Shared documents** — rendered on this origin, so they go through the same sanitizer; `/s/` pages are `noindex`
 - **Custom CSS injection** — Scoped to the preview element only
-- **CDN integrity** — Dependencies loaded from trusted CDNs
+- **CDN integrity** — Third-party libraries load from cdnjs and jsDelivr; DOMPurify is self-hosted
 
 ## Supported Versions
 

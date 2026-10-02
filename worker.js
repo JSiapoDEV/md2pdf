@@ -159,6 +159,69 @@ async function checkRateLimit(ip, env) {
     return true; // allowed
 }
 
+// --- Document lifetime ---
+// New documents live a fixed 30 days from creation; updates do not extend it.
+// Documents created before this rule carry no `expiresAt` in their metadata and
+// keep the terms they were created under (90 days, reset on every update).
+
+var FREE_TTL_MS = 86400 * 1000 * 30;
+var LEGACY_TTL_SECONDS = 86400 * 90;
+
+function expiryOptions(metadata) {
+    if (metadata && metadata.expiresAt) {
+        return { expiration: Math.floor(metadata.expiresAt / 1000) };
+    }
+    return { expirationTtl: LEGACY_TTL_SECONDS };
+}
+
+function expiresAtOf(metadata) {
+    return metadata && metadata.expiresAt ? metadata.expiresAt : Date.now() + LEGACY_TTL_SECONDS * 1000;
+}
+
+// IDs come from generateId(): 8 base62 characters. Anything else never reaches KV.
+var DOC_ID_RE = /^[A-Za-z0-9]{8}$/;
+
+// --- Security headers ---
+// Static pages get the same policy from public/_headers — keep both in sync.
+
+var CSP = [
+    "default-src 'self'",
+    "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com",
+    "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' https://cdnjs.cloudflare.com https://cloudflareinsights.com",
+    "frame-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+].join('; ');
+
+function htmlHeaders(noindex) {
+    var h = {
+        'content-type': 'text/html;charset=UTF-8',
+        'content-security-policy': CSP,
+        'x-content-type-options': 'nosniff',
+        'referrer-policy': 'strict-origin-when-cross-origin',
+        'permissions-policy': 'camera=(), microphone=(), geolocation=()',
+    };
+    // Shared documents are private by default: keep them out of search results.
+    if (noindex) h['x-robots-tag'] = 'noindex, nofollow, noarchive';
+    return h;
+}
+
+function jsonResponse(body, status) {
+    return new Response(JSON.stringify(body), {
+        status: status || 200,
+        headers: {
+            'content-type': 'application/json',
+            'access-control-allow-origin': '*',
+            'x-content-type-options': 'nosniff',
+        },
+    });
+}
+
 // --- Helpers ---
 
 function generateId() {
@@ -176,8 +239,18 @@ function generateEditKey() {
 
 // ── Server-side E2EE (AES-256-GCM) ──────────────────
 
+// String.fromCharCode.apply() throws on large arrays (documents over ~100 KB
+// failed with a 500), so encode in chunks.
+function bytesToBase64(bytes) {
+    var binary = '';
+    for (var i = 0; i < bytes.length; i += 0x8000) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    }
+    return btoa(binary);
+}
+
 function toBase64url(buf) {
-    return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)))
+    return bytesToBase64(new Uint8Array(buf))
         .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
@@ -197,7 +270,7 @@ async function serverEncrypt(plaintext) {
     var combined = new Uint8Array(iv.length + ciphertext.byteLength);
     combined.set(iv);
     combined.set(new Uint8Array(ciphertext), iv.length);
-    var encData = btoa(String.fromCharCode.apply(null, combined));
+    var encData = bytesToBase64(combined);
     // Export key as base64url
     var rawKey = await crypto.subtle.exportKey('raw', key);
     var encKey = toBase64url(rawKey);
@@ -213,7 +286,7 @@ async function serverReencrypt(plaintext, encKeyB64) {
     var combined = new Uint8Array(iv.length + ciphertext.byteLength);
     combined.set(iv);
     combined.set(new Uint8Array(ciphertext), iv.length);
-    return btoa(String.fromCharCode.apply(null, combined));
+    return bytesToBase64(combined);
 }
 
 function injectContent(html, content, meta) {
@@ -246,6 +319,9 @@ async function getIndexHtml(env, request) {
 export default {
     async fetch(request, env) {
         var url = new URL(request.url);
+        // Strict mode: reject plaintext writes and disable the legacy unencrypted
+        // read path. Enable per deployment with wrangler var STRICT_E2EE="true".
+        var strictE2EE = env.STRICT_E2EE === 'true';
 
         // --- POST /api/save — save markdown to KV, return short URL ---
         if (url.pathname === '/api/save' && request.method === 'POST') {
@@ -280,6 +356,16 @@ export default {
                 var editKey = generateEditKey();
                 var clientEncrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
 
+                if (strictE2EE && !clientEncrypted) {
+                    return new Response(JSON.stringify({
+                        error: 'This deployment requires end-to-end encryption. Encrypt with AES-256-GCM locally and send header `X-Encrypted: aes-256-gcm`. See https://md2pdf.studio/skill.md for worked examples.',
+                        code: 'e2ee_required',
+                    }), {
+                        status: 400,
+                        headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
+                    });
+                }
+
                 var storedBody, encKey;
 
                 if (clientEncrypted) {
@@ -293,15 +379,15 @@ export default {
                     encKey = enc.encKey;
                 }
 
-                await env.DOCS.put(id, storedBody, {
-                    expirationTtl: 86400 * 90,
-                    metadata: { editKey: editKey, created: Date.now(), encrypted: true },
-                });
+                var created = Date.now();
+                var saveMeta = { editKey: editKey, created: created, expiresAt: created + FREE_TTL_MS, encrypted: true };
+                await env.DOCS.put(id, storedBody, Object.assign({ metadata: saveMeta }, expiryOptions(saveMeta)));
 
                 var responseBody = {
                     id: id,
                     editKey: editKey,
                     url: url.origin + '/s/' + id,
+                    expiresAt: new Date(saveMeta.expiresAt).toISOString(),
                 };
                 if (encKey) responseBody.key = encKey;
 
@@ -323,6 +409,7 @@ export default {
         if (url.pathname.startsWith('/api/update/') && request.method === 'PUT') {
             try {
                 var updateId = url.pathname.slice(12);
+                if (!DOC_ID_RE.test(updateId)) return jsonResponse({ error: 'Document not found' }, 404);
                 var updateBody = await request.text();
                 var editKeyHeader = request.headers.get('x-edit-key');
 
@@ -357,6 +444,27 @@ export default {
                 var encKeyHeader = request.headers.get('x-enc-key');
                 var updatedBody;
 
+                if (strictE2EE && !clientEncrypted) {
+                    return new Response(JSON.stringify({
+                        error: 'This deployment requires end-to-end encryption. Send X-Encrypted: aes-256-gcm with locally-encrypted ciphertext (do not send X-Enc-Key). See https://md2pdf.studio/skill.md.',
+                        code: 'e2ee_required',
+                    }), {
+                        status: 400,
+                        headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
+                    });
+                }
+                if (strictE2EE && encKeyHeader) {
+                    // Fail loud: the key must never cross the wire in strict mode,
+                    // even if accompanied by X-Encrypted — it may leak to proxy/CDN logs.
+                    return new Response(JSON.stringify({
+                        error: 'X-Enc-Key must not be sent on this deployment. The encryption key must stay client-side.',
+                        code: 'key_leak_blocked',
+                    }), {
+                        status: 400,
+                        headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
+                    });
+                }
+
                 if (clientEncrypted) {
                     // Client already encrypted
                     updatedBody = updateBody;
@@ -371,12 +479,13 @@ export default {
                 }
 
                 var updatedMeta = Object.assign({}, existing.metadata, { encrypted: true });
-                await env.DOCS.put(updateId, updatedBody, {
-                    expirationTtl: 86400 * 90,
-                    metadata: updatedMeta,
-                });
+                await env.DOCS.put(updateId, updatedBody, Object.assign({ metadata: updatedMeta }, expiryOptions(updatedMeta)));
 
-                var updateResponse = { id: updateId, url: url.origin + '/s/' + updateId };
+                var updateResponse = {
+                    id: updateId,
+                    url: url.origin + '/s/' + updateId,
+                    expiresAt: new Date(expiresAtOf(updatedMeta)).toISOString(),
+                };
                 if (encKeyHeader && !clientEncrypted) updateResponse.key = encKeyHeader;
 
                 return new Response(JSON.stringify(updateResponse), {
@@ -389,12 +498,33 @@ export default {
             }
         }
 
+        // --- DELETE /api/delete/:id — remove a document (requires its editKey) ---
+        if (url.pathname.startsWith('/api/delete/') && request.method === 'DELETE') {
+            try {
+                var deleteId = url.pathname.slice(12);
+                if (!DOC_ID_RE.test(deleteId)) return jsonResponse({ error: 'Document not found' }, 404);
+
+                var target = await env.DOCS.getWithMetadata(deleteId);
+                if (!target.value) return jsonResponse({ error: 'Document not found' }, 404);
+
+                var deleteKey = target.metadata && target.metadata.editKey;
+                if (!deleteKey || deleteKey !== request.headers.get('x-edit-key')) {
+                    return jsonResponse({ error: 'Unauthorized' }, 403);
+                }
+
+                await env.DOCS.delete(deleteId);
+                return jsonResponse({ id: deleteId, deleted: true });
+            } catch (e) {
+                return jsonResponse({ error: 'Delete failed' }, 500);
+            }
+        }
+
         // --- CORS preflight for /api/* ---
         if (url.pathname.startsWith('/api/') && request.method === 'OPTIONS') {
             return new Response(null, {
                 headers: {
                     'access-control-allow-origin': '*',
-                    'access-control-allow-methods': 'POST, PUT, OPTIONS',
+                    'access-control-allow-methods': 'POST, PUT, DELETE, OPTIONS',
                     'access-control-allow-headers': 'Content-Type, X-Edit-Key, X-Encrypted, X-Enc-Key',
                 },
             });
@@ -404,12 +534,12 @@ export default {
         if (url.pathname.startsWith('/s/') && url.pathname.length > 3) {
             try {
                 var id = url.pathname.slice(3);
-                var result = await env.DOCS.getWithMetadata(id);
+                var result = DOC_ID_RE.test(id) ? await env.DOCS.getWithMetadata(id) : { value: null };
 
                 if (!result.value) {
                     return new Response('Document not found or expired.', {
                         status: 404,
-                        headers: { 'content-type': 'text/plain' },
+                        headers: { 'content-type': 'text/plain', 'x-robots-tag': 'noindex' },
                     });
                 }
 
@@ -431,7 +561,7 @@ export default {
                 html = injectContent(html, content, meta);
 
                 return new Response(html, {
-                    headers: { 'content-type': 'text/html;charset=UTF-8' },
+                    headers: htmlHeaders(true),
                 });
             } catch (e) {
                 return new Response('Error loading document.', {
@@ -444,6 +574,12 @@ export default {
         // --- GET /share?doc= — legacy LZ-string compressed sharing ---
         var docParam = url.searchParams.get('doc');
         if (url.pathname === '/share' && docParam) {
+            if (strictE2EE) {
+                return new Response('Legacy unencrypted share links are disabled on this deployment.', {
+                    status: 410,
+                    headers: { 'content-type': 'text/plain' },
+                });
+            }
             try {
                 var lzContent = decompressFromEncodedURIComponent(docParam);
 
@@ -453,7 +589,7 @@ export default {
                     lzHtml = injectContent(lzHtml, lzContent, lzMeta);
 
                     return new Response(lzHtml, {
-                        headers: { 'content-type': 'text/html;charset=UTF-8' },
+                        headers: htmlHeaders(true),
                     });
                 }
             } catch (e) {
