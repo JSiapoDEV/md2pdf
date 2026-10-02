@@ -55,6 +55,7 @@
     let renderTimer     = null;
     let saveTimer       = null;
     let isSharedView    = false;
+    let currentDocId    = null;   // see startNewDoc()
 
     // ── i18n ─────────────────────────────────────────
 
@@ -75,6 +76,10 @@
             deleteLink: 'Delete link', deleteConfirm: 'Click again to delete',
             linkDeleted: 'Link deleted', deleteFailed: 'Could not delete the link',
             reportAbuse: 'Report abuse', terms: 'Terms', privacy: 'Privacy',
+            shareLinkTitle: 'Share link', updateLink: 'Update link with current content',
+            yourLinks: 'Your other links on this browser ({n})', expiresShort: 'expires {date}',
+            linkExpiredNew: 'The previous link had expired. Creating a new one.',
+            tooManyShares: 'Too many shares in a minute. Try again shortly.',
             copy: 'Copy', copied: 'Copied!',
             download: 'Download',
             tabSkill: 'Skill', tabApi: 'API',
@@ -123,6 +128,10 @@
             deleteLink: 'Borrar enlace', deleteConfirm: 'Clic otra vez para borrar',
             linkDeleted: 'Enlace borrado', deleteFailed: 'No se pudo borrar el enlace',
             reportAbuse: 'Reportar abuso', terms: 'Términos', privacy: 'Privacidad',
+            shareLinkTitle: 'Enlace para compartir', updateLink: 'Actualizar el enlace con el contenido actual',
+            yourLinks: 'Tus otros enlaces en este navegador ({n})', expiresShort: 'vence el {date}',
+            linkExpiredNew: 'El enlace anterior venció. Creando uno nuevo.',
+            tooManyShares: 'Demasiados enlaces en un minuto. Intenta en un momento.',
             copy: 'Copiar', copied: 'Copiado!',
             download: 'Descargar',
             tabSkill: 'Skill', tabApi: 'API',
@@ -220,6 +229,7 @@ Follow those instructions exactly.
         $('#privacyLink').textContent = t('privacy');
         shareCopyBtn.textContent = t('copy');
         shareDeleteBtn.textContent = t('deleteLink');
+        shareUpdateBtn.textContent = t('updateLink');
 
         // Fork (editable copy) modal
         $('#forkModalTitle').textContent = t('readOnlyTitle');
@@ -286,7 +296,7 @@ Follow those instructions exactly.
             { title: t('apiCreate'), code: 'Path 1 — End-to-end encrypted (recommended for any non-public content)\n\n  1. Generate a 256-bit key and a 12-byte IV.\n  2. Encrypt markdown with AES-256-GCM.\n  3. Send base64(IV ‖ ciphertext ‖ tag) as the body.\n\nPOST https://md2pdf.studio/api/save\nContent-Type: text/plain\nX-Encrypted: aes-256-gcm\n\n<base64 ciphertext>\n\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3"\n}\n\nBuild the share link yourself: {url}#k={your base64url key}\nThe server never sees the key.\n\n---\n\nPath 2 — Server-side encryption (legacy, public content only)\n\nPOST https://md2pdf.studio/api/save\nContent-Type: text/plain\n\n# Your markdown here\n\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3",\n  "key": "xY9kL2m..."\n}\n\nShareable link: {url}#k={key}\nThe server sees the plaintext during this request.' },
             { title: t('apiUpdate'), code: 'Path 1 — Update an end-to-end encrypted document\n\nReuse the same key; generate a fresh IV. Do NOT send X-Enc-Key.\n\nPUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\nX-Encrypted: aes-256-gcm\n\n<base64 ciphertext>\n\nResponse 200:\n{ "id": "BrOrr0N3", "url": "https://md2pdf.studio/s/BrOrr0N3" }\n\n---\n\nPath 2 — Update a server-side encrypted document\n\nPUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\nX-Enc-Key: {key}\n\n# Updated markdown\n\nResponse 403: { "error": "Unauthorized" }\nResponse 404: { "error": "Document not found" }' },
             { title: t('apiCurl'), code: '# Path 1 — End-to-end encrypted (Python example)\npython3 <<\'PY\'\nimport os, json, base64, urllib.request\nfrom cryptography.hazmat.primitives.ciphers.aead import AESGCM\n\nmarkdown = "# Hello World\\n\\nThis is my first document."\n\nkey = AESGCM.generate_key(bit_length=256)\niv  = os.urandom(12)\nct  = AESGCM(key).encrypt(iv, markdown.encode(), None)\nbody = base64.b64encode(iv + ct).decode()\nkey_b64url = base64.urlsafe_b64encode(key).rstrip(b"=").decode()\n\nreq = urllib.request.Request(\n    "https://md2pdf.studio/api/save",\n    data=body.encode(),\n    headers={"Content-Type": "text/plain", "X-Encrypted": "aes-256-gcm"},\n    method="POST",\n)\ndata = json.loads(urllib.request.urlopen(req).read())\nprint(f"{data[\'url\']}#k={key_b64url}")\nPY\n\n# Path 2 — Plaintext (server sees content)\ncurl -X POST https://md2pdf.studio/api/save \\\n  -H "Content-Type: text/plain" \\\n  -d "# Public release notes"\n# Response includes "key"; share link is {url}#k={key}\n\n# Update (path 2)\ncurl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \\\n  -H "Content-Type: text/plain" \\\n  -H "X-Edit-Key: your-edit-key" \\\n  -H "X-Enc-Key: xY9kL2m..." \\\n  -d "# Updated content"' },
-            { title: t('apiLimits'), code: 'Max document size: 500 KB (body size, ciphertext included)\nRate limit: 10 requests/minute per IP\nExpiration: 30 days after creation (updates do not extend it)\nDelete: DELETE /api/delete/{id} with X-Edit-Key\nEncryption at rest: AES-256-GCM (every document)\nE2EE path: X-Encrypted: aes-256-gcm — server never sees key or plaintext\nResponse: 429 Too Many Requests' },
+            { title: t('apiLimits'), code: 'Max document size: 500 KB of Markdown (UTF-8)\nRate limit: 10 writes/minute per IP (save, update, delete)\nExpiration: 30 days after creation (updates do not extend it)\nDelete: DELETE /api/delete/{id} with X-Edit-Key\nEncryption at rest: AES-256-GCM (every document)\nE2EE path: X-Encrypted: aes-256-gcm — server never sees key or plaintext\nResponse: 429 Too Many Requests' },
         ];
 
         sections.forEach(function (s) {
@@ -1333,6 +1343,24 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         RETURN_DOM_FRAGMENT: true,
     };
 
+    let purifyHooksAdded = false;
+
+    function addPurifyHooks() {
+        if (purifyHooksAdded) return;
+        purifyHooksAdded = true;
+        // The app's own element ids, taken before any document is rendered.
+        const appIds = new Set(Array.from(document.querySelectorAll('[id]'), el => el.id));
+        DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
+            if (data.attrName !== 'id') return;
+            // A document must never shadow the app's elements (#shareHint, ...).
+            if (appIds.has(data.attrValue)) { data.keepAttr = false; return; }
+            // SANITIZE_DOM drops ids named like document properties ("links",
+            // "title"...), which breaks the TOC. Heading slugs can't clobber
+            // document, so keep them.
+            if (/^H[1-6]$/.test(node.nodeName) && /^[a-z0-9_-]+$/.test(data.attrValue)) data.forceKeepAttr = true;
+        });
+    }
+
     function sanitizeMarkdownHTML(html) {
         if (typeof DOMPurify === 'undefined') {
             // Never render unsanitized HTML: fall back to plain text.
@@ -1340,6 +1368,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             pre.textContent = html;
             return pre;
         }
+        addPurifyHooks();
         const frag = DOMPurify.sanitize(html, PURIFY_CONFIG);
         frag.querySelectorAll('input').forEach(el => {
             if ((el.getAttribute('type') || '').toLowerCase() !== 'checkbox') { el.remove(); return; }
@@ -1375,46 +1404,51 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         updateCounter();
     }
 
+    // Replaces each [TOC] paragraph with a list of the H2–H6 headings. Works on
+    // DOM nodes only: re-parsing the preview's serialized HTML would turn markup
+    // hidden in attribute values back into live elements.
     function injectTOC() {
-        const html = preview.innerHTML;
-        if (!html.includes(TOC_PLACEHOLDER)) return;
+        const placeholderRe = new RegExp('^' + TOC_PLACEHOLDER + '(?::([\\s\\S]*))?$');
+        const paragraphs = Array.from(preview.querySelectorAll('p'))
+            .filter(p => placeholderRe.test(p.textContent.trim()));
+        if (!paragraphs.length) return;
 
         // H2–H6 only — H1 is the document title, not a section
         const headings = preview.querySelectorAll('h2, h3, h4, h5, h6');
 
-        // Match placeholder with optional title: «TOC_PLACEHOLDER»:My Title or just «TOC_PLACEHOLDER»
-        const tocRegex = new RegExp('<p>' + TOC_PLACEHOLDER + '(?::([^<]*))?</p>|' + TOC_PLACEHOLDER + '(?::([^<]*))?', 'g');
+        paragraphs.forEach(p => {
+            if (!headings.length) { p.remove(); return; }
+            const title = (p.textContent.trim().match(placeholderRe)[1] || '').trim();
+            p.replaceWith(buildTOC(headings, title));
+        });
+    }
 
-        if (!headings.length) {
-            preview.innerHTML = html.replace(tocRegex, '');
-            return;
+    function buildTOC(headings, title) {
+        const nav = document.createElement('nav');
+        nav.className = 'md-toc';
+        if (title) {
+            const heading = document.createElement('p');
+            heading.className = 'md-toc-title';
+            heading.textContent = title;
+            nav.appendChild(heading);
         }
-
-        preview.innerHTML = html.replace(tocRegex, function (_, t1, t2) {
-            const title = t1 || t2 || '';
-            let toc = '<nav class="md-toc">';
-            if (title) toc += '<p class="md-toc-title">' + escapeHtmlFull(title) + '</p>';
-            toc += '<ul>';
-            // Headings may come from raw HTML in the document: escape id and text.
-            headings.forEach(h => {
-                const level = parseInt(h.tagName[1]);
-                toc += '<li class="md-toc-h' + level + '"><a href="#' + escapeHtmlFull(h.id) + '">' + escapeHtmlFull(h.textContent) + '</a></li>';
-            });
-            toc += '</ul></nav>';
-            return toc;
-        });
-
-        // Intercept TOC clicks — scroll inside the preview container, not the page
-        preview.querySelectorAll('.md-toc a').forEach(a => {
-            a.addEventListener('click', function (e) {
+        const list = document.createElement('ul');
+        headings.forEach(h => {
+            const item = document.createElement('li');
+            item.className = 'md-toc-h' + h.tagName[1];
+            const link = document.createElement('a');
+            link.href = '#' + h.id;
+            link.textContent = h.textContent;
+            // Scroll inside the preview container, not the page
+            link.addEventListener('click', function (e) {
                 e.preventDefault();
-                const id = this.getAttribute('href').slice(1);
-                const target = document.getElementById(id);
-                if (target) {
-                    previewContainer.scrollTo({ top: target.offsetTop - previewContainer.offsetTop, behavior: 'smooth' });
-                }
+                previewContainer.scrollTo({ top: h.offsetTop - previewContainer.offsetTop, behavior: 'smooth' });
             });
+            item.appendChild(link);
+            list.appendChild(item);
         });
+        nav.appendChild(list);
+        return nav;
     }
 
     // Per-style mermaid theme variables
@@ -1593,6 +1627,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         const tpl = TEMPLATES[key];
         if (tpl === undefined) return;
         editor.value = tpl;
+        startNewDoc();
         currentFileName = key === 'blank' ? 'untitled.md' : `${key}.md`;
         fileNameEl.value = currentFileName;
         render();
@@ -1607,6 +1642,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         const reader = new FileReader();
         reader.onload = (e) => {
             editor.value = e.target.result;
+            startNewDoc();
             currentFileName = file.name;
             fileNameEl.value = file.name;
             render();
@@ -1637,10 +1673,21 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         }, 800);
     }
 
+    // Each draft has its own id. Share links are tracked per draft, never per
+    // file name, so a new "untitled.md" can't overwrite an earlier link.
+    function startNewDoc() {
+        currentDocId = crypto.randomUUID
+            ? crypto.randomUUID()
+            : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+        localStorage.setItem('md2pdf-doc-id', currentDocId);
+    }
+
     function restoreDraft() {
         const draft = localStorage.getItem('md2pdf-draft');
         if (draft !== null && draft !== '') {
             editor.value = draft;
+            currentDocId = localStorage.getItem('md2pdf-doc-id');
+            if (!currentDocId) startNewDoc();
             currentFileName = localStorage.getItem('md2pdf-filename') || 'untitled.md';
             fileNameEl.value = currentFileName;
             showToast(t('draftRestored'));
@@ -1998,48 +2045,50 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
 
     // ── Share by URL ─────────────────────────────────
 
-    const shareOverlay  = $('#shareOverlay');
-    const shareUrlInput = $('#shareUrlInput');
-    const shareCopyBtn  = $('#shareCopyBtn');
-    const shareCloseBtn = $('#shareCloseBtn');
+    const shareOverlay   = $('#shareOverlay');
+    const shareUrlInput  = $('#shareUrlInput');
+    const shareCopyBtn   = $('#shareCopyBtn');
+    const shareCloseBtn  = $('#shareCloseBtn');
     const shareDeleteBtn = $('#shareDeleteBtn');
+    const shareUpdateBtn = $('#shareUpdateBtn');
+    const shareLinksEl   = $('#shareLinks');
+    const shareLinksList = $('#shareLinksList');
 
-    // What the open share modal refers to: { docKey, expiresAt } for links this
-    // browser created (it holds their editKey); null when viewing someone else's.
-    let shareModalDoc = null;
-    let deleteArmed = null;
+    // Draft whose link the open share modal shows; null when viewing someone
+    // else's document (this browser has no edit key for it).
+    let shareModalDocId = null;
 
-    function updateShareHint() {
-        const hint = $('#shareHint');
-        const expiresAt = shareModalDoc && shareModalDoc.expiresAt;
-        if (expiresAt) {
-            const date = new Date(expiresAt).toLocaleDateString(currentLang, { year: 'numeric', month: 'short', day: 'numeric' });
-            hint.textContent = t('linkExpires').replace('{date}', date);
-        } else {
-            hint.textContent = t('linkHint');
-        }
+    function formatDate(iso) {
+        return new Date(iso).toLocaleDateString(currentLang, { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    function resetDeleteBtn() {
-        clearTimeout(deleteArmed);
-        deleteArmed = null;
-        shareDeleteBtn.classList.remove('confirm');
-        shareDeleteBtn.textContent = t('deleteLink');
+    function updateShareHint() {
+        const entry = shareModalDocId && getShareMap()[shareModalDocId];
+        $('#shareHint').textContent = entry && entry.expiresAt
+            ? t('linkExpires').replace('{date}', formatDate(entry.expiresAt))
+            : t('linkHint');
+    }
+
+    function disarm(btn, label) {
+        if (btn.dataset.armed) clearTimeout(Number(btn.dataset.armed));
+        delete btn.dataset.armed;
+        btn.classList.remove('confirm');
+        btn.textContent = label;
     }
 
     // Two clicks to delete: the first arms the button for 3 seconds.
-    async function deleteShare() {
-        if (!shareModalDoc) return;
-        if (!deleteArmed) {
-            shareDeleteBtn.classList.add('confirm');
-            shareDeleteBtn.textContent = t('deleteConfirm');
-            deleteArmed = setTimeout(resetDeleteBtn, 3000);
-            return;
-        }
-        resetDeleteBtn();
+    function confirmTwice(btn, label, action) {
+        if (btn.dataset.armed) { disarm(btn, label); action(); return; }
+        btn.classList.add('confirm');
+        btn.textContent = t('deleteConfirm');
+        btn.dataset.armed = String(setTimeout(() => disarm(btn, label), 3000));
+    }
+
+    // Deletes a link this browser created. Resolves true once it is gone.
+    async function deleteLink(docId) {
         const shares = getShareMap();
-        const entry = shares[shareModalDoc.docKey];
-        if (!entry) { closeShareModal(); return; }
+        const entry = shares[docId];
+        if (!entry) return true;
         try {
             const res = await fetch('/api/delete/' + entry.id, {
                 method: 'DELETE',
@@ -2047,25 +2096,95 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             });
             // 404 means it already expired: forget it locally too.
             if (res.ok || res.status === 404) {
-                delete shares[shareModalDoc.docKey];
+                delete shares[docId];
                 saveShareMap(shares);
-                closeShareModal();
                 showToast(t('linkDeleted'));
-                return;
+                return true;
             }
         } catch (_) {}
         showToast(t('deleteFailed'));
+        return false;
     }
 
-    function showShareModal(url, doc) {
-        shareModalDoc = doc || null;
-        updateShareHint();
-        resetDeleteBtn();
-        shareDeleteBtn.hidden = !shareModalDoc;
+    function onDeleteClick() {
+        const docId = shareModalDocId;
+        if (!docId) return;
+        confirmTwice(shareDeleteBtn, t('deleteLink'), async () => {
+            if (await deleteLink(docId)) closeShareModal();
+        });
+    }
+
+    // Every link this browser created, so each one can be deleted, not only
+    // the one for the current draft.
+    function renderShareLinks() {
+        const shares = getShareMap();
+        const now = Date.now();
+        let pruned = false;
+        shareLinksList.replaceChildren();
+        Object.keys(shares).forEach(docId => {
+            const entry = shares[docId];
+            // Expired links are already gone from the server.
+            if (!entry || typeof entry.id !== 'string' || (entry.expiresAt && Date.parse(entry.expiresAt) <= now)) {
+                delete shares[docId];
+                pruned = true;
+                return;
+            }
+            if (docId === shareModalDocId) return;
+
+            const item = document.createElement('li');
+            const name = document.createElement('span');
+            name.className = 'share-link-name';
+            // Links saved before per-draft ids were keyed by file name.
+            name.textContent = entry.name || docId;
+            const when = document.createElement('span');
+            when.className = 'share-link-meta';
+            when.textContent = entry.expiresAt ? t('expiresShort').replace('{date}', formatDate(entry.expiresAt)) : '';
+            item.append(name, when);
+
+            if (typeof entry.encKey === 'string') {
+                const copy = document.createElement('button');
+                copy.type = 'button';
+                copy.className = 'btn btn-ghost btn-sm';
+                copy.textContent = t('copy');
+                copy.addEventListener('click', () => {
+                    navigator.clipboard.writeText(shareUrlOf(entry)).then(() => {
+                        copy.textContent = t('copied');
+                        setTimeout(() => { copy.textContent = t('copy'); }, 2000);
+                    }).catch(() => {});
+                });
+                item.append(copy);
+            }
+
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'btn btn-ghost btn-sm share-delete-btn';
+            del.textContent = t('deleteLink');
+            del.addEventListener('click', () => confirmTwice(del, t('deleteLink'), async () => {
+                if (await deleteLink(docId)) renderShareLinks();
+            }));
+            item.append(del);
+            shareLinksList.append(item);
+        });
+        if (pruned) saveShareMap(shares);
+        shareLinksEl.hidden = !shareLinksList.children.length;
+        $('#shareLinksTitle').textContent = t('yourLinks').replace('{n}', shareLinksList.children.length);
+    }
+
+    async function showShareModal(url, docId, fresh) {
+        shareModalDocId = docId || null;
+        $('#shareModalTitle').textContent = fresh ? t('linkCreated') : t('shareLinkTitle');
         shareUrlInput.value = url;
+        disarm(shareDeleteBtn, t('deleteLink'));
+        shareDeleteBtn.hidden = !shareModalDocId;
+        shareUpdateBtn.hidden = true;
+        updateShareHint();
+        renderShareLinks();
         shareOverlay.classList.add('active');
         shareUrlInput.focus();
         shareUrlInput.select();
+        // Offer an update only when the draft changed since it was shared.
+        const entry = shareModalDocId && getShareMap()[shareModalDocId];
+        if (entry && entry.hash !== await contentHash(editor.value)) shareUpdateBtn.hidden = false;
     }
 
     function closeShareModal() {
@@ -2073,18 +2192,19 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
     }
 
     function copyShareUrl() {
-        navigator.clipboard.writeText(shareUrlInput.value).then(() => {
-            shareCopyBtn.textContent = 'Copied!';
-            setTimeout(() => { shareCopyBtn.textContent = 'Copy'; }, 2000);
-        }).catch(() => {
+        const done = () => {
+            shareCopyBtn.textContent = t('copied');
+            setTimeout(() => { shareCopyBtn.textContent = t('copy'); }, 2000);
+        };
+        navigator.clipboard.writeText(shareUrlInput.value).then(done).catch(() => {
             shareUrlInput.select();
             document.execCommand('copy');
-            shareCopyBtn.textContent = 'Copied!';
-            setTimeout(() => { shareCopyBtn.textContent = 'Copy'; }, 2000);
+            done();
         });
     }
 
-    // Share state: map of content hash → { id, editKey }
+    // Share state: draft id → { id, editKey, encKey, expiresAt, hash, name }.
+    // Entries saved before draft ids existed are keyed by file name.
     function getShareMap() {
         try { return JSON.parse(localStorage.getItem('md2pdf-shares') || '{}'); } catch (_) { return {}; }
     }
@@ -2155,56 +2275,49 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         return new TextDecoder().decode(decrypted);
     }
 
+    function isUsableShare(entry) {
+        return !!entry && typeof entry.id === 'string' && typeof entry.editKey === 'string' &&
+            typeof entry.encKey === 'string' && (!entry.expiresAt || Date.parse(entry.expiresAt) > Date.now());
+    }
+
+    function shareUrlOf(entry) {
+        return location.origin + '/s/' + entry.id + '#k=' + entry.encKey;
+    }
+
+    function shareErrorToast(status) {
+        showToast(status === 413 ? t('docTooLarge') : status === 429 ? t('tooManyShares') : t('shareFailed'));
+    }
+
+    // Opens the share dialog for the current draft and returns its link, or
+    // null if sharing failed. A draft that was already shared shows its
+    // existing link: nothing is uploaded until the user picks "Update link".
     async function shareByURL() {
         const text = editor.value;
-        if (!text.trim()) { showToast(t('nothingToShare')); return; }
+        if (!text.trim()) { showToast(t('nothingToShare')); return null; }
 
-        // Viewing someone else's share: surface the current URL instead of
-        // creating a new /s/:id. The viewer doesn't own an editKey anyway.
+        // Viewing someone else's share: surface the current URL. The viewer
+        // has no edit key, so there is nothing to create or update.
         if (isSharedView) {
-            showShareModal(location.href);
-            return;
+            showShareModal(location.href, null, false);
+            return location.href;
         }
 
+        const entry = getShareMap()[currentDocId];
+        if (isUsableShare(entry)) {
+            const url = shareUrlOf(entry);
+            showShareModal(url, currentDocId, false);
+            return url;
+        }
+        return createShare(text);
+    }
+
+    // Encrypts the draft in the browser and uploads only ciphertext. The key
+    // stays local and goes in the link's #k= fragment.
+    async function createShare(text) {
         exportOverlay.classList.add('active');
-
         try {
-            const shares = getShareMap();
-            const docKey = currentFileName;
-
-            // Update path: reuse the locally-stored key, encrypt in the browser,
-            // send ciphertext only. The server never sees plaintext or the key.
-            if (shares[docKey]) {
-                const { id, editKey, encKey } = shares[docKey];
-                const cryptoKey = await e2eeImportKeyFull(encKey);
-                const ciphertext = await e2eeEncrypt(text, cryptoKey);
-
-                const updateRes = await fetch('/api/update/' + id, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'text/plain',
-                        'X-Edit-Key': editKey,
-                        'X-Encrypted': 'aes-256-gcm',
-                    },
-                    body: ciphertext,
-                });
-
-                if (updateRes.ok) {
-                    const data = await updateRes.json();
-                    exportOverlay.classList.remove('active');
-                    if (data.expiresAt) { shares[docKey].expiresAt = data.expiresAt; saveShareMap(shares); }
-                    showShareModal(data.url + '#k=' + encKey, { docKey, expiresAt: shares[docKey].expiresAt });
-                    showToast(t('linkUpdated'));
-                    return;
-                }
-                // If update fails (404 expired, 403 wrong key), create new below
-            }
-
-            // Create path: generate the AES-256-GCM key in the browser, encrypt,
-            // send ciphertext. Key stays local and is placed in the URL fragment.
             const { key: cryptoKey, b64: encKey } = await e2eeGenerateKey();
             const ciphertext = await e2eeEncrypt(text, cryptoKey);
-
             const res = await fetch('/api/save', {
                 method: 'POST',
                 headers: {
@@ -2213,26 +2326,76 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                 },
                 body: ciphertext,
             });
+            if (!res.ok) { shareErrorToast(res.status); return null; }
 
+            const data = await res.json();
+            const shares = getShareMap();
+            shares[currentDocId] = {
+                id: data.id, editKey: data.editKey, encKey, expiresAt: data.expiresAt,
+                hash: await contentHash(text), name: currentFileName,
+            };
+            saveShareMap(shares);
+            const url = shareUrlOf(shares[currentDocId]);
             exportOverlay.classList.remove('active');
+            showShareModal(url, currentDocId, true);
+            return url;
+        } catch (_) {
+            showToast(t('shareFailed'));
+            return null;
+        } finally {
+            exportOverlay.classList.remove('active');
+        }
+    }
 
-            if (res.ok) {
-                const data = await res.json();
-                shares[docKey] = { id: data.id, editKey: data.editKey, encKey, expiresAt: data.expiresAt };
+    // Replaces the content behind the open link with the current draft.
+    async function updateShare() {
+        const docId = shareModalDocId;
+        const shares = getShareMap();
+        const entry = shares[docId];
+        if (!docId || docId !== currentDocId || !isUsableShare(entry)) return;
+
+        const text = editor.value;
+        exportOverlay.classList.add('active');
+        try {
+            const cryptoKey = await e2eeImportKeyFull(entry.encKey);
+            const ciphertext = await e2eeEncrypt(text, cryptoKey);
+            const res = await fetch('/api/update/' + entry.id, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'text/plain',
+                    'X-Edit-Key': entry.editKey,
+                    'X-Encrypted': 'aes-256-gcm',
+                },
+                body: ciphertext,
+            });
+            if (res.status === 404) {
+                // Expired or deleted elsewhere: start a new link instead.
+                delete shares[docId];
                 saveShareMap(shares);
-                showShareModal(data.url + '#k=' + encKey, { docKey, expiresAt: data.expiresAt });
+                exportOverlay.classList.remove('active');
+                showToast(t('linkExpiredNew'));
+                await createShare(text);
                 return;
             }
+            if (!res.ok) { shareErrorToast(res.status); return; }
 
-            showToast(t('shareFailed'));
+            const data = await res.json();
+            entry.expiresAt = data.expiresAt || entry.expiresAt;
+            entry.hash = await contentHash(text);
+            saveShareMap(shares);
+            shareUpdateBtn.hidden = true;
+            updateShareHint();
+            showToast(t('linkUpdated'));
         } catch (_) {
-            exportOverlay.classList.remove('active');
             showToast(t('shareFailed'));
+        } finally {
+            exportOverlay.classList.remove('active');
         }
     }
 
     function loadSharedContent(content) {
         editor.value = content;
+        currentDocId = null;   // not this browser's draft; forking starts a new one
         currentFileName = 'shared.md';
         fileNameEl.value = currentFileName;
         showToast(t('sharedDocLoaded'));
@@ -2278,6 +2441,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         if (lockBtn) lockBtn.hidden = true;
         const report = document.getElementById('reportAbuseLink');
         if (report) report.hidden = true;
+        startNewDoc();
         // Drop the /s/:id URL so F5 no longer re-fetches the original over local edits.
         history.replaceState(null, '', '/');
         // Switch toolbar back to split view.
@@ -2540,7 +2704,8 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         // Share modal
         shareCopyBtn.addEventListener('click', copyShareUrl);
         shareCloseBtn.addEventListener('click', closeShareModal);
-        shareDeleteBtn.addEventListener('click', deleteShare);
+        shareDeleteBtn.addEventListener('click', onDeleteClick);
+        shareUpdateBtn.addEventListener('click', updateShare);
         shareOverlay.addEventListener('click', (e) => { if (e.target === shareOverlay) closeShareModal(); });
 
         // Fork (read-only → editable copy) modal
@@ -2664,7 +2829,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                 const fd = new FormData(wmcpConvert);
                 const md = fd.get('markdown');
                 const style = fd.get('style');
-                if (md) { editor.value = md; currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
+                if (md) { editor.value = md; startNewDoc(); currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
                 if (style && STYLES[style]) applyStyle(style);
                 render();
                 saveDraft();
@@ -2697,7 +2862,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                     style:    { type: 'string', description: 'Visual style (default: notion)' },
                 },
                 execute: async ({ markdown, style }) => {
-                    if (markdown) { editor.value = markdown; currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
+                    if (markdown) { editor.value = markdown; startNewDoc(); currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
                     if (style && STYLES[style]) applyStyle(style);
                     render();
                     saveDraft();
@@ -2719,11 +2884,11 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             });
 
             navigator.modelContext.registerTool('share-document', {
-                description: 'Generate a shareable URL for the current document and copy to clipboard.',
+                description: 'Create a share link for the current document. It is encrypted in the browser, uploaded to md2pdf.studio and kept for 30 days; the key stays in the link (#k=). Returns the link.',
                 params: {},
                 execute: async () => {
-                    shareByURL();
-                    return { success: true, message: 'Share link copied to clipboard' };
+                    const url = await shareByURL();
+                    return url ? { success: true, url } : { success: false, message: 'Sharing failed' };
                 },
             });
 
@@ -2792,6 +2957,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         if (!loaded) {
             if (!restoreDraft()) {
                 editor.value = SAMPLE;
+                startNewDoc();
             }
         }
 

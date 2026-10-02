@@ -20,7 +20,7 @@ API version: 1.0 (stable)
 - Custom CSS injection for full styling control
 - Export to PDF (continuous single page), HTML (standalone with inlined styles), and PNG image
 - **End-to-end encryption** — all shared documents encrypted with AES-256-GCM
-- Share documents via URL with rich OG previews for WhatsApp, Teams, and Slack
+- Share documents via encrypted URL; link previews show a generic card because the server cannot read the content
 - Dark and light theme toggle
 - Drag-and-drop .md file upload
 - 5 built-in document templates
@@ -193,8 +193,8 @@ curl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \
 
 ### Limits
 
-- **Max document size:** 500 KB
-- **Rate limit:** 10 requests per minute per IP
+- **Max document size:** 500 KB of Markdown (UTF-8) on either path
+- **Rate limit:** 10 writes per minute per IP (save, update and delete combined)
 - **Link expiration:** 30 days after creation (updates do not extend it)
 
 ### Error Responses
@@ -202,10 +202,14 @@ curl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \
 | Status | Meaning | Body |
 |--------|---------|------|
 | 400 | Empty content | `{"error": "Empty content"}` |
+| 400 | `X-Encrypted` sent but the body is not base64 ciphertext | `{"error": "...", "code": "not_ciphertext"}` |
+| 400 | Malformed `X-Enc-Key` on update | `{"error": "Invalid X-Enc-Key", "code": "invalid_key"}` |
 | 413 | Document too large (>500KB) | `{"error": "Document too large (max 500KB)"}` |
-| 429 | Rate limit exceeded | `{"error": "Too many requests. Try again in a minute."}` |
-| 403 | Invalid edit key on update | `{"error": "Unauthorized"}` |
-| 404 | Document not found or expired | `{"error": "Document not found"}` |
+| 429 | Rate limit exceeded (`Retry-After: 60`) | `{"error": "Too many requests. Try again in a minute."}` |
+| 403 | Invalid edit key on update or delete | `{"error": "Unauthorized"}` |
+| 404 | Document not found, expired, or within its last minute | `{"error": "Document not found"}` |
+
+Every API response, including errors, carries `Access-Control-Allow-Origin: *`.
 
 ---
 
@@ -281,8 +285,8 @@ notion (default), github, minimal, academic, corporate, latex, dracula, newspape
 
 ## Limits
 
-- Max document size: 500 KB
-- Rate limit: 10 req/min per IP
+- Max document size: 500 KB of Markdown (UTF-8)
+- Rate limit: 10 writes/min per IP
 - Expiration: 30 days after creation (updates do not extend it)
 - No authentication required
 ```

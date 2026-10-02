@@ -654,7 +654,7 @@ print(f"{data['url']}#k={key_b64url}")</code></pre>
   --data-binary "# Hello (updated)"</code></pre>
 
         <h3>GET /s/:id</h3>
-        <p>Load a shared document. For Path 2 docs the HTML response includes dynamic Open Graph tags so link previews show the document's title and description. Path 1 docs render a generic "encrypted document" preview because the server cannot read them.</p>
+        <p>Load a shared document. Every link gets the same generic preview card in chat apps: the server does not read document titles or content.</p>
 
         <h2>Rate Limits</h2>
         <div class="info-grid">

@@ -169,8 +169,9 @@ The recipient can choose from 11 styles when viewing the document:
 
 ## Limits
 
-- **Max document size:** 500 KB (measured on the request body, ciphertext included)
-- **Rate limit:** 10 requests/minute per IP
+- **Max document size:** 500 KB of Markdown (UTF-8) on either path; for path 1 the limit applies to the plaintext, not the base64 ciphertext
+- **Rate limit:** 10 writes/minute per IP (save, update and delete combined); a 429 carries `Retry-After: 60`
+- **Path 1 body check:** with `X-Encrypted` the body must be base64 of `IV ‖ ciphertext ‖ tag`, otherwise 400 `not_ciphertext`
 - **Expiration:** 30 days after creation; updates do not extend it. Save/update responses include `expiresAt`.
 
 ## Deleting a document
@@ -194,5 +195,5 @@ Returns `{ "id": "...", "deleted": true }`. Offer this when the user asks to uns
 - No authentication required.
 - AES-256-GCM encryption at rest for every document, regardless of path.
 - Hash fragments are not sent to the server; path-1 keys stay entirely client-side.
-- Shared links show rich previews in WhatsApp, Teams, and Slack for path-2 docs. Path-1 docs show a generic "encrypted document" preview because the server cannot read them.
+- Every shared link shows the same generic preview card in WhatsApp, Teams and Slack; the server does not read document titles or content.
 - The full URL — including `#k=` — is a bearer token. Never paste it in channels that may log or cache URLs (browser history on shared machines, URL-based analytics, open chat transcripts indexed by third parties).

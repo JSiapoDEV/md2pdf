@@ -1,6 +1,5 @@
-// Cloudflare Worker — Dynamic OG meta tags for shared documents
-// When ?doc= is present, decompress the markdown and inject title + description
-// so WhatsApp, Teams, and Slack show a real preview of the content.
+// Cloudflare Worker for md2pdf.studio: the share-link API (save, update, delete),
+// shared-document pages (/s/:id and legacy /share?doc=), and static assets.
 
 // --- LZ-String decompressFromEncodedURIComponent (inlined) ---
 
@@ -112,51 +111,30 @@ function escapeHtml(s) {
     return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function extractMeta(markdown) {
-    var lines = markdown.split('\n');
-    var title = 'MD2PDF — Shared Document';
-    var desc = '';
+// --- Rate Limiting ---
+// Writes (save, update, delete) go through the Workers rate-limiting binding,
+// which costs no KV writes. The old KV counter spent one of the Free plan's
+// 1,000 daily KV writes per request. Without the binding (a fork that removed
+// it from wrangler.toml), writes are not rate limited.
 
-    for (var i = 0; i < lines.length; i++) {
-        var line = lines[i].trim();
-        if (line.startsWith('# ')) {
-            title = line.replace(/^#+\s*/, '').replace(/\*\*/g, '');
-            break;
-        }
-    }
-
-    var descLines = [];
-    for (var j = 0; j < lines.length; j++) {
-        var l = lines[j].trim();
-        if (!l) continue;
-        if (l.startsWith('#')) continue;
-        if (l.startsWith('```')) continue;
-        if (l.startsWith('|') && l.endsWith('|')) continue;
-        if (l.startsWith('---') || l.startsWith('***')) continue;
-        var clean = l.replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-        descLines.push(clean);
-        if (descLines.join(' ').length > 200) break;
-    }
-    desc = descLines.join(' ').substring(0, 200);
-    if (desc.length === 200) desc += '...';
-
-    return { title: title, description: desc };
+function ipv6Prefix64(ip) {
+    var halves = ip.split('::');
+    var head = halves[0] ? halves[0].split(':') : [];
+    var tail = halves.length > 1 && halves[1] ? halves[1].split(':') : [];
+    var zeros = new Array(Math.max(0, 8 - head.length - tail.length)).fill('0');
+    return head.concat(zeros, tail).slice(0, 4).join(':') + '::/64';
 }
 
-// --- Rate Limiting ---
+function clientKey(request) {
+    var ip = request.headers.get('cf-connecting-ip') || 'unknown';
+    // An IPv6 client usually controls a whole /64: count the prefix, not the address.
+    return ip.indexOf(':') !== -1 && ip.indexOf('.') === -1 ? ipv6Prefix64(ip) : ip;
+}
 
-var RATE_LIMIT = 10;       // max saves
-var RATE_WINDOW = 60;      // per 60 seconds
-
-async function checkRateLimit(ip, env) {
-    var key = 'rl:' + ip;
-    var data = await env.DOCS.get(key);
-    var count = data ? parseInt(data, 10) : 0;
-
-    if (count >= RATE_LIMIT) return false; // blocked
-
-    await env.DOCS.put(key, String(count + 1), { expirationTtl: RATE_WINDOW });
-    return true; // allowed
+async function allowWrite(request, env) {
+    if (!env.WRITE_LIMITER) return true;
+    var outcome = await env.WRITE_LIMITER.limit({ key: clientKey(request) });
+    return outcome.success;
 }
 
 // --- Document lifetime ---
@@ -186,11 +164,18 @@ var DOC_ID_RE = /^[A-Za-z0-9]{8}$/;
 
 var CSP = [
     "default-src 'self'",
-    "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com",
-    "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com data:",
+    // Exact library paths, not whole CDNs: anyone can publish a script to
+    // jsDelivr (any npm package) or find a gadget among cdnjs's libraries.
+    "script-src 'self' https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/ https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/ " +
+        "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/ https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/ " +
+        "https://cdn.jsdelivr.net/npm/mermaid@11/ https://static.cloudflareinsights.com",
+    // Custom CSS may @import any HTTPS stylesheet or font; inline styles are
+    // already allowed, so this adds no script capability.
+    "style-src 'self' 'unsafe-inline' https:",
+    "font-src 'self' https: data:",
     "img-src 'self' data: blob: https:",
-    "connect-src 'self' https://cdnjs.cloudflare.com https://cloudflareinsights.com",
+    "media-src 'self' data: blob: https:",
+    "connect-src 'self' https://cdnjs.cloudflare.com https://cloudflareinsights.com https://api.github.com",
     "frame-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'none'",
@@ -211,15 +196,55 @@ function htmlHeaders(noindex) {
     return h;
 }
 
-function jsonResponse(body, status) {
+function jsonResponse(body, status, extraHeaders) {
     return new Response(JSON.stringify(body), {
         status: status || 200,
-        headers: {
+        headers: Object.assign({
             'content-type': 'application/json',
             'access-control-allow-origin': '*',
             'x-content-type-options': 'nosniff',
-        },
+        }, extraHeaders || {}),
     });
+}
+
+function tooManyRequests() {
+    return jsonResponse({ error: 'Too many requests. Try again in a minute.' }, 429, {
+        'retry-after': '60',
+        'access-control-expose-headers': 'retry-after',
+    });
+}
+
+// --- Write validation ---
+// The limit applies to the Markdown, not to its encoding: 500 KB of UTF-8, or
+// the base64 of that much AES-GCM output (12-byte IV + ciphertext + 16-byte tag).
+
+var MAX_DOC_BYTES = 512000;
+var MAX_CIPHERTEXT_CHARS = Math.ceil((MAX_DOC_BYTES + 28) / 3) * 4;
+var BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
+
+// Returns an error response, or null when the body can be stored.
+function checkWriteBody(body, clientEncrypted, strictE2EE) {
+    if (!body || !body.trim()) return jsonResponse({ error: 'Empty content' }, 400);
+    if (strictE2EE && !clientEncrypted) {
+        return jsonResponse({
+            error: 'This deployment requires end-to-end encryption. Encrypt with AES-256-GCM locally and send header `X-Encrypted: aes-256-gcm` (never X-Enc-Key). See https://md2pdf.studio/skill.md for worked examples.',
+            code: 'e2ee_required',
+        }, 400);
+    }
+    if (clientEncrypted) {
+        if (body.length > MAX_CIPHERTEXT_CHARS) return jsonResponse({ error: 'Document too large (max 500KB)' }, 413);
+        // X-Encrypted promises ciphertext. Plain Markdown sent with it would be
+        // stored in clear while everything says it is encrypted.
+        if (body.length < 40 || body.length % 4 !== 0 || !BASE64_RE.test(body)) {
+            return jsonResponse({
+                error: 'With X-Encrypted the body must be base64(IV ‖ AES-256-GCM ciphertext ‖ tag).',
+                code: 'not_ciphertext',
+            }, 400);
+        }
+    } else if (new TextEncoder().encode(body).length > MAX_DOC_BYTES) {
+        return jsonResponse({ error: 'Document too large (max 500KB)' }, 413);
+    }
+    return null;
 }
 
 // --- Helpers ---
@@ -289,21 +314,28 @@ async function serverReencrypt(plaintext, encKeyB64) {
     return bytesToBase64(combined);
 }
 
-function injectContent(html, content, meta) {
-    var safeTitle = escapeHtml(meta.title);
-    var safeDesc = escapeHtml(meta.description);
+// The server never reads shared documents, so every link gets the same preview.
+var SHARED_META = {
+    title: 'Shared document — MD2PDF',
+    description: 'Open the full link to view this document in MD2PDF.',
+};
+
+function injectContent(html, content) {
+    var safeTitle = escapeHtml(SHARED_META.title);
+    var safeDesc = escapeHtml(SHARED_META.description);
     // Escape for safe JSON inside <script>
     var safeJson = JSON.stringify(content).replace(/</g, '\\u003c');
 
-    // Inject markdown content as embedded data
-    html = html.replace('</head>', '<script id="shared-content" type="application/json">' + safeJson + '</script>\n</head>');
-
-    // Replace OG tags
-    html = html.replace(/<meta property="og:title"[^>]*>/, '<meta property="og:title" content="' + safeTitle + '">');
-    html = html.replace(/<meta property="og:description"[^>]*>/, '<meta property="og:description" content="' + safeDesc + '">');
-    html = html.replace(/<meta name="twitter:title"[^>]*>/, '<meta name="twitter:title" content="' + safeTitle + '">');
-    html = html.replace(/<meta name="twitter:description"[^>]*>/, '<meta name="twitter:description" content="' + safeDesc + '">');
-    html = html.replace(/<meta name="description"[^>]*>/, '<meta name="description" content="' + safeDesc + '">');
+    // Replacer functions keep the inserted text literal: a string replacement
+    // would expand $&, $' and $` found in the document.
+    html = html.replace('</head>', function () {
+        return '<script id="shared-content" type="application/json">' + safeJson + '</script>\n</head>';
+    });
+    html = html.replace(/<meta property="og:title"[^>]*>/, function () { return '<meta property="og:title" content="' + safeTitle + '">'; });
+    html = html.replace(/<meta property="og:description"[^>]*>/, function () { return '<meta property="og:description" content="' + safeDesc + '">'; });
+    html = html.replace(/<meta name="twitter:title"[^>]*>/, function () { return '<meta name="twitter:title" content="' + safeTitle + '">'; });
+    html = html.replace(/<meta name="twitter:description"[^>]*>/, function () { return '<meta name="twitter:description" content="' + safeDesc + '">'; });
+    html = html.replace(/<meta name="description"[^>]*>/, function () { return '<meta name="description" content="' + safeDesc + '">'; });
 
     return html;
 }
@@ -326,46 +358,14 @@ export default {
         // --- POST /api/save — save markdown to KV, return short URL ---
         if (url.pathname === '/api/save' && request.method === 'POST') {
             try {
-                // Rate limit by IP
-                var ip = request.headers.get('cf-connecting-ip') || 'unknown';
-                var allowed = await checkRateLimit(ip, env);
-                if (!allowed) {
-                    return new Response(JSON.stringify({ error: 'Too many requests. Try again in a minute.' }), {
-                        status: 429,
-                        headers: { 'content-type': 'application/json', 'retry-after': '60' },
-                    });
-                }
-
                 var body = await request.text();
-                if (!body || !body.trim()) {
-                    return new Response(JSON.stringify({ error: 'Empty content' }), {
-                        status: 400,
-                        headers: { 'content-type': 'application/json' },
-                    });
-                }
-
-                // Limit: 500KB max
-                if (body.length > 512000) {
-                    return new Response(JSON.stringify({ error: 'Document too large (max 500KB)' }), {
-                        status: 413,
-                        headers: { 'content-type': 'application/json' },
-                    });
-                }
+                var clientEncrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
+                var invalid = checkWriteBody(body, clientEncrypted, strictE2EE);
+                if (invalid) return invalid;
+                if (!(await allowWrite(request, env))) return tooManyRequests();
 
                 var id = generateId();
                 var editKey = generateEditKey();
-                var clientEncrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
-
-                if (strictE2EE && !clientEncrypted) {
-                    return new Response(JSON.stringify({
-                        error: 'This deployment requires end-to-end encryption. Encrypt with AES-256-GCM locally and send header `X-Encrypted: aes-256-gcm`. See https://md2pdf.studio/skill.md for worked examples.',
-                        code: 'e2ee_required',
-                    }), {
-                        status: 400,
-                        headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
-                    });
-                }
-
                 var storedBody, encKey;
 
                 if (clientEncrypted) {
@@ -390,18 +390,9 @@ export default {
                     expiresAt: new Date(saveMeta.expiresAt).toISOString(),
                 };
                 if (encKey) responseBody.key = encKey;
-
-                return new Response(JSON.stringify(responseBody), {
-                    headers: {
-                        'content-type': 'application/json',
-                        'access-control-allow-origin': '*',
-                    },
-                });
+                return jsonResponse(responseBody);
             } catch (e) {
-                return new Response(JSON.stringify({ error: 'Save failed' }), {
-                    status: 500,
-                    headers: { 'content-type': 'application/json' },
-                });
+                return jsonResponse({ error: 'Save failed' }, 500);
             }
         }
 
@@ -410,75 +401,53 @@ export default {
             try {
                 var updateId = url.pathname.slice(12);
                 if (!DOC_ID_RE.test(updateId)) return jsonResponse({ error: 'Document not found' }, 404);
+
                 var updateBody = await request.text();
-                var editKeyHeader = request.headers.get('x-edit-key');
-
-                if (!updateBody || !updateBody.trim()) {
-                    return new Response(JSON.stringify({ error: 'Empty content' }), {
-                        status: 400, headers: { 'content-type': 'application/json' },
-                    });
-                }
-
-                if (updateBody.length > 512000) {
-                    return new Response(JSON.stringify({ error: 'Document too large' }), {
-                        status: 413, headers: { 'content-type': 'application/json' },
-                    });
-                }
-
-                // Verify editKey
-                var existing = await env.DOCS.getWithMetadata(updateId);
-                if (!existing.value) {
-                    return new Response(JSON.stringify({ error: 'Document not found' }), {
-                        status: 404, headers: { 'content-type': 'application/json' },
-                    });
-                }
-
-                var storedKey = existing.metadata?.editKey;
-                if (!storedKey || storedKey !== editKeyHeader) {
-                    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-                        status: 403, headers: { 'content-type': 'application/json' },
-                    });
-                }
-
                 var clientEncrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
                 var encKeyHeader = request.headers.get('x-enc-key');
-                var updatedBody;
-
-                if (strictE2EE && !clientEncrypted) {
-                    return new Response(JSON.stringify({
-                        error: 'This deployment requires end-to-end encryption. Send X-Encrypted: aes-256-gcm with locally-encrypted ciphertext (do not send X-Enc-Key). See https://md2pdf.studio/skill.md.',
-                        code: 'e2ee_required',
-                    }), {
-                        status: 400,
-                        headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
-                    });
-                }
+                var invalid = checkWriteBody(updateBody, clientEncrypted, strictE2EE);
+                if (invalid) return invalid;
                 if (strictE2EE && encKeyHeader) {
                     // Fail loud: the key must never cross the wire in strict mode,
                     // even if accompanied by X-Encrypted — it may leak to proxy/CDN logs.
-                    return new Response(JSON.stringify({
+                    return jsonResponse({
                         error: 'X-Enc-Key must not be sent on this deployment. The encryption key must stay client-side.',
                         code: 'key_leak_blocked',
-                    }), {
-                        status: 400,
-                        headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
-                    });
+                    }, 400);
+                }
+                if (!(await allowWrite(request, env))) return tooManyRequests();
+
+                var existing = await env.DOCS.getWithMetadata(updateId);
+                var existingMeta = existing.metadata || {};
+                // KV rejects expirations less than 60 s away, and an expired key can
+                // still be served for a while: treat both as gone.
+                if (!existing.value || (existingMeta.expiresAt && existingMeta.expiresAt - Date.now() < 61000)) {
+                    return jsonResponse({ error: 'Document not found' }, 404);
+                }
+                if (!existingMeta.editKey || existingMeta.editKey !== request.headers.get('x-edit-key')) {
+                    return jsonResponse({ error: 'Unauthorized' }, 403);
                 }
 
+                var updatedBody;
                 if (clientEncrypted) {
                     // Client already encrypted
                     updatedBody = updateBody;
                 } else if (encKeyHeader) {
                     // API consumer sent the encryption key — re-encrypt server-side
-                    updatedBody = await serverReencrypt(updateBody, encKeyHeader);
+                    try {
+                        updatedBody = await serverReencrypt(updateBody, encKeyHeader);
+                    } catch (e) {
+                        return jsonResponse({ error: 'Invalid X-Enc-Key', code: 'invalid_key' }, 400);
+                    }
                 } else {
-                    // No encryption key provided — encrypt with a new key
+                    // No key provided: encrypt with a new one. Links shared with the
+                    // old #k= stop working; the response carries the new key.
                     var enc = await serverEncrypt(updateBody);
                     updatedBody = enc.encData;
                     encKeyHeader = enc.encKey;
                 }
 
-                var updatedMeta = Object.assign({}, existing.metadata, { encrypted: true });
+                var updatedMeta = Object.assign({}, existingMeta, { encrypted: true });
                 await env.DOCS.put(updateId, updatedBody, Object.assign({ metadata: updatedMeta }, expiryOptions(updatedMeta)));
 
                 var updateResponse = {
@@ -487,14 +456,9 @@ export default {
                     expiresAt: new Date(expiresAtOf(updatedMeta)).toISOString(),
                 };
                 if (encKeyHeader && !clientEncrypted) updateResponse.key = encKeyHeader;
-
-                return new Response(JSON.stringify(updateResponse), {
-                    headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' },
-                });
+                return jsonResponse(updateResponse);
             } catch (e) {
-                return new Response(JSON.stringify({ error: 'Update failed' }), {
-                    status: 500, headers: { 'content-type': 'application/json' },
-                });
+                return jsonResponse({ error: 'Update failed' }, 500);
             }
         }
 
@@ -503,6 +467,7 @@ export default {
             try {
                 var deleteId = url.pathname.slice(12);
                 if (!DOC_ID_RE.test(deleteId)) return jsonResponse({ error: 'Document not found' }, 404);
+                if (!(await allowWrite(request, env))) return tooManyRequests();
 
                 var target = await env.DOCS.getWithMetadata(deleteId);
                 if (!target.value) return jsonResponse({ error: 'Document not found' }, 404);
@@ -543,22 +508,8 @@ export default {
                     });
                 }
 
-                var content = result.value;
-                var isEncrypted = result.metadata && result.metadata.encrypted;
-                var meta;
-
-                if (isEncrypted) {
-                    // Encrypted doc — use generic OG tags (server cannot read content)
-                    meta = {
-                        title: 'Encrypted Document — MD2PDF',
-                        description: 'This document is end-to-end encrypted. Open the full link to decrypt and view it.',
-                    };
-                } else {
-                    meta = extractMeta(content);
-                }
-
                 var html = await getIndexHtml(env, request);
-                html = injectContent(html, content, meta);
+                html = injectContent(html, result.value);
 
                 return new Response(html, {
                     headers: htmlHeaders(true),
@@ -584,9 +535,8 @@ export default {
                 var lzContent = decompressFromEncodedURIComponent(docParam);
 
                 if (lzContent) {
-                    var lzMeta = extractMeta(lzContent);
                     var lzHtml = await getIndexHtml(env, request);
-                    lzHtml = injectContent(lzHtml, lzContent, lzMeta);
+                    lzHtml = injectContent(lzHtml, lzContent);
 
                     return new Response(lzHtml, {
                         headers: htmlHeaders(true),

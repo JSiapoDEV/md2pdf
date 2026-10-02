@@ -10,6 +10,16 @@ binding = "ASSETS"
 binding = "DOCS"
 id = "a6b32dd5e339407998e719b0baa1dcb8"
 
+# Rate limit for writes (save, update, delete), per client IP or IPv6 /64.
+# Unlike the old KV counter, it spends none of KV's daily write quota.
+[[ratelimits]]
+name = "WRITE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 10
+  period = 60
+
 # ── Strict E2EE mode (corporate deployments) ─────────────────────
 # The public md2pdf.studio instance accepts both paths:
 #   - E2EE (client sends ciphertext + X-Encrypted: aes-256-gcm)

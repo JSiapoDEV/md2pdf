@@ -344,7 +344,7 @@
                 <li><strong>Document templates</strong> — Start with pre-built CV, Report, Documentation, Changelog, or Meeting Notes</li>
                 <li><strong>Dark and light mode</strong> — Toggle your preferred theme</li>
                 <li><strong>End-to-end encryption</strong> — All shared documents encrypted with AES-256-GCM. The decryption key stays in the URL hash and never reaches the server</li>
-                <li><strong>Share by URL</strong> — Generate shareable links with preview support for Teams, Slack, and WhatsApp</li>
+                <li><strong>Share by URL</strong> — Generate encrypted links that open the styled document in any browser</li>
                 <li><strong>Find and replace</strong> — Search and replace text in the editor with Ctrl+F / Ctrl+H</li>
                 <li><strong>Auto-save</strong> — Your work is saved automatically to your browser</li>
                 <li><strong>AI agent ready</strong> — Public REST API for programmatic access by Claude, ChatGPT, Gemini, and other AI agents</li>
@@ -386,7 +386,7 @@
 
             <details><summary>Is my data safe?</summary><p>Conversion runs in your browser: your Markdown is never uploaded to convert it. Only if you create a share link is the document uploaded, and it is encrypted in your browser first, so the server stores ciphertext it cannot read. No cookies, no account.</p></details>
 
-            <details><summary>Can I share my documents?</summary><p>Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document in their browser. Links show rich previews in WhatsApp, Teams, and Slack.</p></details>
+            <details><summary>Can I share my documents?</summary><p>Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document in their browser. Link previews in chat apps show a generic card, because the server cannot read the document.</p></details>
 
             <details><summary>Does it work offline?</summary><p>The editor and preview work offline after the initial page load. Export and sharing features require an internet connection.</p></details>
 
@@ -398,7 +398,7 @@
 
             <details><summary>Can I generate a table of contents?</summary><p>Yes. Write [TOC] on its own line anywhere in your document. MD2PDF will auto-generate a linked table of contents from all your headings.</p></details>
 
-            <details><summary>Are shared documents encrypted?</summary><p>Yes. All shared documents are encrypted with AES-256-GCM. When you share from the app, the document is encrypted in your browser and the key lives only in the link's #k= fragment, which browsers never send to the server. Only people with the full link can read it.</p></details>
+            <details><summary>Are shared documents encrypted?</summary><p>Yes, every stored document is encrypted with AES-256-GCM. When you share from the app, it is encrypted in your browser and the key lives only in the link's #k= fragment, which browsers never send to the server. Documents sent to the API in plain text are encrypted by the server, which sees them during that request and does not keep the key. Only people with the full link can read a document.</p></details>
 
             <details><summary>What programming languages are supported for syntax highlighting?</summary><p>MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, Bash, TypeScript, and many more. Every code block has a copy button.</p></details>
 
@@ -451,13 +451,13 @@
         {"@type": "Question", "name": "Does it support GitHub-Flavored Markdown?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF fully supports GFM including tables, task lists, strikethrough, code blocks with syntax highlighting, and more."}},
         {"@type": "Question", "name": "Can I customize the PDF styling?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Choose from 11 built-in styles or inject your own custom CSS. Your CSS is applied to both the preview and the exported document."}},
         {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Conversion runs in your browser: your Markdown is never uploaded to convert it. Only if you create a share link is the document uploaded, and it is encrypted in your browser first, so the server stores ciphertext it cannot read. No cookies, no account."}},
-        {"@type": "Question", "name": "Can I share my documents?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document. Links show rich previews in WhatsApp, Teams, and Slack."}},
+        {"@type": "Question", "name": "Can I share my documents?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document in their browser. Link previews in chat apps show a generic card, because the server cannot read the document."}},
         {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "The editor and preview work offline after the initial page load. Export and sharing features require an internet connection."}},
         {"@type": "Question", "name": "What export formats are available?", "acceptedAnswer": {"@type": "Answer", "text": "PDF (continuous single page), HTML (standalone file with inlined styles), and PNG image. All formats preserve your chosen style."}},
         {"@type": "Question", "name": "Can AI agents use MD2PDF?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF provides an installable Skill in the Claude Skills format plus a public REST API, so Claude, Custom GPTs, Gemini, and other agents can create, update, and share styled documents on the user's behalf."}},
         {"@type": "Question", "name": "Does MD2PDF support Mermaid diagrams?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Write Mermaid code inside a ```mermaid code block and it renders automatically as an SVG diagram. Supported types include flowcharts, sequence diagrams, Gantt charts, pie charts, class diagrams, and more."}},
         {"@type": "Question", "name": "Can I generate a table of contents?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Write [TOC] on its own line anywhere in your document. MD2PDF will auto-generate a linked table of contents from all your headings."}},
-        {"@type": "Question", "name": "Are shared documents encrypted?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. All shared documents are encrypted with AES-256-GCM. The decryption key lives in the URL hash fragment and is never sent to the server."}},
+        {"@type": "Question", "name": "Are shared documents encrypted?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, every stored document is encrypted with AES-256-GCM. When you share from the app, it is encrypted in your browser and the key lives only in the link's #k= fragment, which browsers never send to the server. Documents sent to the API in plain text are encrypted by the server, which sees them during that request and does not keep the key. Only people with the full link can read a document."}},
         {"@type": "Question", "name": "What programming languages are supported?", "acceptedAnswer": {"@type": "Answer", "text": "MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, and more. Every code block has a copy button."}},
         {"@type": "Question", "name": "How long do shared links last?", "acceptedAnswer": {"@type": "Answer", "text": "Shared links last 30 days from when they are created. You can update the content without changing the URL, and delete the link at any time from the share dialog."}},
         {"@type": "Question", "name": "Is MD2PDF open source?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF is MIT licensed and available on GitHub. Contributions are welcome."}}
@@ -507,10 +507,15 @@
                 <input type="text" id="shareUrlInput" class="share-url-input" readonly>
                 <button class="btn btn-primary btn-sm" id="shareCopyBtn">Copy</button>
             </div>
+            <button class="btn btn-primary btn-sm share-update-btn" id="shareUpdateBtn" type="button" hidden>Update link with current content</button>
             <div class="share-footer">
                 <p class="share-hint" id="shareHint">Anyone with the full link can read this document.</p>
                 <button class="btn btn-ghost btn-sm share-delete-btn" id="shareDeleteBtn" type="button" hidden>Delete link</button>
             </div>
+            <details class="share-links" id="shareLinks" hidden>
+                <summary id="shareLinksTitle">Your other links on this browser</summary>
+                <ul id="shareLinksList"></ul>
+            </details>
         </div>
     </div>
 
@@ -579,12 +584,12 @@
 
     <form id="wmcpShare"
           toolname="share-document"
-          tooldescription="Generate a shareable URL for the current markdown document. The URL contains the compressed content — no server needed. Copy and share the returned link."
+          tooldescription="Create a share link for the current markdown document. The document is encrypted in the browser and uploaded to md2pdf.studio, where it is kept for 30 days; the decryption key stays in the link after #k=. The link opens in the share dialog."
           toolautosubmit="true"
           hidden>
         <input type="hidden" name="action" value="share"
                toolparamtitle="Action"
-               toolparamdescription="Always 'share'. Generates a link to the clipboard.">
+               toolparamdescription="Always 'share'. Opens the share dialog with the link.">
     </form>
 
     <!-- Fallback for crawlers / no-JS -->

@@ -51,24 +51,30 @@
         <ul>
             <li>Converting a file happens in your browser. Your Markdown is not uploaded to convert it.</li>
             <li>A document reaches our server only when you create a share link, and the app encrypts it in your browser first. The key stays in the link's <code>#k=</code> fragment, which browsers do not send to servers, so we cannot read it.</li>
+            <li>You never have to give us personal data. Sharing is optional: if you don't share, no document is sent anywhere.</li>
             <li>No accounts, no cookies, no advertising.</li>
         </ul>
 
         <h2>What is processed, and for how long</h2>
         <table>
             <tr><th>Data</th><th>Where</th><th>Why</th><th>Kept</th></tr>
-            <tr><td>Your drafts, settings, and the keys of links you created</td><td>Your browser's local storage only</td><td>Auto-save and editing your own links</td><td>Until you clear your browser data</td></tr>
-            <tr><td>Share links: the encrypted document, its ID, an edit key, creation and expiry dates</td><td>Cloudflare KV</td><td>Serving the link</td><td>30 days from creation, or until you delete it (links created before October 2026: up to 90 days)</td></tr>
+            <tr><td>Your drafts, settings, and the links you created with their keys</td><td>Your browser's local storage only</td><td>Auto-save and editing your own links</td><td>Until you clear your browser data</td></tr>
+            <tr><td>Share links: the encrypted document, its ID, an edit key, creation and expiry dates</td><td>Cloudflare KV</td><td>Serving the link</td><td>30 days from creation, or until you delete it. Links created before October 2, 2026: 90 days after their last update</td></tr>
             <tr><td>Documents sent to the REST API in plain text (API "path 2")</td><td>Our server, in memory during the request</td><td>Encrypting them before storage</td><td>Only stored encrypted, as above. We do not keep the key</td></tr>
-            <tr><td>Your IP address</td><td>Cloudflare KV, as a rate-limit counter</td><td>Preventing abuse of share links</td><td>60 seconds</td></tr>
+            <tr><td>Your IP address, when you create, update or delete a link</td><td>Cloudflare's rate limiter, in memory</td><td>Preventing abuse of share links</td><td>About 60 seconds; we do not store it</td></tr>
+            <tr><td>Older <code>/share?doc=…</code> links, which carry the whole document unencrypted in the address</td><td>Our server, in memory, each time such a link is opened</td><td>Showing the document</td><td>Not stored. The link itself never expires and cannot be deleted</td></tr>
             <tr><td>Standard request data (IP address, browser, page, referring site)</td><td>Cloudflare, which hosts the site</td><td>Delivering and protecting the site; we see aggregate counts such as visits per page and country</td><td>Under Cloudflare's retention policies; we keep no logs of our own</td></tr>
         </table>
         <p>We also use Cloudflare Web Analytics, which counts page views without cookies and without identifying you.</p>
 
-        <h2>Third parties</h2>
+        <h2>Data banks</h2>
+        <p>Two data banks: <strong>shared links</strong> (encrypted documents, link IDs, edit keys, creation and expiry dates) and <strong>abuse control</strong> (IP addresses, for about 60 seconds). Your IP address is processed because delivering a website requires it.</p>
+
+        <h2>Processors and international transfers</h2>
         <ul>
-            <li><strong>Cloudflare, Inc.</strong> hosts the site, the API and the share-link storage, on servers in many countries, including the United States.</li>
-            <li>Open-source libraries load from <strong>cdnjs</strong> (Cloudflare) and <strong>jsDelivr</strong>, and fonts from <strong>Google Fonts</strong>. Those providers receive your IP address when your browser downloads the files.</li>
+            <li><strong>Cloudflare, Inc.</strong> (101 Townsend St, San Francisco, CA 94107, USA) hosts the site, the API and the share-link storage, and processes this data on our behalf on servers in many countries, including the United States, under its Data Processing Addendum.</li>
+            <li>Your browser also downloads open-source libraries from <strong>cdnjs</strong> (Cloudflare) and <strong>jsDelivr</strong>, and fonts from <strong>Google Fonts</strong>. Those providers receive your IP address under their own policies.</li>
+            <li>Images, fonts or stylesheets that a document or your custom CSS links to load from their own sites, which receive the reader's IP address.</li>
         </ul>
         <p>We do not sell or share data with anyone else, and we do not use it for advertising.</p>
 

@@ -1,7 +1,7 @@
 # Security headers for static pages. Pages rendered by worker.js (/s/:id and
 # /share) get the same policy from htmlHeaders() there — keep both in sync.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://cdnjs.cloudflare.com https://cloudflareinsights.com; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/ https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/ https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/ https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/ https://cdn.jsdelivr.net/npm/mermaid@11/ https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https:; font-src 'self' https: data:; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://cdnjs.cloudflare.com https://cloudflareinsights.com https://api.github.com; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
