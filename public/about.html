@@ -141,7 +141,7 @@
 
         <h2>What is MD2PDF?</h2>
         <p>MD2PDF is a web tool that converts Markdown (.md) files into beautifully styled PDFs, HTML files, and images. It supports GitHub-Flavored Markdown with syntax highlighting for 180+ programming languages.</p>
-        <p>Conversion and export run client-side in your browser; nothing is uploaded to convert a file. Only share links are stored on the server, encrypted in your browser before upload. The tool is free, open-source, and requires no account or installation.</p>
+        <p>Conversion and export run client-side in your browser; nothing is uploaded to convert a file. Only share links are stored on the server, always encrypted; links shared from the app are encrypted in your browser before upload. The tool is free, open-source, and requires no account or installation.</p>
 
         <h2>Features</h2>
         <div class="features-grid">
@@ -167,7 +167,7 @@
             </div>
             <div class="feature-card">
                 <h3>Privacy First</h3>
-                <p>Converts in your browser. Share links are encrypted before upload, and the key never reaches the server. No cookies, no account.</p>
+                <p>Converts in your browser. Links shared from the app are encrypted before upload, and their key never reaches the server. No cookies, no account.</p>
             </div>
         </div>
 
@@ -211,7 +211,7 @@
             <li><strong>POST /api/save</strong> — Create a document. With plain text it returns <code>{ id, editKey, url, key, expiresAt }</code>; share <code>{url}#k={key}</code>, which only works with the key</li>
             <li><strong>PUT /api/update/{id}</strong> — Update an existing document (requires <code>X-Edit-Key</code>, plus <code>X-Enc-Key: {key}</code> for plain text so existing links keep working)</li>
         </ul>
-        <p>No authentication required. Max 500 KB per document, 10 requests/minute per IP, links expire 30 days after creation and can be deleted with their edit key.</p>
+        <p>No authentication required. Max 500 KB of Markdown per document, 10 writes (save, update and delete combined) per IP per minute, links expire 30 days after creation and can be deleted with their edit key.</p>
 
         <h2>Open Source</h2>
         <p>MD2PDF is MIT licensed and fully open-source. Built with pure HTML, CSS, and JavaScript — no framework, no build step.</p>

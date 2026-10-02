@@ -222,6 +222,12 @@ var MAX_DOC_BYTES = 512000;
 var MAX_CIPHERTEXT_CHARS = Math.ceil((MAX_DOC_BYTES + 28) / 3) * 4;
 var BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
+// Tools like `base64` and `openssl enc -base64` wrap lines; atob() ignores the
+// whitespace, so accept it and store the compact form.
+function stripBase64Whitespace(body) {
+    return body.replace(/[\t\n\f\r ]+/g, '');
+}
+
 // Returns an error response, or null when the body can be stored.
 function checkWriteBody(body, clientEncrypted, strictE2EE) {
     if (!body || !body.trim()) return jsonResponse({ error: 'Empty content' }, 400);
@@ -360,6 +366,7 @@ export default {
             try {
                 var body = await request.text();
                 var clientEncrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
+                if (clientEncrypted) body = stripBase64Whitespace(body);
                 var invalid = checkWriteBody(body, clientEncrypted, strictE2EE);
                 if (invalid) return invalid;
                 if (!(await allowWrite(request, env))) return tooManyRequests();
@@ -404,6 +411,7 @@ export default {
 
                 var updateBody = await request.text();
                 var clientEncrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
+                if (clientEncrypted) updateBody = stripBase64Whitespace(updateBody);
                 var encKeyHeader = request.headers.get('x-enc-key');
                 var invalid = checkWriteBody(updateBody, clientEncrypted, strictE2EE);
                 if (invalid) return invalid;

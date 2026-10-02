@@ -55,7 +55,7 @@
         "sameAs": ["https://github.com/JSiapoDEV","https://www.linkedin.com/in/jsiapo/"]
       },
       "screenshot": "https://md2pdf.studio/og-image.png",
-      "featureList": ["Convert Markdown to PDF online","Live Markdown preview","GitHub-flavored Markdown (GFM)","Syntax highlighting for 180+ languages","Mermaid diagram rendering (flowcharts, sequence, Gantt, pie charts)","Auto table of contents generation","End-to-end encryption (AES-256-GCM)","PDF export","HTML export","Image export (PNG)","11 visual styles (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel)","Custom CSS injection","Copy button on code blocks","5 document templates","Dark and light theme","Drag and drop .md file upload","Auto-save drafts","Word count and reading time","Split and preview-only view modes","Installable AI Skill (Claude Skills format)","Public REST API for agents","Share by URL with dynamic OG previews"]
+      "featureList": ["Convert Markdown to PDF online","Live Markdown preview","GitHub-flavored Markdown (GFM)","Syntax highlighting for 180+ languages","Mermaid diagram rendering (flowcharts, sequence, Gantt, pie charts)","Auto table of contents generation","End-to-end encryption (AES-256-GCM)","PDF export","HTML export","Image export (PNG)","11 visual styles (Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel)","Custom CSS injection","Copy button on code blocks","5 document templates","Dark and light theme","Drag and drop .md file upload","Auto-save drafts","Word count and reading time","Split and preview-only view modes","Installable AI Skill (Claude Skills format)","Public REST API for agents","Share by encrypted URL"]
     }
     </script>
 
@@ -161,6 +161,10 @@
                         <button class="dropdown-item" id="shareBtn">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                             Share Link
+                        </button>
+                        <button class="dropdown-item" id="myLinksBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                            My Links
                         </button>
                     </div>
                 </div>
@@ -343,7 +347,7 @@
                 <li><strong>Custom CSS</strong> — Inject your own styles for complete control over the output</li>
                 <li><strong>Document templates</strong> — Start with pre-built CV, Report, Documentation, Changelog, or Meeting Notes</li>
                 <li><strong>Dark and light mode</strong> — Toggle your preferred theme</li>
-                <li><strong>End-to-end encryption</strong> — All shared documents encrypted with AES-256-GCM. The decryption key stays in the URL hash and never reaches the server</li>
+                <li><strong>End-to-end encryption</strong> — Links shared from the app are encrypted in your browser with AES-256-GCM; the key stays in the #k= part of the link and never reaches the server</li>
                 <li><strong>Share by URL</strong> — Generate encrypted links that open the styled document in any browser</li>
                 <li><strong>Find and replace</strong> — Search and replace text in the editor with Ctrl+F / Ctrl+H</li>
                 <li><strong>Auto-save</strong> — Your work is saved automatically to your browser</li>
@@ -402,7 +406,7 @@
 
             <details><summary>What programming languages are supported for syntax highlighting?</summary><p>MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, Bash, TypeScript, and many more. Every code block has a copy button.</p></details>
 
-            <details><summary>How long do shared links last?</summary><p>Shared links last 30 days from when they are created. You can update the content without changing the URL, and delete the link at any time from the share dialog.</p></details>
+            <details><summary>How long do shared links last?</summary><p>Shared links last 30 days from when they are created. You can update the content without changing the URL, and delete any of your links at any time from Export > My links. Links created before October 2, 2026 expire 90 days after their last update.</p></details>
 
             <details><summary>Is MD2PDF open source?</summary><p>Yes. MD2PDF is MIT licensed and available on <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a>. Contributions are welcome.</p></details>
         </div>
@@ -459,7 +463,7 @@
         {"@type": "Question", "name": "Can I generate a table of contents?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Write [TOC] on its own line anywhere in your document. MD2PDF will auto-generate a linked table of contents from all your headings."}},
         {"@type": "Question", "name": "Are shared documents encrypted?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, every stored document is encrypted with AES-256-GCM. When you share from the app, it is encrypted in your browser and the key lives only in the link's #k= fragment, which browsers never send to the server. Documents sent to the API in plain text are encrypted by the server, which sees them during that request and does not keep the key. Only people with the full link can read a document."}},
         {"@type": "Question", "name": "What programming languages are supported?", "acceptedAnswer": {"@type": "Answer", "text": "MD2PDF uses highlight.js which supports 180+ programming languages including JavaScript, Python, Go, Rust, Java, SQL, and more. Every code block has a copy button."}},
-        {"@type": "Question", "name": "How long do shared links last?", "acceptedAnswer": {"@type": "Answer", "text": "Shared links last 30 days from when they are created. You can update the content without changing the URL, and delete the link at any time from the share dialog."}},
+        {"@type": "Question", "name": "How long do shared links last?", "acceptedAnswer": {"@type": "Answer", "text": "Shared links last 30 days from when they are created. You can update the content without changing the URL, and delete any of your links at any time from Export > My links. Links created before October 2, 2026 expire 90 days after their last update."}},
         {"@type": "Question", "name": "Is MD2PDF open source?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF is MIT licensed and available on GitHub. Contributions are welcome."}}
       ]
     }
@@ -503,7 +507,7 @@
                 <span class="share-title" id="shareModalTitle">Link created!</span>
                 <button class="find-btn" id="shareCloseBtn" title="Close">&#10005;</button>
             </div>
-            <div class="share-url-row">
+            <div class="share-url-row" id="shareUrlRow">
                 <input type="text" id="shareUrlInput" class="share-url-input" readonly>
                 <button class="btn btn-primary btn-sm" id="shareCopyBtn">Copy</button>
             </div>

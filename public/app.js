@@ -77,6 +77,7 @@
             linkDeleted: 'Link deleted', deleteFailed: 'Could not delete the link',
             reportAbuse: 'Report abuse', terms: 'Terms', privacy: 'Privacy',
             shareLinkTitle: 'Share link', updateLink: 'Update link with current content',
+            myLinks: 'My links', allLinks: 'Links created in this browser ({n})', noLinks: 'No links created in this browser yet.',
             yourLinks: 'Your other links on this browser ({n})', expiresShort: 'expires {date}',
             linkExpiredNew: 'The previous link had expired. Creating a new one.',
             tooManyShares: 'Too many shares in a minute. Try again shortly.',
@@ -129,6 +130,7 @@
             linkDeleted: 'Enlace borrado', deleteFailed: 'No se pudo borrar el enlace',
             reportAbuse: 'Reportar abuso', terms: 'Términos', privacy: 'Privacidad',
             shareLinkTitle: 'Enlace para compartir', updateLink: 'Actualizar el enlace con el contenido actual',
+            myLinks: 'Mis enlaces', allLinks: 'Enlaces creados en este navegador ({n})', noLinks: 'Aún no creaste enlaces en este navegador.',
             yourLinks: 'Tus otros enlaces en este navegador ({n})', expiresShort: 'vence el {date}',
             linkExpiredNew: 'El enlace anterior venció. Creando uno nuevo.',
             tooManyShares: 'Demasiados enlaces en un minuto. Intenta en un momento.',
@@ -196,6 +198,7 @@ Follow those instructions exactly.
         $('#exportHTMLBtn').lastChild.textContent = ' ' + t('exportHtml');
         $('#exportImageBtn').lastChild.textContent = ' ' + t('exportImage');
         $('#shareBtn').lastChild.textContent = ' ' + t('shareLink');
+        $('#myLinksBtn').lastChild.textContent = ' ' + t('myLinks');
 
         // Templates
         document.querySelector('[data-template="blank"]').textContent = t('blankDoc');
@@ -1333,6 +1336,25 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
 
     const TOC_PLACEHOLDER = '\u00ABTOC_PLACEHOLDER\u00BB';
 
+    // Replace [TOC] / [TOC title="..."] lines with a placeholder paragraph before
+    // marked parses the source. Blank lines around it keep it a paragraph of its
+    // own even next to other text; lines inside fenced code are left alone.
+    function markTOC(src) {
+        let fence = null;
+        return src.split('\n').map(line => {
+            const f = line.match(/^ {0,3}(`{3,}|~{3,})/);
+            if (f) {
+                if (!fence) fence = f[1][0];
+                else if (f[1][0] === fence) fence = null;
+                return line;
+            }
+            if (fence) return line;
+            const m = line.match(/^\[toc(?:\s+title="([^"]*)")?\]\s*$/i);
+            if (!m) return line;
+            return '\n' + (m[1] ? TOC_PLACEHOLDER + ':' + m[1] : TOC_PLACEHOLDER) + '\n';
+        }).join('\n');
+    }
+
     // Markdown may carry raw HTML, and shared links render someone else's
     // document on this origin. Everything marked emits goes through DOMPurify.
     // No forms, frames, embeds or <style> (it would restyle the whole app);
@@ -1352,8 +1374,14 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         const appIds = new Set(Array.from(document.querySelectorAll('[id]'), el => el.id));
         DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
             if (data.attrName !== 'id') return;
-            // A document must never shadow the app's elements (#shareHint, ...).
-            if (appIds.has(data.attrValue)) { data.keepAttr = false; return; }
+            // A document must never shadow the app's elements (#preview, ...):
+            // headings get a prefixed id so TOC links still work; others lose it.
+            // (No forceKeepAttr here: it would keep the original value.)
+            if (appIds.has(data.attrValue)) {
+                if (/^H[1-6]$/.test(node.nodeName)) data.attrValue = 'h-' + data.attrValue;
+                else data.keepAttr = false;
+                return;
+            }
             // SANITIZE_DOM drops ids named like document properties ("links",
             // "title"...), which breaks the TOC. Heading slugs can't clobber
             // document, so keep them.
@@ -1388,10 +1416,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         if (!src) {
             preview.innerHTML = '<div class="preview-empty"><p>Start typing to see the preview...</p></div>';
         } else {
-            // Replace [TOC] / [TOC title="..."] with a placeholder before marked parses it
-            const processed = src.replace(/^\[toc(?:\s+title="([^"]*)")?\]$/gim, function (_, title) {
-                return title ? TOC_PLACEHOLDER + ':' + title : TOC_PLACEHOLDER;
-            });
+            const processed = markTOC(src);
             preview.replaceChildren(sanitizeMarkdownHTML(marked.parse(processed)));
             injectTOC();
             preview.querySelectorAll('pre code').forEach(block => {
@@ -1664,13 +1689,26 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     }
 
     // ── localStorage ─────────────────────────────────
+    // The draft is one record { id, text, name }, so its text and its draft id
+    // (which share links are keyed by) are always written and read together,
+    // even with several tabs open.
+
+    const DRAFT_KEY = 'md2pdf-draft-v2';
 
     function saveDraft() {
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
-            localStorage.setItem('md2pdf-draft', editor.value);
-            localStorage.setItem('md2pdf-filename', currentFileName);
+            // A shared document belongs to its author, not to this browser's draft.
+            if (isSharedView) return;
+            if (!currentDocId) startNewDoc();
+            localStorage.setItem(DRAFT_KEY, JSON.stringify({ id: currentDocId, text: editor.value, name: currentFileName }));
+            ['md2pdf-draft', 'md2pdf-filename', 'md2pdf-doc-id'].forEach(k => localStorage.removeItem(k));
         }, 800);
+    }
+
+    // Called on every keystroke; saveDraft() debounces.
+    function scheduleSave() {
+        saveDraft();
     }
 
     // Each draft has its own id. Share links are tracked per draft, never per
@@ -1679,21 +1717,25 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         currentDocId = crypto.randomUUID
             ? crypto.randomUUID()
             : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
-        localStorage.setItem('md2pdf-doc-id', currentDocId);
     }
 
     function restoreDraft() {
-        const draft = localStorage.getItem('md2pdf-draft');
-        if (draft !== null && draft !== '') {
-            editor.value = draft;
-            currentDocId = localStorage.getItem('md2pdf-doc-id');
-            if (!currentDocId) startNewDoc();
-            currentFileName = localStorage.getItem('md2pdf-filename') || 'untitled.md';
-            fileNameEl.value = currentFileName;
-            showToast(t('draftRestored'));
-            return true;
+        let draft = null;
+        try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch (_) {}
+        if (!draft) {
+            // Saved before draft records existed: text and name only. Its links
+            // stay listed under "your other links" rather than being guessed.
+            const text = localStorage.getItem('md2pdf-draft');
+            if (text) draft = { id: null, text, name: localStorage.getItem('md2pdf-filename') };
         }
-        return false;
+        if (!draft || !draft.text) return false;
+        editor.value = draft.text;
+        currentDocId = draft.id || null;
+        if (!currentDocId) startNewDoc();
+        currentFileName = draft.name || 'untitled.md';
+        fileNameEl.value = currentFileName;
+        showToast(t('draftRestored'));
+        return true;
     }
 
     // ── Toast ────────────────────────────────────────
@@ -2115,8 +2157,8 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
     }
 
     // Every link this browser created, so each one can be deleted, not only
-    // the one for the current draft.
-    function renderShareLinks() {
+    // the one for the current draft. listOnly: opened from "My links".
+    function renderShareLinks(listOnly) {
         const shares = getShareMap();
         const now = Date.now();
         let pruned = false;
@@ -2129,7 +2171,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                 pruned = true;
                 return;
             }
-            if (docId === shareModalDocId) return;
+            if (!listOnly && docId === shareModalDocId) return;
 
             const item = document.createElement('li');
             const name = document.createElement('span');
@@ -2138,7 +2180,8 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             name.textContent = entry.name || docId;
             const when = document.createElement('span');
             when.className = 'share-link-meta';
-            when.textContent = entry.expiresAt ? t('expiresShort').replace('{date}', formatDate(entry.expiresAt)) : '';
+            // The link id tells apart drafts that share a file name.
+            when.textContent = '/s/' + entry.id + (entry.expiresAt ? ' · ' + t('expiresShort').replace('{date}', formatDate(entry.expiresAt)) : '');
             item.append(name, when);
 
             if (typeof entry.encKey === 'string') {
@@ -2160,19 +2203,37 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             del.className = 'btn btn-ghost btn-sm share-delete-btn';
             del.textContent = t('deleteLink');
             del.addEventListener('click', () => confirmTwice(del, t('deleteLink'), async () => {
-                if (await deleteLink(docId)) renderShareLinks();
+                if (await deleteLink(docId)) {
+                    renderShareLinks(listOnly);
+                    if (listOnly && !shareLinksList.children.length) $('#shareHint').textContent = t('noLinks');
+                }
             }));
             item.append(del);
             shareLinksList.append(item);
         });
         if (pruned) saveShareMap(shares);
         shareLinksEl.hidden = !shareLinksList.children.length;
-        $('#shareLinksTitle').textContent = t('yourLinks').replace('{n}', shareLinksList.children.length);
+        $('#shareLinksTitle').textContent = t(listOnly ? 'allLinks' : 'yourLinks').replace('{n}', shareLinksList.children.length);
+    }
+
+    // Opens the dialog with only the list of links, so any of them can be
+    // deleted without sharing the open draft first.
+    function showMyLinks() {
+        shareModalDocId = null;
+        $('#shareModalTitle').textContent = t('myLinks');
+        $('#shareUrlRow').hidden = true;
+        shareDeleteBtn.hidden = true;
+        shareUpdateBtn.hidden = true;
+        renderShareLinks(true);
+        $('#shareHint').textContent = shareLinksList.children.length ? '' : t('noLinks');
+        shareLinksEl.open = true;
+        shareOverlay.classList.add('active');
     }
 
     async function showShareModal(url, docId, fresh) {
         shareModalDocId = docId || null;
         $('#shareModalTitle').textContent = fresh ? t('linkCreated') : t('shareLinkTitle');
+        $('#shareUrlRow').hidden = false;
         shareUrlInput.value = url;
         disarm(shareDeleteBtn, t('deleteLink'));
         shareDeleteBtn.hidden = !shareModalDocId;
@@ -2275,6 +2336,15 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         return new TextDecoder().decode(decrypted);
     }
 
+    // For AI agents: they expect the link to hold the current text, so an
+    // existing link with older content is updated before it is returned.
+    async function shareForAgent() {
+        let url = await shareByURL();
+        const entry = url && !isSharedView ? getShareMap()[currentDocId] : null;
+        if (entry && entry.hash !== await contentHash(editor.value)) url = await updateShare();
+        return url;
+    }
+
     function isUsableShare(entry) {
         return !!entry && typeof entry.id === 'string' && typeof entry.editKey === 'string' &&
             typeof entry.encKey === 'string' && (!entry.expiresAt || Date.parse(entry.expiresAt) > Date.now());
@@ -2348,11 +2418,12 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
     }
 
     // Replaces the content behind the open link with the current draft.
+    // Returns the link, or null on failure.
     async function updateShare() {
         const docId = shareModalDocId;
         const shares = getShareMap();
         const entry = shares[docId];
-        if (!docId || docId !== currentDocId || !isUsableShare(entry)) return;
+        if (!docId || docId !== currentDocId || !isUsableShare(entry)) return null;
 
         const text = editor.value;
         exportOverlay.classList.add('active');
@@ -2374,10 +2445,9 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                 saveShareMap(shares);
                 exportOverlay.classList.remove('active');
                 showToast(t('linkExpiredNew'));
-                await createShare(text);
-                return;
+                return await createShare(text);
             }
-            if (!res.ok) { shareErrorToast(res.status); return; }
+            if (!res.ok) { shareErrorToast(res.status); return null; }
 
             const data = await res.json();
             entry.expiresAt = data.expiresAt || entry.expiresAt;
@@ -2386,8 +2456,10 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             shareUpdateBtn.hidden = true;
             updateShareHint();
             showToast(t('linkUpdated'));
+            return shareUrlOf(entry);
         } catch (_) {
             showToast(t('shareFailed'));
+            return null;
         } finally {
             exportOverlay.classList.remove('active');
         }
@@ -2431,23 +2503,28 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         overlay.classList.remove('active');
     }
 
-    function forkToLocalCopy() {
-        // Turn a shared read-only doc into a local editable copy.
+    // Turn the read-only shared view back into the normal editor.
+    function leaveSharedView() {
         isSharedView = false;
         workspace.classList.remove('preview-only', 'shared-locked');
-        currentFileName = 'copy-of-shared.md';
-        fileNameEl.value = currentFileName;
         const lockBtn = document.getElementById('sharedLock');
         if (lockBtn) lockBtn.hidden = true;
         const report = document.getElementById('reportAbuseLink');
         if (report) report.hidden = true;
-        startNewDoc();
         // Drop the /s/:id URL so F5 no longer re-fetches the original over local edits.
         history.replaceState(null, '', '/');
         // Switch toolbar back to split view.
         viewToggle.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
         const splitBtn = viewToggle.querySelector('[data-view="split"]');
         if (splitBtn) splitBtn.classList.add('active');
+    }
+
+    function forkToLocalCopy() {
+        // Turn a shared read-only doc into a local editable copy.
+        leaveSharedView();
+        startNewDoc();
+        currentFileName = 'copy-of-shared.md';
+        fileNameEl.value = currentFileName;
         // Persist so F5 restores the copy instead of the sample.
         saveDraft();
         closeForkModal();
@@ -2700,6 +2777,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         exportHTMLBtn.addEventListener('click', () => { exportDropdown.classList.remove('open'); exportHTML(); });
         exportImageBtn.addEventListener('click', () => { exportDropdown.classList.remove('open'); exportImage(); });
         shareBtn.addEventListener('click', () => { exportDropdown.classList.remove('open'); shareByURL(); });
+        $('#myLinksBtn').addEventListener('click', () => { exportDropdown.classList.remove('open'); showMyLinks(); });
 
         // Share modal
         shareCopyBtn.addEventListener('click', copyShareUrl);
@@ -2829,7 +2907,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                 const fd = new FormData(wmcpConvert);
                 const md = fd.get('markdown');
                 const style = fd.get('style');
-                if (md) { editor.value = md; startNewDoc(); currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
+                if (md) { if (isSharedView) leaveSharedView(); editor.value = md; startNewDoc(); currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
                 if (style && STYLES[style]) applyStyle(style);
                 render();
                 saveDraft();
@@ -2849,7 +2927,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         if (wmcpShare) {
             wmcpShare.addEventListener('submit', (e) => {
                 e.preventDefault();
-                shareByURL();
+                shareForAgent();
             });
         }
 
@@ -2862,7 +2940,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                     style:    { type: 'string', description: 'Visual style (default: notion)' },
                 },
                 execute: async ({ markdown, style }) => {
-                    if (markdown) { editor.value = markdown; startNewDoc(); currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
+                    if (markdown) { if (isSharedView) leaveSharedView(); editor.value = markdown; startNewDoc(); currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
                     if (style && STYLES[style]) applyStyle(style);
                     render();
                     saveDraft();
@@ -2887,7 +2965,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                 description: 'Create a share link for the current document. It is encrypted in the browser, uploaded to md2pdf.studio and kept for 30 days; the key stays in the link (#k=). Returns the link.',
                 params: {},
                 execute: async () => {
-                    const url = await shareByURL();
+                    const url = await shareForAgent();
                     return url ? { success: true, url } : { success: false, message: 'Sharing failed' };
                 },
             });

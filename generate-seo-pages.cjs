@@ -585,7 +585,7 @@ function buildApi() {
         <h1>MD2PDF <span class="accent">REST API</span></h1>
         <p class="tagline">Create, update, and share Markdown documents programmatically.</p>
 
-        <p>The public API lets AI agents, scripts, and integrations produce styled, shareable documents in Markdown — no signup, no API key. Rate-limited to 10 saves per IP per minute.</p>
+        <p>The public API lets AI agents, scripts, and integrations produce styled, shareable documents in Markdown — no signup, no API key. Rate-limited to 10 writes (save, update and delete combined) per IP per minute.</p>
 
         <div class="cta-row">
             <a href="/" class="cta">Try in Browser</a>
@@ -668,7 +668,7 @@ print(f"{data['url']}#k={key_b64url}")</code></pre>
             </div>
             <div class="info-card">
                 <div class="label">Retention</div>
-                <div class="value">30 days from creation</div>
+                <div class="value">30 days from creation (links before Oct 2, 2026: 90 days after last update)</div>
             </div>
             <div class="info-card">
                 <div class="label">Auth</div>

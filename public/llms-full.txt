@@ -19,7 +19,7 @@ API version: 1.0 (stable)
 - 11 visual styles for document rendering
 - Custom CSS injection for full styling control
 - Export to PDF (continuous single page), HTML (standalone with inlined styles), and PNG image
-- **End-to-end encryption** — all shared documents encrypted with AES-256-GCM
+- **Encryption** — every shared document is stored encrypted with AES-256-GCM; end-to-end (key never reaches the server) when the client encrypts, as the web app does
 - Share documents via encrypted URL; link previews show a generic card because the server cannot read the content
 - Dark and light theme toggle
 - Drag-and-drop .md file upload
