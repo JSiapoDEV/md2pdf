@@ -1,0 +1,45 @@
+{
+  "name": "md2pdf-studio",
+  "version": "0.1.0",
+  "description": "Share Markdown as an end-to-end encrypted link from your terminal or AI agent. Encrypts locally; the server never sees the key.",
+  "type": "module",
+  "bin": {
+    "md2pdf-studio": "bin/md2pdf-studio.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "skill.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "prepack": "cp ../public/skill.md skill.md && cp ../LICENSE LICENSE",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18.3"
+  },
+  "keywords": [
+    "markdown",
+    "share",
+    "encrypted",
+    "e2ee",
+    "mcp",
+    "claude",
+    "codex",
+    "agent-skill",
+    "md2pdf"
+  ],
+  "homepage": "https://md2pdf.studio/ai-skill",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JSiapoDEV/md2pdf.git",
+    "directory": "cli"
+  },
+  "bugs": {
+    "url": "https://github.com/JSiapoDEV/md2pdf/issues"
+  },
+  "license": "MIT",
+  "author": "JSiapoDev"
+}
