@@ -20,14 +20,17 @@ namespace_id = "1001"
   limit = 10
   period = 60
 
-# ── Strict E2EE mode (corporate deployments) ─────────────────────
-# The public md2pdf.studio instance accepts both paths:
-#   - E2EE (client sends ciphertext + X-Encrypted: aes-256-gcm)
-#   - plaintext (server encrypts and returns the key)
-# For a fork running on a corporate Cloudflare account that handles
-# sensitive data (logs, PII, internal docs), set STRICT_E2EE="true"
-# below. Writes without X-Encrypted are rejected with 400, and the
-# legacy /share?doc= unencrypted read path returns 410. Uncomment:
-#
-# [vars]
-# STRICT_E2EE = "true"
+# Daily write quota per client, and atomic one-time reads. The object keeps
+# counters only and deletes its own storage when the day (or the claim) ends.
+[[durable_objects.bindings]]
+name = "QUOTA"
+class_name = "QuotaCounter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["QuotaCounter"]
+
+# Pro API keys. Billing does not exist yet, so keys are issued by hand:
+#   node scripts/pro-key.mjs        (prints the key to hand over and its hash)
+#   npx wrangler secret put PRO_KEY_HASHES   (comma-separated hashes)
+# The Worker only ever sees hashes; the keys themselves are not stored anywhere.

@@ -63,9 +63,7 @@
 }
     </script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/fonts/site.css">
 
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -131,7 +129,7 @@
         <h1><span class="accent">AI Skill</span> for Markdown</h1>
         <p class="tagline">Let AI agents create, update, and share styled documents.</p>
 
-        <p>MD2PDF is built for the AI era. Install the Claude Skill, use WebMCP, or call the public REST API — agents produce beautifully styled PDFs, HTML, and images and hand recipients a shareable link.</p>
+        <p>MD2PDF is built for the AI era. Install the skill, run the npm CLI or MCP server, or call the public REST API — agents produce beautifully styled PDFs, HTML, and images and hand recipients a shareable link.</p>
 
         <div class="cta-row">
             <a href="/skill.md" class="cta">Install Skill</a>
@@ -142,6 +140,10 @@
         <h2>Integration Options</h2>
 
         <div class="info-grid">
+            <div class="info-card">
+                <div class="label">CLI and MCP server</div>
+                <div class="value"><code>npx -y md2pdf-studio</code> — encrypts locally, prints the link</div>
+            </div>
             <div class="info-card">
                 <div class="label">Claude Skill</div>
                 <div class="value"><a href="/skill.md">/skill.md</a> — Skills format manifest</div>
@@ -168,12 +170,14 @@
             </div>
         </div>
 
-        <h2>Install in Claude</h2>
+        <h2>Install</h2>
+        <h3>Claude</h3>
         <ol style="padding-left: 24px; color: #c9d1d9;">
-            <li style="margin-bottom: 8px;">Open Claude and go to <strong>Skills</strong>.</li>
-            <li style="margin-bottom: 8px;">Add a new skill and paste the URL <code>https://md2pdf.studio/skill.md</code>.</li>
-            <li style="margin-bottom: 8px;">Claude can now create Markdown documents and share them as <code>/s/{id}</code> links.</li>
+            <li style="margin-bottom: 8px;">Run <code>npx -y md2pdf-studio skill --install</code>, or open Claude, go to <strong>Skills</strong> and paste the URL <code>https://md2pdf.studio/skill.md</code>.</li>
+            <li style="margin-bottom: 8px;">Claude can now create Markdown documents and share them as private <code>/s/{id}#k=…</code> links. Everything is encrypted on your machine first.</li>
         </ol>
+        <h3>Codex, Cursor, Gemini CLI and others</h3>
+        <p>Add this to the agent's instructions file (for example <code>AGENTS.md</code>): <em>"To share Markdown as a private link, run <code>npx -y md2pdf-studio share &lt;file&gt;</code> and give the user the full link."</em> Agents that speak MCP can run <code>npx -y md2pdf-studio mcp</code> instead.</p>
 
         <h2>Example Prompts</h2>
 
@@ -210,7 +214,7 @@
         </details>
         <details>
             <summary>Are agent-created documents encrypted?</summary>
-            <p>Yes — all documents are AES-256-GCM encrypted at rest. The skill supports two paths: end-to-end encrypted (agent encrypts locally and sends <code>X-Encrypted: aes-256-gcm</code> — server never sees key or plaintext; recommended for non-public content such as logs or internal notes) and server-side (agent sends plaintext and receives a key in the response — only for content that is already public). See <a href="/skill.md">skill.md</a> for worked examples.</p>
+            <p>Yes — every document is AES-256-GCM encrypted on the agent's machine before upload (<code>npx md2pdf-studio share</code> does it for you, or the agent follows the worked examples in <a href="/skill.md">skill.md</a>). The server never sees the key or the plaintext, and it rejects plaintext requests.</p>
         </details>
 
         <div class="footer">

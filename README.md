@@ -20,11 +20,13 @@
 - **5 Templates** — CV/Resume, Report, Documentation, Changelog, Meeting Notes
 - **Export** — PDF (continuous, no page breaks), HTML (standalone with inline styles), PNG
 - **Custom CSS** — Inject your own styles
-- **Share by URL** — AES-256-GCM encrypted short links
+- **Share by URL** — end-to-end encrypted (AES-256-GCM) short links; the key never reaches the server
+- **Expiry, one-time links, previews** — choose a shorter lifetime, make a link open once, or (Pro API key) set the title and description chat apps show
+- **CLI and MCP server** — [`npx md2pdf-studio share file.md`](cli/README.md) encrypts locally and prints the link
 - **Mermaid diagrams** — Flowcharts, sequence, Gantt, pie
 - **Auto table of contents**, **syntax highlighting** (180+ languages)
 - **Dark & Light Mode**, **Drag & Drop**, **Find & Replace**, **Scroll Sync**, **Fullscreen**, **Word Count**, **Auto-Save**
-- **AI Skill** — Installable [skill for Claude and other agents](https://md2pdf.studio/ai-skill) + public [REST API](https://md2pdf.studio/api) + WebMCP
+- **AI Skill** — Installable [skill for Claude, Codex and other agents](https://md2pdf.studio/ai-skill) + public [REST API](https://md2pdf.studio/api) + WebMCP
 - **AI Discoverable** — `llms.txt`, `robots.txt`, JSON-LD, Open Graph, `ai-plugin.json`
 
 ## Tech Stack
@@ -32,11 +34,12 @@
 - Pure **HTML**, **CSS**, **JavaScript** — no framework, no build step
 - **Cloudflare Workers** — edge compute for shared-document rendering and the REST API
 - **Cloudflare KV** — AES-256-GCM encrypted document storage
+Libraries and fonts are vendored in `public/vendor` and `public/fonts`: the app makes no third-party requests.
+
 - [marked.js](https://github.com/markedjs/marked) — Markdown parsing
 - [highlight.js](https://github.com/highlightjs/highlight.js) — Syntax highlighting
 - [mermaid](https://github.com/mermaid-js/mermaid) — Diagrams
 - [html2canvas](https://github.com/niklasvh/html2canvas) — Image export
-- [LZ-String](https://github.com/pieroxy/lz-string) — URL sharing compression
 
 ## Quick Start
 
@@ -58,6 +61,7 @@ npx wrangler dev
 
 ## For AI Agents
 
+- CLI and MCP server: [`npx -y md2pdf-studio`](cli/README.md)
 - Install the Claude Skill: [md2pdf.studio/skill.md](https://md2pdf.studio/skill.md)
 - REST API docs: [md2pdf.studio/api](https://md2pdf.studio/api)
 - LLM documentation: [md2pdf.studio/llms-full.txt](https://md2pdf.studio/llms-full.txt)

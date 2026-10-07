@@ -1,21 +1,21 @@
 # MD2PDF
 
-> Free online Markdown to PDF converter. Convert .md files to beautifully styled PDFs, HTML, and images with 11 visual styles, Mermaid diagrams, auto table of contents, and syntax highlighting for 180+ languages. All documents encrypted at rest (AES-256-GCM). No signup; conversion runs entirely in the browser and share links are encrypted before upload. Includes a public REST API and an installable AI Skill for Claude, ChatGPT, and other AI agents.
+> Free online Markdown to PDF converter. Convert .md files to beautifully styled PDFs, HTML, and images with 11 visual styles, Mermaid diagrams, auto table of contents, and syntax highlighting for 180+ languages. No signup; conversion runs entirely in the browser and share links are end-to-end encrypted (AES-256-GCM) before upload. Includes an npm CLI and MCP server (md2pdf-studio), a public REST API and an installable AI Skill for Claude, Codex and other AI agents.
 
-Last updated: 2026-04-16
+Last updated: 2026-10-06
 
 ## Main
 
 - [MD2PDF App](https://md2pdf.studio/): Online Markdown editor with live preview, 11 visual styles, Mermaid diagrams, TOC, and export to PDF/HTML/image
 - [About MD2PDF](https://md2pdf.studio/about): Background, features, and how it works
 - [Full AI Documentation](https://md2pdf.studio/llms-full.txt): Complete reference for LLMs — features, API, AI Skill, styles, and usage
-- [AI Skill (downloadable)](https://md2pdf.studio/skill.md): Installable skill file for Claude, Custom GPTs, Gemini, and compatible agents
+- [AI Skill (downloadable)](https://md2pdf.studio/skill.md): Installable skill file for Claude, Codex, Cursor, Gemini CLI, and compatible agents
 
 ## API
 
-- [Create Document — POST /api/save (E2EE path, recommended)](https://md2pdf.studio/llms-full.txt): Encrypt locally with AES-256-GCM, send ciphertext with header X-Encrypted: aes-256-gcm. Server never sees plaintext or key.
-- [Create Document — POST /api/save (plaintext path, public content only)](https://md2pdf.studio/llms-full.txt): Send Markdown plaintext; server encrypts and returns the key. Server sees plaintext during the request.
-- [Update Document — PUT /api/update/{id}](https://md2pdf.studio/llms-full.txt): Reuse editKey. Send X-Encrypted: aes-256-gcm with fresh ciphertext for E2EE docs, or X-Enc-Key for plaintext-path docs.
+- [CLI and MCP server — npx md2pdf-studio](https://md2pdf.studio/llms-full.txt): `npx -y md2pdf-studio share file.md` encrypts locally and prints the private link; also update, delete, list, `--expires`, `--burn` (one-time links), and an MCP server over stdio.
+- [Create Document — POST /api/save](https://md2pdf.studio/llms-full.txt): Encrypt locally with AES-256-GCM, send ciphertext with header X-Encrypted: aes-256-gcm. Plaintext is rejected. The server never sees plaintext or key.
+- [Update Document — PUT /api/update/{id}](https://md2pdf.studio/llms-full.txt): Reuse editKey. Send X-Encrypted: aes-256-gcm with fresh ciphertext and the same key.
 
 ## Styles
 

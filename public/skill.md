@@ -18,17 +18,56 @@ Example user prompts that trigger this skill:
 - "Generate a shareable link for this content"
 - "Turn my notes into a nice PDF"
 
-## Trust model — read before sending anything
+## Before you share anything
 
-The API exposes two paths. They produce the same shareable URL shape but have very different threat models.
+Every link is end-to-end encrypted: the content is encrypted on this machine, and the key lives only in the link's `#k=` fragment, which the server never receives. That protects the content in transit and at rest, but **anyone who holds the full link can read it**.
 
-**Path 1 — End-to-end encrypted (recommended, default).** Encrypt the markdown locally with AES-256-GCM, then POST the ciphertext with header `X-Encrypted: aes-256-gcm`. The server stores the blob as-is and never sees the key or the plaintext. Use this for anything non-public: logs, internal notes, customer data, drafts, CloudWatch output, anything you would not paste in a public channel.
+- If the content may hold secrets (API keys, tokens, passwords, customer data, private logs), remove them or ask the user before sharing.
+- Tell the user the link expires 30 days after creation (sooner if you set `--expires`) and that they can ask you to delete it.
+- For something very sensitive, make the link one-time with `--burn`: it stops working after the first open. Link-preview bots do not use it up, because the page only asks the reader to confirm.
+- Give the user the **whole** link, including `#k=...`. Without it nobody can read the document.
 
-**Path 2 — Server-side encryption (legacy).** POST plaintext; the server generates a key, encrypts, returns the key in the response. **The server sees the plaintext during the request.** Only use this for content that is already public (marketing copy, open-source READMEs, public release notes).
+## Preferred: the CLI (no crypto code to write)
 
-**If in doubt, use path 1.** It is a few extra lines and the safety floor is much higher.
+`md2pdf-studio` encrypts locally, uploads the ciphertext and prints the link. It needs Node 18.3 or later and has no dependencies.
 
-## Path 1 — End-to-end encrypted (recommended)
+```bash
+# Share a file, or pipe Markdown into stdin
+npx -y md2pdf-studio share report.md
+cat notes.md | npx -y md2pdf-studio share
+
+# Change what an existing link shows (same link, same key, same expiry)
+npx -y md2pdf-studio update https://md2pdf.studio/s/AbCd1234#k=... report.md
+
+# Stop sharing
+npx -y md2pdf-studio delete https://md2pdf.studio/s/AbCd1234#k=...
+
+# Links made on this machine (listed without their keys)
+npx -y md2pdf-studio list
+
+# Options when sharing
+npx -y md2pdf-studio share report.md --expires 7d      # shorter life: 1h to 30d (free)
+npx -y md2pdf-studio share report.md --burn            # opens a single time
+npx -y md2pdf-studio share report.md --title "Q3 report" --description "For the board" --api-key $MD2PDF_API_KEY
+```
+
+`--title` and `--description` set the preview card chat apps show. Chat apps cannot read an encrypted document, so these two fields are stored **unencrypted**: never put anything private in them. They, longer lifetimes (up to 365 days) and a larger size limit need a Pro API key (`--api-key` or the `MD2PDF_API_KEY` environment variable). Never ask the user to paste an API key into the chat.
+
+Add `--json` for machine-readable output. The edit key and encryption key of every link are kept in `~/.config/md2pdf-studio/links.json` (readable by the current user only), so you can update or delete a link in a later session. Only links made on this machine can be changed.
+
+### As an MCP server
+
+Clients that speak MCP can run `npx -y md2pdf-studio mcp` and call `share_markdown`, `update_shared_markdown`, `delete_shared_markdown` and `list_shared_markdown`.
+
+### Installing this skill
+
+`npx -y md2pdf-studio skill --install` writes this file to `~/.claude/skills/md2pdf/SKILL.md`. For other agents (Codex, Cursor, Gemini CLI, ...), add a line to their instructions file such as `AGENTS.md`: "To share Markdown as a private link, run `npx -y md2pdf-studio share <file>` and give the user the full link."
+
+## Without npm: the API, end-to-end encrypted
+
+Plaintext is **not accepted**. A request without `X-Encrypted: aes-256-gcm` is rejected with 400 `e2ee_required`, and the key must never be sent to the server (`X-Enc-Key` is rejected with 400 `key_leak_blocked`). Use this path only when you cannot run the CLI.
+
+### Create
 
 1. Generate a random 256-bit key and a random 12-byte IV.
 2. Encrypt the markdown with AES-256-GCM. The output is `IV ‖ ciphertext ‖ 16-byte GCM tag`.
@@ -37,7 +76,7 @@ The API exposes two paths. They produce the same shareable URL shape but have ve
 5. Base64url-encode the key (no padding). That is the URL fragment.
 6. The shareable link is `{url}#k={key_base64url}`. Share the full link.
 
-### Python
+#### Python
 
 ```python
 import os, json, base64, urllib.request
@@ -65,7 +104,7 @@ print(f"{data['url']}#k={key_b64url}")
 # -> https://md2pdf.studio/s/BrOrr0N3#k=xY9kL2m...
 ```
 
-### Node
+#### Node
 
 ```javascript
 const { subtle, getRandomValues } = globalThis.crypto;
@@ -94,7 +133,7 @@ const data = await res.json();
 console.log(`${data.url}#k=${keyB64}`);
 ```
 
-### Response
+#### Response
 
 ```json
 {
@@ -106,7 +145,7 @@ console.log(`${data.url}#k=${keyB64}`);
 
 No `key` field. The server does not have it. Build the share link yourself: `{url}#k={your base64url key}`. Save `id`, `editKey`, and the key in your context if the user may want to update the document later.
 
-### Updating an encrypted document
+### Update
 
 Reuse the same key; generate a fresh IV every time.
 
@@ -129,27 +168,7 @@ req = urllib.request.Request(
 urllib.request.urlopen(req)
 ```
 
-Do **not** send `X-Enc-Key` in path 1. The key must never leave your process.
-
-## Path 2 — Server-side encryption (public content only)
-
-```bash
-curl -X POST https://md2pdf.studio/api/save \
-  -H "Content-Type: text/plain" \
-  -d "# Public release notes"
-# Response: {"id":"abc","editKey":"...","url":"...","key":"xY9..."}
-# Share: {url}#k={key}
-```
-
-The response includes `key` because the server generated it after reading your plaintext. Update with the same plaintext-exposing shape:
-
-```bash
-curl -X PUT https://md2pdf.studio/api/update/{id} \
-  -H "Content-Type: text/plain" \
-  -H "X-Edit-Key: {editKey}" \
-  -H "X-Enc-Key: {key}" \
-  -d "# Updated public content"
-```
+The key must never leave your process.
 
 ## Available visual styles
 
@@ -169,10 +188,11 @@ The recipient can choose from 11 styles when viewing the document:
 
 ## Limits
 
-- **Max document size:** 500 KB of Markdown (UTF-8) on either path; for path 1 the limit applies to the plaintext, not the base64 ciphertext
+- **Max document size:** 500 KB of Markdown (UTF-8) (5 MB with a Pro key); the limit applies to the plaintext, not the base64 ciphertext
 - **Rate limit:** 10 writes/minute per IP (save, update and delete combined); a 429 carries `Retry-After: 60`
-- **Path 1 body check:** with `X-Encrypted` the body must be base64 of `IV ‖ ciphertext ‖ tag`, otherwise 400 `not_ciphertext`
-- **Expiration:** 30 days after creation; updates do not extend it. Save/update responses include `expiresAt`.
+- **Daily quota (free):** 100 writes and 25 MB per address per UTC day; a 429 with code `daily_quota` carries `Retry-After` until 00:00 UTC. Deleting is never limited. A Pro API key has its own, larger quota
+- **Body check:** the body must be base64 of `IV ‖ ciphertext ‖ tag`, otherwise 400 `not_ciphertext`
+- **Expiration:** 30 days after creation by default; updates do not extend it. Save/update responses include `expiresAt`. Send `X-Expires-In: <seconds>` (3600 to 2592000) for a shorter life, or `X-Burn: 1` on create for a one-time link. Pro: `Authorization: Bearer <key>`, up to 365 days, 5 MB, `X-Doc-Title` and `X-Doc-Description` (percent-encoded UTF-8, max 100 and 300 bytes, stored unencrypted)
 
 ## Deleting a document
 
@@ -193,7 +213,7 @@ Returns `{ "id": "...", "deleted": true }`. Offer this when the user asks to uns
 ## Notes
 
 - No authentication required.
-- AES-256-GCM encryption at rest for every document, regardless of path.
-- Hash fragments are not sent to the server; path-1 keys stay entirely client-side.
+- Every document is encrypted with AES-256-GCM before it leaves the client. The server stores ciphertext only and cannot read, search or moderate it.
+- Hash fragments are not sent to the server; keys stay entirely client-side.
 - Every shared link shows the same generic preview card in WhatsApp, Teams and Slack; the server does not read document titles or content.
 - The full URL — including `#k=` — is a bearer token. Never paste it in channels that may log or cache URLs (browser history on shared machines, URL-based analytics, open chat transcripts indexed by third parties).

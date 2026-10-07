@@ -13,9 +13,7 @@ const GH_REPO = 'https://github.com/JSiapoDEV/md2pdf';
 
 const FAVICON = `<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f0883e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><polyline points='10 9 9 9 8 9'/></svg>">`;
 
-const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">`;
+const FONTS = `<link rel="stylesheet" href="/fonts/site.css">`;
 
 const BASE_CSS = `
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -585,7 +583,7 @@ function buildApi() {
         <h1>MD2PDF <span class="accent">REST API</span></h1>
         <p class="tagline">Create, update, and share Markdown documents programmatically.</p>
 
-        <p>The public API lets AI agents, scripts, and integrations produce styled, shareable documents in Markdown — no signup, no API key. Rate-limited to 10 writes (save, update and delete combined) per IP per minute.</p>
+        <p>The public API lets AI agents, scripts, and integrations produce styled, shareable documents in Markdown — no signup, no API key. Rate-limited to 10 writes (save, update and delete combined) per IP per minute and 100 writes per day.</p>
 
         <div class="cta-row">
             <a href="/" class="cta">Try in Browser</a>
@@ -593,13 +591,20 @@ function buildApi() {
             <a href="/llms-full.txt" class="cta-secondary">llms-full.txt</a>
         </div>
 
-        <h2>Two paths, different threat models</h2>
-        <p><strong>Path 1 — End-to-end encrypted (recommended).</strong> Encrypt locally with AES-256-GCM and send ciphertext with header <code>X-Encrypted: aes-256-gcm</code>. The server stores the blob as-is and never sees the key or plaintext. Use this for anything non-public.</p>
-        <p><strong>Path 2 — Server-side encryption (legacy).</strong> Send plaintext; the server generates the key, encrypts, and returns the key. The server sees plaintext during the request. Only suitable for content that is already public.</p>
+        <h2>Command line first</h2>
+        <p>You do not need to write crypto code. <code>md2pdf-studio</code> encrypts on your machine, uploads only ciphertext and prints the link (Node 18.3+, no dependencies):</p>
+        <pre><code>npx -y md2pdf-studio share report.md
+cat notes.md | npx -y md2pdf-studio share
+npx -y md2pdf-studio update &lt;link|id&gt; report.md
+npx -y md2pdf-studio delete &lt;link|id&gt;
+npx -y md2pdf-studio mcp      # MCP server over stdio</code></pre>
+
+        <h2>One path: end-to-end encrypted</h2>
+        <p>Encrypt locally with AES-256-GCM and send the ciphertext with header <code>X-Encrypted: aes-256-gcm</code>. The server stores the blob as-is and never sees the key or the plaintext. Plaintext requests are rejected with <code>400 e2ee_required</code>, and a request that carries the key (<code>X-Enc-Key</code>) is rejected with <code>400 key_leak_blocked</code>.</p>
 
         <h2>Endpoints</h2>
 
-        <h3>POST /api/save — Path 1 (E2EE, recommended)</h3>
+        <h3>POST /api/save</h3>
         <p>Python example. Generates a 256-bit key locally, encrypts, POSTs ciphertext.</p>
 <pre><code>import os, json, base64, urllib.request
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -627,34 +632,26 @@ print(f"{data['url']}#k={key_b64url}")</code></pre>
   "url": "https://md2pdf.studio/s/aB3xY9zK"
 }</code></pre>
 
-        <h3>POST /api/save — Path 2 (plaintext, public content only)</h3>
-<pre><code>curl -X POST https://md2pdf.studio/api/save \\
-  -H "Content-Type: text/plain" \\
-  --data-binary "# Public release notes"</code></pre>
-        <p>Response:</p>
-<pre><code>{
-  "id": "aB3xY9zK",
-  "editKey": "…",
-  "url": "https://md2pdf.studio/s/aB3xY9zK",
-  "key": "…"   // AES-256-GCM key generated server-side after reading your plaintext
-}</code></pre>
-
         <h3>PUT /api/update/:id</h3>
-        <p>Path 1 (E2EE): reuse the same key, generate a fresh IV, send ciphertext. Do <strong>not</strong> send <code>X-Enc-Key</code>.</p>
-<pre><code>curl -X PUT https://md2pdf.studio/api/update/aB3xY9zK \\
+        <p>Reuse the same key and generate a fresh IV for every update, then send the new ciphertext.</p>
+        <pre><code>curl -X PUT https://md2pdf.studio/api/update/aB3xY9zK \\
   -H "Content-Type: text/plain" \\
   -H "X-Edit-Key: YOUR_EDIT_KEY" \\
   -H "X-Encrypted: aes-256-gcm" \\
   --data-binary "&lt;base64 ciphertext&gt;"</code></pre>
-        <p>Path 2 (plaintext):</p>
-<pre><code>curl -X PUT https://md2pdf.studio/api/update/aB3xY9zK \\
-  -H "Content-Type: text/plain" \\
-  -H "X-Edit-Key: YOUR_EDIT_KEY" \\
-  -H "X-Enc-Key: YOUR_ENC_KEY" \\
-  --data-binary "# Hello (updated)"</code></pre>
+
+        <h3>Options (headers on save and update)</h3>
+        <table>
+            <tr><th>Header</th><th>Effect</th></tr>
+            <tr><td><code>X-Expires-In: 604800</code></td><td>Seconds until the link expires: 3600 to 2592000 (30 days) on the free plan. On update it can only shorten the life, unless you use a Pro key</td></tr>
+            <tr><td><code>X-Burn: 1</code></td><td>Save only. The link can be opened one time. <code>GET /s/{id}</code> serves a page without content and <code>POST /api/open/{id}</code> returns the ciphertext once, so link-preview bots cannot use it up</td></tr>
+            <tr><td><code>Authorization: Bearer &lt;key&gt;</code></td><td>Pro API key: links up to 365 days, 5 MB documents, a larger daily quota. Unknown keys get <code>401 invalid_api_key</code></td></tr>
+            <tr><td><code>X-Doc-Title</code>, <code>X-Doc-Description</code></td><td>Pro. Percent-encoded UTF-8, up to 100 and 300 bytes. Chat apps cannot read an encrypted document, so these set the preview card, and they are stored <strong>unencrypted</strong></td></tr>
+        </table>
+        <p>Without a Pro key, a header that needs one answers <code>403 pro_required</code>. When the daily quota is spent the API answers <code>429 daily_quota</code> with <code>Retry-After</code> until 00:00 UTC; deleting is never limited.</p>
 
         <h3>GET /s/:id</h3>
-        <p>Load a shared document. Every link gets the same generic preview card in chat apps: the server does not read document titles or content.</p>
+        <p>Load a shared document. Links get the same generic preview card in chat apps, because the server does not read document titles or content. Only a link whose author set a Pro title and description shows those.</p>
 
         <h2>Rate Limits</h2>
         <div class="info-grid">
@@ -664,11 +661,11 @@ print(f"{data['url']}#k={key_b64url}")</code></pre>
             </div>
             <div class="info-card">
                 <div class="label">Max document size</div>
-                <div class="value">500 KB</div>
+                <div class="value">500 KB (5 MB with a Pro key)</div>
             </div>
             <div class="info-card">
                 <div class="label">Retention</div>
-                <div class="value">30 days from creation (links before the Oct 2, 2026 update: 90 days after last update)</div>
+                <div class="value">30 days from creation by default, or what you choose (links before the Oct 2, 2026 update: 90 days after last update)</div>
             </div>
             <div class="info-card">
                 <div class="label">Auth</div>
@@ -677,11 +674,11 @@ print(f"{data['url']}#k={key_b64url}")</code></pre>
         </div>
 
         <h2>Encryption</h2>
-        <p>All documents are encrypted at rest with AES-256-GCM. Path 1 is true end-to-end encryption: the key is generated by the caller and never reaches the server. Path 2 is server-side encryption: the server sees plaintext during the request and the key during the response. Pick based on the sensitivity of the content — the web editor uses Path 1 by default.</p>
+        <p>Every document is encrypted in the client with AES-256-GCM before upload: the key is generated by the caller and never reaches the server, which stores ciphertext only. The web editor, the CLI and the API all work this way.</p>
         <p>The full URL, including <code>#k=</code>, is a bearer token. Treat it like a password: never paste it in channels that may log or cache URLs.</p>
 
         <h2>For AI Agents</h2>
-        <p>See <a href="/ai-skill">/ai-skill</a> for the installable Claude Skill, <a href="/llms-full.txt">/llms-full.txt</a> for the full LLM documentation, and <a href="/skill.md">/skill.md</a> for the skill manifest.</p>
+        <p>See <a href="/ai-skill">/ai-skill</a> for the installable skill and MCP server, <a href="/llms-full.txt">/llms-full.txt</a> for the full LLM documentation, and <a href="/skill.md">/skill.md</a> for the skill manifest.</p>
 
         <h2>FAQ</h2>
         <details>
@@ -733,7 +730,7 @@ function buildAiSkill() {
         <h1><span class="accent">AI Skill</span> for Markdown</h1>
         <p class="tagline">Let AI agents create, update, and share styled documents.</p>
 
-        <p>MD2PDF is built for the AI era. Install the Claude Skill, use WebMCP, or call the public REST API — agents produce beautifully styled PDFs, HTML, and images and hand recipients a shareable link.</p>
+        <p>MD2PDF is built for the AI era. Install the skill, run the npm CLI or MCP server, or call the public REST API — agents produce beautifully styled PDFs, HTML, and images and hand recipients a shareable link.</p>
 
         <div class="cta-row">
             <a href="/skill.md" class="cta">Install Skill</a>
@@ -744,6 +741,10 @@ function buildAiSkill() {
         <h2>Integration Options</h2>
 
         <div class="info-grid">
+            <div class="info-card">
+                <div class="label">CLI and MCP server</div>
+                <div class="value"><code>npx -y md2pdf-studio</code> — encrypts locally, prints the link</div>
+            </div>
             <div class="info-card">
                 <div class="label">Claude Skill</div>
                 <div class="value"><a href="/skill.md">/skill.md</a> — Skills format manifest</div>
@@ -770,12 +771,14 @@ function buildAiSkill() {
             </div>
         </div>
 
-        <h2>Install in Claude</h2>
+        <h2>Install</h2>
+        <h3>Claude</h3>
         <ol style="padding-left: 24px; color: #c9d1d9;">
-            <li style="margin-bottom: 8px;">Open Claude and go to <strong>Skills</strong>.</li>
-            <li style="margin-bottom: 8px;">Add a new skill and paste the URL <code>${SITE}/skill.md</code>.</li>
-            <li style="margin-bottom: 8px;">Claude can now create Markdown documents and share them as <code>/s/{id}</code> links.</li>
+            <li style="margin-bottom: 8px;">Run <code>npx -y md2pdf-studio skill --install</code>, or open Claude, go to <strong>Skills</strong> and paste the URL <code>${SITE}/skill.md</code>.</li>
+            <li style="margin-bottom: 8px;">Claude can now create Markdown documents and share them as private <code>/s/{id}#k=…</code> links. Everything is encrypted on your machine first.</li>
         </ol>
+        <h3>Codex, Cursor, Gemini CLI and others</h3>
+        <p>Add this to the agent's instructions file (for example <code>AGENTS.md</code>): <em>"To share Markdown as a private link, run <code>npx -y md2pdf-studio share &lt;file&gt;</code> and give the user the full link."</em> Agents that speak MCP can run <code>npx -y md2pdf-studio mcp</code> instead.</p>
 
         <h2>Example Prompts</h2>
 
@@ -808,7 +811,7 @@ function buildAiSkill() {
         </details>
         <details>
             <summary>Are agent-created documents encrypted?</summary>
-            <p>Yes — all documents are AES-256-GCM encrypted at rest. The skill supports two paths: end-to-end encrypted (agent encrypts locally and sends <code>X-Encrypted: aes-256-gcm</code> — server never sees key or plaintext; recommended for non-public content such as logs or internal notes) and server-side (agent sends plaintext and receives a key in the response — only for content that is already public). See <a href="/skill.md">skill.md</a> for worked examples.</p>
+            <p>Yes — every document is AES-256-GCM encrypted on the agent's machine before upload (<code>npx md2pdf-studio share</code> does it for you, or the agent follows the worked examples in <a href="/skill.md">skill.md</a>). The server never sees the key or the plaintext, and it rejects plaintext requests.</p>
         </details>
 
         ${FOOTER}

@@ -1,109 +1,6 @@
 // Cloudflare Worker for md2pdf.studio: the share-link API (save, update, delete),
-// shared-document pages (/s/:id and legacy /share?doc=), and static assets.
-
-// --- LZ-String decompressFromEncodedURIComponent (inlined) ---
-
-function _decompress(length, resetValue, getNextValue) {
-    var dictionary = [], enlargeIn = 4, dictSize = 4, numBits = 3,
-        entry = '', result = [], i, w, bits, resb, maxpower, power, c,
-        data = { val: getNextValue(0), position: resetValue, index: 1 };
-
-    for (i = 0; i < 3; i++) dictionary[i] = i;
-
-    bits = 0; maxpower = Math.pow(2, 2); power = 1;
-    while (power != maxpower) {
-        resb = data.val & data.position; data.position >>= 1;
-        if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
-        bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
-    }
-
-    var next = bits;
-    switch (next) {
-        case 0:
-            bits = 0; maxpower = Math.pow(2, 8); power = 1;
-            while (power != maxpower) {
-                resb = data.val & data.position; data.position >>= 1;
-                if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
-                bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
-            }
-            c = String.fromCharCode(bits); break;
-        case 1:
-            bits = 0; maxpower = Math.pow(2, 16); power = 1;
-            while (power != maxpower) {
-                resb = data.val & data.position; data.position >>= 1;
-                if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
-                bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
-            }
-            c = String.fromCharCode(bits); break;
-        case 2: return '';
-    }
-
-    dictionary[3] = c; w = c; result.push(c);
-
-    while (true) {
-        if (data.index > length) return '';
-
-        bits = 0; maxpower = Math.pow(2, numBits); power = 1;
-        while (power != maxpower) {
-            resb = data.val & data.position; data.position >>= 1;
-            if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
-            bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
-        }
-
-        switch (c = bits) {
-            case 0:
-                bits = 0; maxpower = Math.pow(2, 8); power = 1;
-                while (power != maxpower) {
-                    resb = data.val & data.position; data.position >>= 1;
-                    if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
-                    bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
-                }
-                dictionary[dictSize++] = String.fromCharCode(bits);
-                c = dictSize - 1; enlargeIn--; break;
-            case 1:
-                bits = 0; maxpower = Math.pow(2, 16); power = 1;
-                while (power != maxpower) {
-                    resb = data.val & data.position; data.position >>= 1;
-                    if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++); }
-                    bits |= (resb > 0 ? 1 : 0) * power; power <<= 1;
-                }
-                dictionary[dictSize++] = String.fromCharCode(bits);
-                c = dictSize - 1; enlargeIn--; break;
-            case 2: return result.join('');
-        }
-
-        if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
-
-        if (dictionary[c]) {
-            entry = dictionary[c];
-        } else if (c === dictSize) {
-            entry = w + w.charAt(0);
-        } else {
-            return null;
-        }
-
-        result.push(entry);
-        dictionary[dictSize++] = w + entry.charAt(0);
-        enlargeIn--;
-        w = entry;
-
-        if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
-    }
-}
-
-function decompressFromEncodedURIComponent(input) {
-    if (input == null) return '';
-    if (input == '') return null;
-    input = input.replace(/ /g, '+');
-
-    var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$';
-    var baseReverseDic = {};
-    for (var i = 0; i < keyStr.length; i++) baseReverseDic[keyStr.charAt(i)] = i;
-
-    return _decompress(input.length, 32, function (index) {
-        return baseReverseDic[input.charAt(index)];
-    });
-}
+// shared-document pages (/s/:id), and static assets. Every document is encrypted
+// in the client before it reaches this Worker: it never sees a key or plaintext.
 
 // --- Helpers ---
 
@@ -137,13 +34,203 @@ async function allowWrite(request, env) {
     return outcome.success;
 }
 
-// --- Document lifetime ---
-// New documents live a fixed 30 days from creation; updates do not extend it.
-// Documents created before this rule carry no `expiresAt` in their metadata and
-// keep the terms they were created under (90 days, reset on every update).
+// --- Plans ---
+// Every limit that differs between the free service and a paid key lives here.
+// Pro keys are checked by planOf(); until billing exists they are issued by hand
+// (see scripts/pro-key.mjs), and only their SHA-256 hashes are configured.
 
-var FREE_TTL_MS = 86400 * 1000 * 30;
-var LEGACY_TTL_SECONDS = 86400 * 90;
+var DAY_SEC = 86400;
+var MB = 1024 * 1024;
+
+var PLANS = {
+    free: {
+        name: 'free',
+        maxBytes: 512000,
+        maxExpirySec: 30 * DAY_SEC,
+        defaultExpirySec: 30 * DAY_SEC,
+        dailyWrites: 100,
+        dailyBytes: 25 * MB,
+        customPreview: false,
+    },
+    pro: {
+        name: 'pro',
+        maxBytes: 5 * MB,
+        maxExpirySec: 365 * DAY_SEC,
+        defaultExpirySec: 365 * DAY_SEC,
+        dailyWrites: 2000,
+        dailyBytes: 500 * MB,
+        customPreview: true,
+    },
+};
+
+var MIN_EXPIRY_SEC = 3600;
+var MAX_TITLE_BYTES = 100;
+var MAX_DESCRIPTION_BYTES = 300;
+// KV metadata may not exceed 1,024 bytes; keep a margin.
+var MAX_METADATA_BYTES = 1000;
+
+async function sha256Hex(text) {
+    var digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(digest), function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+// Returns { plan, owner } where owner identifies a paid key without revealing it,
+// or { error } when a key is sent but unknown: silently treating a mistyped key as
+// the free plan would hide the mistake until a limit is hit.
+async function planOf(request, env) {
+    var header = request.headers.get('authorization');
+    if (!header) return { plan: PLANS.free, owner: null };
+    var match = header.match(/^Bearer\s+(\S+)$/i);
+    var hash = match ? await sha256Hex(match[1]) : null;
+    var known = String(env.PRO_KEY_HASHES || '').split(',').map(function (h) { return h.trim().toLowerCase(); });
+    if (!hash || known.indexOf(hash) === -1) {
+        return { error: jsonResponse({ error: 'Unknown API key.', code: 'invalid_api_key' }, 401) };
+    }
+    return { plan: PLANS.pro, owner: hash.slice(0, 32) };
+}
+
+function proRequired(what) {
+    return jsonResponse({ error: what + ' needs a Pro API key.', code: 'pro_required' }, 403);
+}
+
+// --- Daily quota ---
+// A Durable Object counts each client's writes and bytes for the current UTC
+// day. The Workers rate limiter only reaches 60-second windows. The object keeps
+// counters only (no IP address) and wipes itself when the day ends.
+
+async function takeQuota(env, request, planInfo, bytes) {
+    if (!env.QUOTA) return null;
+    var who = planInfo.owner ? 'key:' + planInfo.owner : 'ip:' + clientKey(request);
+    var stub = env.QUOTA.get(env.QUOTA.idFromName(await sha256Hex(who)));
+    var res = await stub.fetch('https://quota/take', {
+        method: 'POST',
+        body: JSON.stringify({ writes: 1, bytes: bytes, maxWrites: planInfo.plan.dailyWrites, maxBytes: planInfo.plan.dailyBytes }),
+    });
+    var out = await res.json();
+    if (out.ok) return null;
+    return jsonResponse({ error: 'Daily limit reached for this ' + (planInfo.owner ? 'key' : 'address') + '. It resets at 00:00 UTC.', code: 'daily_quota' }, 429, {
+        'retry-after': String(out.retryAfter),
+        'access-control-expose-headers': 'retry-after',
+    });
+}
+
+function secondsToUtcMidnight() {
+    var now = new Date();
+    var next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+    return Math.max(1, Math.ceil((next - now.getTime()) / 1000));
+}
+
+export class QuotaCounter {
+    constructor(state) {
+        this.state = state;
+    }
+
+    async fetch(request) {
+        var url = new URL(request.url);
+        var storage = this.state.storage;
+
+        if (url.pathname === '/take') {
+            var want = await request.json();
+            var today = new Date().toISOString().slice(0, 10);
+            var used = await storage.get('used');
+            if (!used || used.day !== today) used = { day: today, writes: 0, bytes: 0 };
+            var ok = used.writes + want.writes <= want.maxWrites && used.bytes + want.bytes <= want.maxBytes;
+            if (ok) {
+                used.writes += want.writes;
+                used.bytes += want.bytes;
+                await storage.put('used', used);
+                if ((await storage.getAlarm()) === null) await storage.setAlarm(Date.now() + secondsToUtcMidnight() * 1000);
+            }
+            return Response.json({ ok: ok, retryAfter: secondsToUtcMidnight() });
+        }
+
+        // One-time reads: the first caller claims the document, everyone after is
+        // refused. KV is eventually consistent, so deleting the key alone would
+        // let a second reader at another location still get it for up to a minute.
+        if (url.pathname === '/claim') {
+            if (await storage.get('claimed')) return Response.json({ ok: false });
+            await storage.put('claimed', true);
+            await storage.setAlarm(Date.now() + 31 * DAY_SEC * 1000);
+            return Response.json({ ok: true });
+        }
+
+        return new Response('Not found', { status: 404 });
+    }
+
+    async alarm() {
+        await this.state.storage.deleteAll();
+    }
+}
+
+// --- Request options ---
+// Expiry, one-time reads and the preview card travel in headers so the body stays
+// pure ciphertext. The preview text is the one thing the server reads: it must
+// be, because link unfurlers (WhatsApp, Slack) never see the key.
+
+function utf8Length(text) {
+    return new TextEncoder().encode(text).length;
+}
+
+function cleanText(raw) {
+    // Headers cannot carry line breaks; collapse whitespace and drop control characters.
+    return raw.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function readOptionHeader(request, name, limit) {
+    var raw = request.headers.get(name);
+    if (raw === null) return { present: false };
+    var text;
+    try { text = cleanText(decodeURIComponent(raw)); } catch (e) {
+        return { error: jsonResponse({ error: name + ' must be percent-encoded UTF-8.', code: 'bad_option' }, 400) };
+    }
+    if (utf8Length(text) > limit) {
+        return { error: jsonResponse({ error: name + ' is too long (max ' + limit + ' bytes).', code: 'bad_option' }, 400) };
+    }
+    return { present: true, value: text };
+}
+
+// Returns { expiresInSec, burn, title, description } (each undefined when not
+// sent; title and description are '' to clear) or { error }.
+function readOptions(request, plan) {
+    var out = {};
+
+    var expires = request.headers.get('x-expires-in');
+    if (expires !== null) {
+        if (!/^\d{1,9}$/.test(expires) || Number(expires) < MIN_EXPIRY_SEC) {
+            return { error: jsonResponse({ error: 'X-Expires-In is a number of seconds, at least ' + MIN_EXPIRY_SEC + '.', code: 'bad_expiry' }, 400) };
+        }
+        if (Number(expires) > plan.maxExpirySec) {
+            if (plan.name === 'free' && Number(expires) <= PLANS.pro.maxExpirySec) return { error: proRequired('Keeping a link longer than 30 days') };
+            return { error: jsonResponse({ error: 'X-Expires-In is above the ' + (plan.maxExpirySec / DAY_SEC) + '-day maximum.', code: 'bad_expiry' }, 400) };
+        }
+        out.expiresInSec = Number(expires);
+    }
+
+    var burn = request.headers.get('x-burn');
+    if (burn !== null) out.burn = burn === '1' || burn.toLowerCase() === 'true';
+
+    var title = readOptionHeader(request, 'x-doc-title', MAX_TITLE_BYTES);
+    if (title.error) return { error: title.error };
+    var description = readOptionHeader(request, 'x-doc-description', MAX_DESCRIPTION_BYTES);
+    if (description.error) return { error: description.error };
+    if ((title.present && title.value) || (description.present && description.value)) {
+        if (!plan.customPreview) return { error: proRequired('A custom title and description') };
+    }
+    if (title.present) out.title = title.value;
+    if (description.present) out.description = description.value;
+    return out;
+}
+
+// Metadata is rebuilt from scratch on every write so empty values never linger.
+function withPreview(meta, title, description) {
+    if (title) meta.title = title; else delete meta.title;
+    if (description) meta.description = description; else delete meta.description;
+    return meta;
+}
+
+function metadataFits(meta) {
+    return utf8Length(JSON.stringify(meta)) <= MAX_METADATA_BYTES;
+}
 
 function expiryOptions(metadata) {
     if (metadata && metadata.expiresAt) {
@@ -156,6 +243,14 @@ function expiresAtOf(metadata) {
     return metadata && metadata.expiresAt ? metadata.expiresAt : Date.now() + LEGACY_TTL_SECONDS * 1000;
 }
 
+// --- Document lifetime ---
+// New documents live from creation until the expiry the plan allows; updates do
+// not extend it. Documents created before expiry was stored carry no `expiresAt`
+// in their metadata and keep the terms they were created under (90 days, reset
+// on every update).
+
+var LEGACY_TTL_SECONDS = DAY_SEC * 90;
+
 // IDs come from generateId(): 8 base62 characters. Anything else never reaches KV.
 var DOC_ID_RE = /^[A-Za-z0-9]{8}$/;
 
@@ -164,18 +259,16 @@ var DOC_ID_RE = /^[A-Za-z0-9]{8}$/;
 
 var CSP = [
     "default-src 'self'",
-    // Exact library paths, not whole CDNs: anyone can publish a script to
-    // jsDelivr (any npm package) or find a gadget among cdnjs's libraries.
-    "script-src 'self' https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/ https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/ " +
-        "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/ https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/ " +
-        "https://cdn.jsdelivr.net/npm/mermaid@11/ https://static.cloudflareinsights.com",
+    // Every library is served from this origin, so no CDN can inject a script.
+    // static.cloudflareinsights.com is Cloudflare's cookieless page-view counter.
+    "script-src 'self' https://static.cloudflareinsights.com",
     // Custom CSS may @import any HTTPS stylesheet or font; inline styles are
     // already allowed, so this adds no script capability.
     "style-src 'self' 'unsafe-inline' https:",
     "font-src 'self' https: data:",
     "img-src 'self' data: blob: https:",
     "media-src 'self' data: blob: https:",
-    "connect-src 'self' https://cdnjs.cloudflare.com https://cloudflareinsights.com https://api.github.com",
+    "connect-src 'self' https://cloudflareinsights.com",
     "frame-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'none'",
@@ -215,11 +308,16 @@ function tooManyRequests() {
 }
 
 // --- Write validation ---
-// The limit applies to the Markdown, not to its encoding: 500 KB of UTF-8, or
-// the base64 of that much AES-GCM output (12-byte IV + ciphertext + 16-byte tag).
+// Every write is end-to-end encrypted: the client sends base64(IV ‖ AES-256-GCM
+// ciphertext ‖ tag) and keeps the key in the link's #k= fragment. The limit
+// applies to the Markdown, not to its encoding: the plan's size limit of UTF-8
+// becomes at most the base64 of that much ciphertext plus the 12-byte IV and
+// 16-byte tag.
 
-var MAX_DOC_BYTES = 512000;
-var MAX_CIPHERTEXT_CHARS = Math.ceil((MAX_DOC_BYTES + 28) / 3) * 4;
+function maxCiphertextChars(plan) {
+    return Math.ceil((plan.maxBytes + 28) / 3) * 4;
+}
+
 var BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
 // Tools like `base64` and `openssl enc -base64` wrap lines; accept that and
@@ -229,29 +327,36 @@ function stripBase64Whitespace(body) {
     return body.replace(/[\r\n]+/g, '');
 }
 
-// Returns an error response, or null when the body can be stored.
-function checkWriteBody(body, clientEncrypted, strictE2EE) {
-    if (!body || !body.trim()) return jsonResponse({ error: 'Empty content' }, 400);
-    if (strictE2EE && !clientEncrypted) {
-        return jsonResponse({
-            error: 'This deployment requires end-to-end encryption. Encrypt with AES-256-GCM locally and send header `X-Encrypted: aes-256-gcm` (never X-Enc-Key). See https://md2pdf.studio/skill.md for worked examples.',
+// Returns { body } with the compact ciphertext, or { error } with the response
+// to send back. Plaintext is never accepted, and neither is a key in a header:
+// it would reach proxy and CDN logs.
+async function readCiphertext(request, plan) {
+    if (request.headers.get('x-enc-key')) {
+        return { error: jsonResponse({
+            error: 'Never send the encryption key to the server. It stays in the link fragment (#k=).',
+            code: 'key_leak_blocked',
+        }, 400) };
+    }
+    if (request.headers.get('x-encrypted') !== 'aes-256-gcm') {
+        return { error: jsonResponse({
+            error: 'End-to-end encryption is required. Encrypt with AES-256-GCM locally and send header `X-Encrypted: aes-256-gcm`. See https://md2pdf.studio/skill.md for worked examples.',
             code: 'e2ee_required',
-        }, 400);
+        }, 400) };
     }
-    if (clientEncrypted) {
-        if (body.length > MAX_CIPHERTEXT_CHARS) return jsonResponse({ error: 'Document too large (max 500KB)' }, 413);
-        // X-Encrypted promises ciphertext. Plain Markdown sent with it would be
-        // stored in clear while everything says it is encrypted.
-        if (body.length < 40 || body.length % 4 !== 0 || !BASE64_RE.test(body)) {
-            return jsonResponse({
-                error: 'With X-Encrypted the body must be base64(IV ‖ AES-256-GCM ciphertext ‖ tag).',
-                code: 'not_ciphertext',
-            }, 400);
-        }
-    } else if (new TextEncoder().encode(body).length > MAX_DOC_BYTES) {
-        return jsonResponse({ error: 'Document too large (max 500KB)' }, 413);
+    var body = stripBase64Whitespace(await request.text());
+    if (!body.trim()) return { error: jsonResponse({ error: 'Empty content' }, 400) };
+    if (body.length > maxCiphertextChars(plan)) {
+        return { error: jsonResponse({ error: 'Document too large (max ' + Math.round(plan.maxBytes / 1000) + ' KB on the ' + plan.name + ' plan)', code: 'too_large' }, 413) };
     }
-    return null;
+    // X-Encrypted promises ciphertext. Plain Markdown sent with it would be
+    // stored in clear while everything says it is encrypted.
+    if (body.length < 40 || body.length % 4 !== 0 || !BASE64_RE.test(body)) {
+        return { error: jsonResponse({
+            error: 'With X-Encrypted the body must be base64(IV ‖ AES-256-GCM ciphertext ‖ tag).',
+            code: 'not_ciphertext',
+        }, 400) };
+    }
+    return { body: body };
 }
 
 // --- Helpers ---
@@ -269,67 +374,18 @@ function generateEditKey() {
     return Array.from(arr, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
 }
 
-// ── Server-side E2EE (AES-256-GCM) ──────────────────
-
-// String.fromCharCode.apply() throws on large arrays (documents over ~100 KB
-// failed with a 500), so encode in chunks.
-function bytesToBase64(bytes) {
-    var binary = '';
-    for (var i = 0; i < bytes.length; i += 0x8000) {
-        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    }
-    return btoa(binary);
-}
-
-function toBase64url(buf) {
-    return bytesToBase64(new Uint8Array(buf))
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function fromBase64url(b64) {
-    var str = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
-    var arr = new Uint8Array(str.length);
-    for (var i = 0; i < str.length; i++) arr[i] = str.charCodeAt(i);
-    return arr;
-}
-
-async function serverEncrypt(plaintext) {
-    var key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
-    var iv = crypto.getRandomValues(new Uint8Array(12));
-    var encoded = new TextEncoder().encode(plaintext);
-    var ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, encoded);
-    // Combine IV + ciphertext, then base64
-    var combined = new Uint8Array(iv.length + ciphertext.byteLength);
-    combined.set(iv);
-    combined.set(new Uint8Array(ciphertext), iv.length);
-    var encData = bytesToBase64(combined);
-    // Export key as base64url
-    var rawKey = await crypto.subtle.exportKey('raw', key);
-    var encKey = toBase64url(rawKey);
-    return { encData: encData, encKey: encKey };
-}
-
-async function serverReencrypt(plaintext, encKeyB64) {
-    var rawKey = fromBase64url(encKeyB64);
-    var key = await crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
-    var iv = crypto.getRandomValues(new Uint8Array(12));
-    var encoded = new TextEncoder().encode(plaintext);
-    var ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, encoded);
-    var combined = new Uint8Array(iv.length + ciphertext.byteLength);
-    combined.set(iv);
-    combined.set(new Uint8Array(ciphertext), iv.length);
-    return bytesToBase64(combined);
-}
-
-// The server never reads shared documents, so every link gets the same preview.
+// The server never reads shared documents, so links get the same generic preview
+// unless the author set a title and description (Pro): those are stored in clear.
 var SHARED_META = {
     title: 'Shared document — MD2PDF',
     description: 'Open the full link to view this document in MD2PDF.',
 };
 
-function injectContent(html, content) {
-    var safeTitle = escapeHtml(SHARED_META.title);
-    var safeDesc = escapeHtml(SHARED_META.description);
+function injectContent(html, content, preview) {
+    var title = (preview && preview.title) || SHARED_META.title;
+    var description = (preview && preview.description) || SHARED_META.description;
+    var safeTitle = escapeHtml(title);
+    var safeDesc = escapeHtml(description);
     // Escape for safe JSON inside <script>
     var safeJson = JSON.stringify(content).replace(/</g, '\\u003c');
 
@@ -338,6 +394,9 @@ function injectContent(html, content) {
     html = html.replace('</head>', function () {
         return '<script id="shared-content" type="application/json">' + safeJson + '</script>\n</head>';
     });
+    if (preview && preview.title) {
+        html = html.replace(/<title>[^<]*<\/title>/, function () { return '<title>' + safeTitle + ' — MD2PDF</title>'; });
+    }
     html = html.replace(/<meta property="og:title"[^>]*>/, function () { return '<meta property="og:title" content="' + safeTitle + '">'; });
     html = html.replace(/<meta property="og:description"[^>]*>/, function () { return '<meta property="og:description" content="' + safeDesc + '">'; });
     html = html.replace(/<meta name="twitter:title"[^>]*>/, function () { return '<meta name="twitter:title" content="' + safeTitle + '">'; });
@@ -353,77 +412,65 @@ async function getIndexHtml(env, request) {
     return response.text();
 }
 
+// What the API tells the caller about a stored document.
+function describeDocument(url, id, meta, editKey) {
+    var out = { id: id, url: url.origin + '/s/' + id, expiresAt: new Date(expiresAtOf(meta)).toISOString(), plan: meta.plan || 'free' };
+    if (editKey) out.editKey = editKey;
+    if (meta.burn) out.burn = true;
+    if (meta.title) out.title = meta.title;
+    if (meta.description) out.description = meta.description;
+    return out;
+}
+
 // --- Worker entry point ---
 
 export default {
     async fetch(request, env) {
         var url = new URL(request.url);
-        // Strict mode: reject plaintext writes and disable the legacy unencrypted
-        // read path. Enable per deployment with wrangler var STRICT_E2EE="true".
-        var strictE2EE = env.STRICT_E2EE === 'true';
-
-        // --- POST /api/save — save markdown to KV, return short URL ---
+        // --- POST /api/save — store a client-encrypted document, return short URL ---
         if (url.pathname === '/api/save' && request.method === 'POST') {
             try {
-                var body = await request.text();
-                var clientEncrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
-                if (clientEncrypted) body = stripBase64Whitespace(body);
-                var invalid = checkWriteBody(body, clientEncrypted, strictE2EE);
-                if (invalid) return invalid;
+                var saver = await planOf(request, env);
+                if (saver.error) return saver.error;
+                var written = await readCiphertext(request, saver.plan);
+                if (written.error) return written.error;
+                var wanted = readOptions(request, saver.plan);
+                if (wanted.error) return wanted.error;
                 if (!(await allowWrite(request, env))) return tooManyRequests();
+                var overQuota = await takeQuota(env, request, saver, written.body.length);
+                if (overQuota) return overQuota;
 
                 var id = generateId();
-                var editKey = generateEditKey();
-                var storedBody, encKey;
-
-                if (clientEncrypted) {
-                    // Client already encrypted — store as-is
-                    storedBody = body;
-                    encKey = null; // key is in the client's URL hash
-                } else {
-                    // Server-side encryption for API consumers
-                    var enc = await serverEncrypt(body);
-                    storedBody = enc.encData;
-                    encKey = enc.encKey;
-                }
-
                 var created = Date.now();
-                var saveMeta = { editKey: editKey, created: created, expiresAt: created + FREE_TTL_MS, encrypted: true };
-                await env.DOCS.put(id, storedBody, Object.assign({ metadata: saveMeta }, expiryOptions(saveMeta)));
-
-                var responseBody = {
-                    id: id,
-                    editKey: editKey,
-                    url: url.origin + '/s/' + id,
-                    expiresAt: new Date(saveMeta.expiresAt).toISOString(),
+                var lifetime = wanted.expiresInSec || saver.plan.defaultExpirySec;
+                var saveMeta = {
+                    editKey: generateEditKey(), created: created, expiresAt: created + lifetime * 1000,
+                    encrypted: true, plan: saver.plan.name,
                 };
-                if (encKey) responseBody.key = encKey;
-                return jsonResponse(responseBody);
+                if (wanted.burn) saveMeta.burn = true;
+                withPreview(saveMeta, wanted.title, wanted.description);
+                if (!metadataFits(saveMeta)) return jsonResponse({ error: 'Title and description are too long together.', code: 'bad_option' }, 400);
+                await env.DOCS.put(id, written.body, Object.assign({ metadata: saveMeta }, expiryOptions(saveMeta)));
+
+                return jsonResponse(describeDocument(url, id, saveMeta, saveMeta.editKey));
             } catch (e) {
                 return jsonResponse({ error: 'Save failed' }, 500);
             }
         }
 
-        // --- PUT /api/update/:id — update existing document ---
+        // --- PUT /api/update/:id — replace a document with new ciphertext ---
         if (url.pathname.startsWith('/api/update/') && request.method === 'PUT') {
             try {
                 var updateId = url.pathname.slice(12);
                 if (!DOC_ID_RE.test(updateId)) return jsonResponse({ error: 'Document not found' }, 404);
 
-                var updateBody = await request.text();
-                var clientEncrypted = request.headers.get('x-encrypted') === 'aes-256-gcm';
-                if (clientEncrypted) updateBody = stripBase64Whitespace(updateBody);
-                var encKeyHeader = request.headers.get('x-enc-key');
-                var invalid = checkWriteBody(updateBody, clientEncrypted, strictE2EE);
-                if (invalid) return invalid;
-                if (strictE2EE && encKeyHeader) {
-                    // Fail loud: the key must never cross the wire in strict mode,
-                    // even if accompanied by X-Encrypted — it may leak to proxy/CDN logs.
-                    return jsonResponse({
-                        error: 'X-Enc-Key must not be sent on this deployment. The encryption key must stay client-side.',
-                        code: 'key_leak_blocked',
-                    }, 400);
-                }
+                var updater = await planOf(request, env);
+                if (updater.error) return updater.error;
+                var updated = await readCiphertext(request, updater.plan);
+                if (updated.error) return updated.error;
+                var changes = readOptions(request, updater.plan);
+                if (changes.error) return changes.error;
+                if (changes.burn !== undefined) return jsonResponse({ error: 'One-time reads can only be chosen when the link is created.', code: 'bad_option' }, 400);
                 if (!(await allowWrite(request, env))) return tooManyRequests();
 
                 var existing = await env.DOCS.getWithMetadata(updateId);
@@ -436,36 +483,27 @@ export default {
                 if (!existingMeta.editKey || existingMeta.editKey !== request.headers.get('x-edit-key')) {
                     return jsonResponse({ error: 'Unauthorized' }, 403);
                 }
-
-                var updatedBody;
-                if (clientEncrypted) {
-                    // Client already encrypted
-                    updatedBody = updateBody;
-                } else if (encKeyHeader) {
-                    // API consumer sent the encryption key — re-encrypt server-side
-                    try {
-                        updatedBody = await serverReencrypt(updateBody, encKeyHeader);
-                    } catch (e) {
-                        return jsonResponse({ error: 'Invalid X-Enc-Key', code: 'invalid_key' }, 400);
-                    }
-                } else {
-                    // No key provided: encrypt with a new one. Links shared with the
-                    // old #k= stop working; the response carries the new key.
-                    var enc = await serverEncrypt(updateBody);
-                    updatedBody = enc.encData;
-                    encKeyHeader = enc.encKey;
-                }
+                var overUpdateQuota = await takeQuota(env, request, updater, updated.body.length);
+                if (overUpdateQuota) return overUpdateQuota;
 
                 var updatedMeta = Object.assign({}, existingMeta, { encrypted: true });
-                await env.DOCS.put(updateId, updatedBody, Object.assign({ metadata: updatedMeta }, expiryOptions(updatedMeta)));
+                if (changes.expiresInSec) {
+                    var newExpiry = Date.now() + changes.expiresInSec * 1000;
+                    // Only a paid key can push the end date out; anyone may shorten it.
+                    if (newExpiry > expiresAtOf(existingMeta) && updater.plan.name !== 'pro') {
+                        return proRequired('Extending a link');
+                    }
+                    updatedMeta.expiresAt = newExpiry;
+                }
+                if (changes.title !== undefined || changes.description !== undefined) {
+                    withPreview(updatedMeta,
+                        changes.title !== undefined ? changes.title : existingMeta.title,
+                        changes.description !== undefined ? changes.description : existingMeta.description);
+                }
+                if (!metadataFits(updatedMeta)) return jsonResponse({ error: 'Title and description are too long together.', code: 'bad_option' }, 400);
+                await env.DOCS.put(updateId, updated.body, Object.assign({ metadata: updatedMeta }, expiryOptions(updatedMeta)));
 
-                var updateResponse = {
-                    id: updateId,
-                    url: url.origin + '/s/' + updateId,
-                    expiresAt: new Date(expiresAtOf(updatedMeta)).toISOString(),
-                };
-                if (encKeyHeader && !clientEncrypted) updateResponse.key = encKeyHeader;
-                return jsonResponse(updateResponse);
+                return jsonResponse(describeDocument(url, updateId, updatedMeta));
             } catch (e) {
                 return jsonResponse({ error: 'Update failed' }, 500);
             }
@@ -493,13 +531,33 @@ export default {
             }
         }
 
+        // --- POST /api/open/:id — read a one-time document, once ---
+        if (url.pathname.startsWith('/api/open/') && request.method === 'POST') {
+            try {
+                var openId = url.pathname.slice(10);
+                var gone = jsonResponse({ error: 'Document not found, expired, or already opened.' }, 404);
+                if (!DOC_ID_RE.test(openId)) return gone;
+                var burnDoc = await env.DOCS.getWithMetadata(openId);
+                var burnMeta = burnDoc.metadata || {};
+                if (!burnDoc.value || !burnMeta.burn || (burnMeta.expiresAt && burnMeta.expiresAt < Date.now())) return gone;
+                if (env.QUOTA) {
+                    var claim = await env.QUOTA.get(env.QUOTA.idFromName('burn:' + openId)).fetch('https://quota/claim', { method: 'POST' });
+                    if (!(await claim.json()).ok) return gone;
+                }
+                await env.DOCS.delete(openId);
+                return jsonResponse({ content: burnDoc.value }, 200, { 'cache-control': 'no-store' });
+            } catch (e) {
+                return jsonResponse({ error: 'Open failed' }, 500);
+            }
+        }
+
         // --- CORS preflight for /api/* ---
         if (url.pathname.startsWith('/api/') && request.method === 'OPTIONS') {
             return new Response(null, {
                 headers: {
                     'access-control-allow-origin': '*',
                     'access-control-allow-methods': 'POST, PUT, DELETE, OPTIONS',
-                    'access-control-allow-headers': 'Content-Type, X-Edit-Key, X-Encrypted, X-Enc-Key',
+                    'access-control-allow-headers': 'Content-Type, Authorization, X-Edit-Key, X-Encrypted, X-Expires-In, X-Burn, X-Doc-Title, X-Doc-Description',
                 },
             });
         }
@@ -518,10 +576,14 @@ export default {
                 }
 
                 var html = await getIndexHtml(env, request);
-                html = injectContent(html, result.value);
+                // A one-time document is not sent with the page: link unfurlers
+                // fetch every link, and would use it up before the recipient. The
+                // page asks the reader to open it, which calls /api/open.
+                var served = (result.metadata && result.metadata.burn) ? { burn: true } : result.value;
+                html = injectContent(html, served, result.metadata);
 
                 return new Response(html, {
-                    headers: htmlHeaders(true),
+                    headers: Object.assign(htmlHeaders(true), { 'cache-control': 'no-store' }),
                 });
             } catch (e) {
                 return new Response('Error loading document.', {
@@ -531,29 +593,12 @@ export default {
             }
         }
 
-        // --- GET /share?doc= — legacy LZ-string compressed sharing ---
-        var docParam = url.searchParams.get('doc');
-        if (url.pathname === '/share' && docParam) {
-            if (strictE2EE) {
-                return new Response('Legacy unencrypted share links are disabled on this deployment.', {
-                    status: 410,
-                    headers: { 'content-type': 'text/plain' },
-                });
-            }
-            try {
-                var lzContent = decompressFromEncodedURIComponent(docParam);
-
-                if (lzContent) {
-                    var lzHtml = await getIndexHtml(env, request);
-                    lzHtml = injectContent(lzHtml, lzContent);
-
-                    return new Response(lzHtml, {
-                        headers: htmlHeaders(true),
-                    });
-                }
-            } catch (e) {
-                // Fall through to static
-            }
+        // --- /share?doc= — retired links that carried the whole document in the address ---
+        if (url.pathname === '/share' && url.searchParams.has('doc')) {
+            return new Response('This link format was retired: it carried the document unencrypted in the address. Ask the sender for a new link.', {
+                status: 410,
+                headers: { 'content-type': 'text/plain', 'x-robots-tag': 'noindex' },
+            });
         }
 
         // --- Serve llms.txt / llms-full.txt with correct Content-Type ---

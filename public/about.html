@@ -15,9 +15,7 @@
     <meta property="og:description" content="Convert Markdown to styled PDFs with 11 visual themes. Free, open-source, no signup. Runs entirely in your browser.">
     <meta property="og:image" content="https://md2pdf.studio/og-image.png">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/fonts/site.css">
 
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -125,7 +123,7 @@
           "name": "Can AI agents use MD2PDF?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. MD2PDF provides an installable AI Skill in the Claude Skills format (SKILL.md) plus a public REST API. Claude, Custom GPTs, Gemini, and other agents can create, update, and share styled documents on the user's behalf. It also supports WebMCP for direct browser integration."
+            "text": "Yes. MD2PDF provides an installable AI Skill in the Claude Skills format (SKILL.md) plus a public REST API. Claude, Codex, Cursor, Gemini CLI, and other agents can create, update, and share styled documents on the user's behalf. An npm CLI and MCP server (md2pdf-studio) encrypt everything locally first. It also supports WebMCP for direct browser integration."
           }
         }
       ]
@@ -205,13 +203,14 @@
         </ul>
 
         <h2>AI Skill & API for Developers</h2>
-        <p>MD2PDF ships with an installable <strong>AI Skill</strong> in the Claude Skills format. Open the AI Skill button in the toolbar, copy or download <code>SKILL.md</code>, and install it in Claude, Custom GPTs, Gemini, or any compatible agent. The agent can then create and update styled documents on your behalf.</p>
+        <p>MD2PDF ships with an installable <strong>AI Skill</strong> in the Claude Skills format. Open the AI Skill button in the toolbar, copy or download <code>SKILL.md</code>, or run <code>npx -y md2pdf-studio skill --install</code>, and install it in Claude, Codex, Cursor, Gemini CLI, or any compatible agent. The agent can then create and update styled documents on your behalf.</p>
+        <p>The <code>md2pdf-studio</code> npm package also works from a terminal (<code>npx -y md2pdf-studio share report.md</code>) and as an MCP server (<code>npx -y md2pdf-studio mcp</code>). It encrypts on your machine, so the server never receives your key or your text.</p>
         <p>Developers can also call the public REST API directly:</p>
         <ul>
-            <li><strong>POST /api/save</strong> — Create a document. With plain text it returns <code>{ id, editKey, url, key, expiresAt }</code>; share <code>{url}#k={key}</code>, which only works with the key</li>
-            <li><strong>PUT /api/update/{id}</strong> — Update an existing document (requires <code>X-Edit-Key</code>, plus <code>X-Enc-Key: {key}</code> for plain text so existing links keep working)</li>
+            <li><strong>POST /api/save</strong> — Create a document. Send AES-256-GCM ciphertext with <code>X-Encrypted: aes-256-gcm</code>; it returns <code>{ id, editKey, url, expiresAt }</code>. Share <code>{url}#k={key}</code>, which only works with the key you generated. Plain text is rejected</li>
+            <li><strong>PUT /api/update/{id}</strong> — Replace a document with new ciphertext (requires <code>X-Edit-Key</code>; reuse the same key so existing links keep working)</li>
         </ul>
-        <p>No authentication required. Max 500 KB of Markdown per document, 10 writes (save, update and delete combined) per IP per minute, links expire 30 days after creation and can be deleted with their edit key.</p>
+        <p>No authentication required. Max 500 KB of Markdown per document, 10 writes (save, update and delete combined) per IP per minute and 100 writes per day, links expire 30 days after creation (or sooner if you choose) and can be deleted with their edit key. Optional headers set a shorter lifetime (<code>X-Expires-In</code>) or make a link one-time (<code>X-Burn</code>); a Pro API key lifts the limits and adds a custom preview title and description.</p>
 
         <h2>Open Source</h2>
         <p>MD2PDF is MIT licensed and fully open-source. Built with pure HTML, CSS, and JavaScript — no framework, no build step.</p>

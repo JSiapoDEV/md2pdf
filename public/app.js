@@ -80,6 +80,7 @@
             reportAbuse: 'Report abuse', terms: 'Terms', privacy: 'Privacy',
             shareLinkTitle: 'Share link', updateLink: 'Update link with current content',
             draftTooLarge: 'Draft too large to autosave in this browser',
+            burnTitle: 'This document can only be opened once', burnBody: 'Opening it uses up the link: nobody, including you, can open it again. Make sure you are ready to read it, and copy or export what you need before you leave the page.', burnOpen: 'Open it now', burnCancel: 'Not now', burnGone: 'This document was already opened, has expired, or was deleted.', burnLost: 'The document was opened but could not be decrypted. Check that you have the whole link.', burnOpened: 'Opened. This link no longer works: copy or export it before you leave.',
             keyMissing: 'This link is missing its key (the part after #k=). Ask the sender for the full link.', myLinks: 'My links', allLinks: 'Links created in this browser ({n})', noLinks: 'No links created in this browser yet.',
             yourLinks: 'Your other links on this browser ({n})', expiresShort: 'expires {date}',
             linkExpiredNew: 'The previous link had expired. Creating a new one.',
@@ -134,6 +135,7 @@
             reportAbuse: 'Reportar abuso', terms: 'Términos', privacy: 'Privacidad',
             shareLinkTitle: 'Enlace para compartir', updateLink: 'Actualizar el enlace con el contenido actual',
             draftTooLarge: 'El borrador es demasiado grande para guardarse en este navegador',
+            burnTitle: 'Este documento solo se puede abrir una vez', burnBody: 'Al abrirlo el enlace se agota: nadie, tampoco tú, podrá abrirlo de nuevo. Asegúrate de estar listo para leerlo y copia o exporta lo que necesites antes de salir de la página.', burnOpen: 'Abrir ahora', burnCancel: 'Ahora no', burnGone: 'Este documento ya fue abierto, expiró o fue eliminado.', burnLost: 'El documento se abrió pero no se pudo descifrar. Comprueba que tienes el enlace completo.', burnOpened: 'Abierto. Este enlace ya no funciona: cópialo o expórtalo antes de salir.',
             keyMissing: 'A este enlace le falta su clave (lo que va después de #k=). Pide el enlace completo.', myLinks: 'Mis enlaces', allLinks: 'Enlaces creados en este navegador ({n})', noLinks: 'Aún no creaste enlaces en este navegador.',
             yourLinks: 'Tus otros enlaces en este navegador ({n})', expiresShort: 'vence el {date}',
             linkExpiredNew: 'El enlace anterior venció. Creando uno nuevo.',
@@ -239,6 +241,10 @@ Follow those instructions exactly.
         shareUpdateBtn.textContent = t('updateLink');
 
         // Fork (editable copy) modal
+        $('#burnTitle').textContent = t('burnTitle');
+        $('#burnBody').textContent = t('burnBody');
+        $('#burnOpenBtn').textContent = t('burnOpen');
+        $('#burnCancelBtn').textContent = t('burnCancel');
         $('#forkModalTitle').textContent = t('readOnlyTitle');
         $('#forkModalBody').textContent = t('readOnlyBody');
         $('#forkCancelBtn').textContent = t('cancelBtn');
@@ -300,10 +306,10 @@ Follow those instructions exactly.
         var html = '<p class="api-desc">' + t('apiDesc') + '</p>';
 
         var sections = [
-            { title: t('apiCreate'), code: 'Path 1 — End-to-end encrypted (recommended for any non-public content)\n\n  1. Generate a 256-bit key and a 12-byte IV.\n  2. Encrypt markdown with AES-256-GCM.\n  3. Send base64(IV ‖ ciphertext ‖ tag) as the body.\n\nPOST https://md2pdf.studio/api/save\nContent-Type: text/plain\nX-Encrypted: aes-256-gcm\n\n<base64 ciphertext>\n\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3"\n}\n\nBuild the share link yourself: {url}#k={your base64url key}\nThe server never sees the key.\n\n---\n\nPath 2 — Server-side encryption (legacy, public content only)\n\nPOST https://md2pdf.studio/api/save\nContent-Type: text/plain\n\n# Your markdown here\n\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3",\n  "key": "xY9kL2m..."\n}\n\nShareable link: {url}#k={key}\nThe server sees the plaintext during this request.' },
-            { title: t('apiUpdate'), code: 'Path 1 — Update an end-to-end encrypted document\n\nReuse the same key; generate a fresh IV. Do NOT send X-Enc-Key.\n\nPUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\nX-Encrypted: aes-256-gcm\n\n<base64 ciphertext>\n\nResponse 200:\n{ "id": "BrOrr0N3", "url": "https://md2pdf.studio/s/BrOrr0N3" }\n\n---\n\nPath 2 — Update a server-side encrypted document\n\nPUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\nX-Enc-Key: {key}\n\n# Updated markdown\n\nResponse 403: { "error": "Unauthorized" }\nResponse 404: { "error": "Document not found" }' },
-            { title: t('apiCurl'), code: '# Path 1 — End-to-end encrypted (Python example)\npython3 <<\'PY\'\nimport os, json, base64, urllib.request\nfrom cryptography.hazmat.primitives.ciphers.aead import AESGCM\n\nmarkdown = "# Hello World\\n\\nThis is my first document."\n\nkey = AESGCM.generate_key(bit_length=256)\niv  = os.urandom(12)\nct  = AESGCM(key).encrypt(iv, markdown.encode(), None)\nbody = base64.b64encode(iv + ct).decode()\nkey_b64url = base64.urlsafe_b64encode(key).rstrip(b"=").decode()\n\nreq = urllib.request.Request(\n    "https://md2pdf.studio/api/save",\n    data=body.encode(),\n    headers={"Content-Type": "text/plain", "X-Encrypted": "aes-256-gcm"},\n    method="POST",\n)\ndata = json.loads(urllib.request.urlopen(req).read())\nprint(f"{data[\'url\']}#k={key_b64url}")\nPY\n\n# Path 2 — Plaintext (server sees content)\ncurl -X POST https://md2pdf.studio/api/save \\\n  -H "Content-Type: text/plain" \\\n  -d "# Public release notes"\n# Response includes "key"; share link is {url}#k={key}\n\n# Update (path 2)\ncurl -X PUT https://md2pdf.studio/api/update/BrOrr0N3 \\\n  -H "Content-Type: text/plain" \\\n  -H "X-Edit-Key: your-edit-key" \\\n  -H "X-Enc-Key: xY9kL2m..." \\\n  -d "# Updated content"' },
-            { title: t('apiLimits'), code: 'Max document size: 500 KB of Markdown (UTF-8)\nRate limit: 10 writes/minute per IP (save, update, delete)\nExpiration: 30 days after creation (updates do not extend it)\nDelete: DELETE /api/delete/{id} with X-Edit-Key\nEncryption at rest: AES-256-GCM (every document)\nE2EE path: X-Encrypted: aes-256-gcm — server never sees key or plaintext\nResponse: 429 Too Many Requests' },
+            { title: t('apiCreate'), code: 'End-to-end encrypted: the server only ever receives ciphertext.\n\nEasiest: npx -y md2pdf-studio share report.md\n\nOr by hand:\n\n  1. Generate a 256-bit key and a 12-byte IV.\n  2. Encrypt markdown with AES-256-GCM.\n  3. Send base64(IV ‖ ciphertext ‖ tag) as the body.\n\nPOST https://md2pdf.studio/api/save\nContent-Type: text/plain\nX-Encrypted: aes-256-gcm\n\n<base64 ciphertext>\n\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3",\n  "expiresAt": "2026-11-05T12:00:00.000Z"\n}\n\nBuild the share link yourself: {url}#k={your base64url key}\nThe server never sees the key. Plaintext is rejected (400 e2ee_required).' },
+            { title: t('apiUpdate'), code: 'Reuse the same key; generate a fresh IV. Never send the key (X-Enc-Key is rejected).\n\nEasiest: npx -y md2pdf-studio update <link|id> report.md\n\nPUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\nX-Encrypted: aes-256-gcm\n\n<base64 ciphertext>\n\nResponse 200:\n{ "id": "BrOrr0N3", "url": "https://md2pdf.studio/s/BrOrr0N3", "expiresAt": "..." }\n\nResponse 403: { "error": "Unauthorized" }\nResponse 404: { "error": "Document not found" }' },
+            { title: t('apiCurl'), code: '# Command line (recommended)\nnpx -y md2pdf-studio share report.md\ncat notes.md | npx -y md2pdf-studio share\nnpx -y md2pdf-studio delete <link|id>\n\n# By hand (Python)\npython3 <<\'PY\'\nimport os, json, base64, urllib.request\nfrom cryptography.hazmat.primitives.ciphers.aead import AESGCM\n\nmarkdown = "# Hello World\\n\\nThis is my first document."\n\nkey = AESGCM.generate_key(bit_length=256)\niv  = os.urandom(12)\nct  = AESGCM(key).encrypt(iv, markdown.encode(), None)\nbody = base64.b64encode(iv + ct).decode()\nkey_b64url = base64.urlsafe_b64encode(key).rstrip(b"=").decode()\n\nreq = urllib.request.Request(\n    "https://md2pdf.studio/api/save",\n    data=body.encode(),\n    headers={"Content-Type": "text/plain", "X-Encrypted": "aes-256-gcm"},\n    method="POST",\n)\ndata = json.loads(urllib.request.urlopen(req).read())\nprint(f"{data[\'url\']}#k={key_b64url}")\nPY' },
+            { title: t('apiLimits'), code: 'Max document size: 500 KB of Markdown (UTF-8)\nRate limit: 10 writes/minute per IP; 100 writes/day (free)\nExpiration: 30 days after creation (updates do not extend it)\nOptional headers: X-Expires-In: <seconds> (shorter life), X-Burn: 1 (one-time link)\nPro key (Authorization: Bearer): longer links, 5 MB, X-Doc-Title / X-Doc-Description\nDelete: DELETE /api/delete/{id} with X-Edit-Key\nEncryption: AES-256-GCM in the client; the server never sees key or plaintext\nResponse: 429 Too Many Requests' },
         ];
 
         sections.forEach(function (s) {
@@ -466,7 +472,7 @@ Follow those instructions exactly.
 `},
 
         latex: { name: 'LaTeX', dark: false, bg: '#fff', css: `
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inconsolata:wght@400;500&display=swap');
+@import url('/fonts/libre-baskerville.css');
 .markdown-body {
   font-family: 'Libre Baskerville', 'Computer Modern', Georgia, serif !important;
   font-size: 15px;
@@ -598,7 +604,7 @@ Follow those instructions exactly.
 `},
 
         newspaper: { name: 'Newspaper', dark: false, bg: '#fff', css: `
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('/fonts/playfair.css');
 .markdown-body {
   font-family: 'Source Serif 4', Georgia, serif !important;
   font-size: 15.5px;
@@ -663,7 +669,7 @@ Follow those instructions exactly.
 `},
 
         handwritten: { name: 'Handwritten', dark: false, bg: '#fff', css: `
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap');
+@import url('/fonts/caveat.css');
 .markdown-body {
   font-family: 'Caveat', cursive !important;
   font-size: 20px;
@@ -731,7 +737,7 @@ Follow those instructions exactly.
 `},
 
         terminal: { name: 'Terminal', dark: true, bg: '#0a0a0a', css: `
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap');
+@import url('/fonts/fira-code.css');
 .markdown-body {
   font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace !important;
   font-size: 14px;
@@ -796,7 +802,7 @@ Follow those instructions exactly.
 `},
 
         pastel: { name: 'Pastel', dark: false, bg: '#fff', css: `
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+@import url('/fonts/nunito.css');
 .markdown-body {
   font-family: 'Nunito', 'Rounded Mplus 1c', system-ui, sans-serif !important;
   font-size: 15px;
@@ -1794,11 +1800,11 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         if (!dark && _printCSSLight) return _printCSSLight;
 
         const mdURL   = dark
-            ? 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css'
-            : 'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-light.min.css';
+            ? '/vendor/github-markdown-dark.min.css'
+            : '/vendor/github-markdown-light.min.css';
         const hljsURL = dark
-            ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
-            : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+            ? '/vendor/hljs-github-dark.min.css'
+            : '/vendor/hljs-github.min.css';
 
         const [mdCSS, hljsCSS] = await Promise.all([
             fetch(mdURL).then(r => r.text()).catch(() => ''),
@@ -1822,7 +1828,10 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             css = css.replace(/\[data-theme="dark"\][^\{]*\{[^}]*\}/g, '');
             css = css.replace(/\[data-theme="light"\]\s*/g, '');
         }
-        return css;
+        // Theme fonts are served by this site. An exported file lives elsewhere,
+        // so point it back at the origin that hosts them.
+        const origin = /^https?:$/.test(location.protocol) ? location.origin : 'https://md2pdf.studio';
+        return css.replace(/url\('\/fonts\//g, "url('" + origin + '/fonts/');
     }
 
     function isCurrentStyleDark() {
@@ -2530,6 +2539,55 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         }
     }
 
+    // One-time documents: nothing is fetched until the reader confirms.
+    let pendingBurn = null;
+
+    function showBurnPrompt(id, key) {
+        pendingBurn = { id, key };
+        $('#burnBody').textContent = t('burnBody');
+        $('#burnOpenBtn').hidden = false;
+        $('#burnOpenBtn').disabled = false;
+        $('#burnOverlay').classList.add('active');
+    }
+
+    function closeBurnPrompt() {
+        $('#burnOverlay').classList.remove('active');
+    }
+
+    async function openBurnDocument() {
+        if (!pendingBurn) return;
+        const { id, key } = pendingBurn;
+        const openBtn = $('#burnOpenBtn');
+        openBtn.disabled = true;
+        try {
+            const res = await fetch('/api/open/' + id, { method: 'POST' });
+            if (!res.ok) {
+                $('#burnBody').textContent = t('burnGone');
+                openBtn.hidden = true;
+                return;
+            }
+            const { content } = await res.json();
+            pendingBurn = null;
+            let text;
+            try {
+                text = await e2eeDecrypt(content, await e2eeImportKey(key));
+            } catch (_) {
+                $('#burnBody').textContent = t('burnLost');
+                openBtn.hidden = true;
+                return;
+            }
+            closeBurnPrompt();
+            loadSharedContent(text);
+            render();
+            // The link is spent: a reload must not land on a dead address.
+            history.replaceState(null, '', '/');
+            showToast(t('burnOpened'));
+        } catch (_) {
+            openBtn.disabled = false;
+            showToast(t('shareFailed'));
+        }
+    }
+
     function openForkModal() {
         const overlay = document.getElementById('forkOverlay');
         if (!overlay) return;
@@ -2572,7 +2630,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
     }
 
     async function loadFromURL() {
-        // Try embedded content (injected by Worker for /s/:id and /share?doc=)
+        // Try embedded content (injected by Worker for /s/:id)
         const sharedEl = document.getElementById('shared-content');
         if (sharedEl) {
             try {
@@ -2581,6 +2639,17 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                     // Check if content is encrypted (has #k= in URL hash)
                     const hash = location.hash;
                     const keyMatch = hash.match(/[#&]k=([A-Za-z0-9_-]+)/);
+                    if (typeof raw === 'object' && raw.burn) {
+                        // One-time document: the page carries no content. Ask first,
+                        // because opening it uses it up.
+                        if (!keyMatch) {
+                            linkKeyMissing = true;
+                            history.replaceState(null, '', '/');
+                            return false;
+                        }
+                        showBurnPrompt(location.pathname.slice(3), keyMatch[1]);
+                        return false;
+                    }
                     if (keyMatch) {
                         try {
                             const cryptoKey = await e2eeImportKey(keyMatch[1]);
@@ -2600,34 +2669,12 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
                         linkKeyMissing = true;
                         history.replaceState(null, '', '/');
                         return false;
-                    } else {
-                        // Unencrypted legacy /share?doc= document
-                        loadSharedContent(raw);
                     }
                     return true;
                 }
             } catch (_) {}
         }
 
-        // Fallback: try ?doc= query param (client-side decompression)
-        const params = new URLSearchParams(location.search);
-        const docParam = params.get('doc');
-        if (docParam) {
-            try {
-                const content = LZString.decompressFromEncodedURIComponent(docParam);
-                if (content) { loadSharedContent(content); return true; }
-            } catch (_) {}
-        }
-
-        // Backward compat: try #doc= (hash)
-        const hashStr = location.hash;
-        if (hashStr.startsWith('#doc=')) {
-            const compressed = hashStr.slice(5);
-            try {
-                const content = LZString.decompressFromEncodedURIComponent(compressed);
-                if (content) { loadSharedContent(content); return true; }
-            } catch (_) {}
-        }
         return false;
     }
 
@@ -2843,6 +2890,8 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         const sharedLockBtn  = $('#sharedLock');
         sharedLockBtn.addEventListener('click', openForkModal);
         forkCloseBtn.addEventListener('click', closeForkModal);
+        $('#burnOpenBtn').addEventListener('click', openBurnDocument);
+        $('#burnCancelBtn').addEventListener('click', closeBurnPrompt);
         forkCancelBtn.addEventListener('click', closeForkModal);
         forkConfirmBtn.addEventListener('click', forkToLocalCopy);
         forkOverlay.addEventListener('click', (e) => { if (e.target === forkOverlay) closeForkModal(); });
@@ -3032,22 +3081,6 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         }
     }
 
-    // ── GitHub Stars ─────────────────────────────────
-
-    function fetchGitHubStars() {
-        fetch('https://api.github.com/repos/JSiapoDEV/md2pdf')
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.stargazers_count !== undefined) {
-                    var count = data.stargazers_count;
-                    var label = count >= 1000 ? (count / 1000).toFixed(1) + 'k' : count;
-                    var el = $('#starText');
-                    if (el) el.textContent = label + ' \u2605';
-                }
-            })
-            .catch(function () {});
-    }
-
     // ── Boot ─────────────────────────────────────────
 
     async function init() {
@@ -3105,7 +3138,6 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         initDropdowns();
         initEvents();
         initWebMCP();
-        fetchGitHubStars();
     }
 
     if (document.readyState === 'loading') {
