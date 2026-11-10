@@ -89,7 +89,6 @@
             tooManyShares: 'Too many shares in a minute. Try again shortly.',
             copy: 'Copy', copied: 'Copied!',
             download: 'Download',
-            tabSkill: 'Skill', tabApi: 'API',
             generatingPdf: 'Generating PDF...',
             dropHere: 'Drop your <strong>.md</strong> file here',
             emptyPreview: 'Start typing to see the preview...',
@@ -121,10 +120,6 @@
             skillLoading: 'Loading the skill…',
             skillLoadFailed: 'Could not load the skill. Open it here:',
             downloadZip: 'ZIP for claude.ai',
-            // API tab
-            apiDesc: 'REST API for programmatic access. No authentication required.',
-            apiCreate: 'Create document', apiUpdate: 'Update document',
-            apiCurl: 'cURL examples', apiLimits: 'Limits',
         },
         es: {
             markdown: 'Markdown', preview: 'Vista previa',
@@ -152,7 +147,6 @@
             tooManyShares: 'Demasiados enlaces en un minuto. Intenta en un momento.',
             copy: 'Copiar', copied: 'Copiado!',
             download: 'Descargar',
-            tabSkill: 'Skill', tabApi: 'API',
             generatingPdf: 'Generando PDF...',
             dropHere: 'Suelta tu archivo <strong>.md</strong> aqui',
             emptyPreview: 'Empieza a escribir para ver la vista previa...',
@@ -184,10 +178,6 @@
             skillLoading: 'Cargando la skill…',
             skillLoadFailed: 'No se pudo cargar la skill. Ábrela aquí:',
             downloadZip: 'ZIP para claude.ai',
-            // API tab
-            apiDesc: 'API REST para acceso programatico. No requiere autenticacion.',
-            apiCreate: 'Crear documento', apiUpdate: 'Actualizar documento',
-            apiCurl: 'Ejemplos cURL', apiLimits: 'Limites',
         },
     };
 
@@ -291,13 +281,7 @@
         $('#apiPromptsBtn').setAttribute('aria-label', t('apiPrompts'));
         $('#apiPromptsBtnLabel').textContent = t('apiPrompts');
 
-        // Tab labels
-        $('#tabBtnSkill').textContent = t('tabSkill');
-        $('#tabBtnApi').textContent = t('tabApi');
-
-        // Rebuild Skill/API content
         buildSkillTab();
-        buildApiTab();
     }
 
     function buildSkillTab() {
@@ -352,40 +336,7 @@
         });
     }
 
-    function buildApiTab() {
-        var html = '<p class="api-desc">' + t('apiDesc') + '</p>';
-
-        var sections = [
-            { title: t('apiCreate'), code: 'End-to-end encrypted: the server only ever receives ciphertext.\n\nEasiest: npx -y md2pdf-studio share report.md\n\nOr by hand:\n\n  1. Generate a 256-bit key and a 12-byte IV.\n  2. Encrypt markdown with AES-256-GCM.\n  3. Send base64(IV ‖ ciphertext ‖ tag) as the body.\n\nPOST https://md2pdf.studio/api/save\nContent-Type: text/plain\nX-Encrypted: aes-256-gcm\n\n<base64 ciphertext>\n\nResponse 200:\n{\n  "id": "BrOrr0N3",\n  "editKey": "a1b2c3...64chars",\n  "url": "https://md2pdf.studio/s/BrOrr0N3",\n  "expiresAt": "2026-11-05T12:00:00.000Z"\n}\n\nBuild the share link yourself: {url}#k={your base64url key}\nThe server never sees the key. Plaintext is rejected (400 e2ee_required).' },
-            { title: t('apiUpdate'), code: 'Reuse the same key; generate a fresh IV. Never send the key (X-Enc-Key is rejected).\n\nEasiest: npx -y md2pdf-studio update <link|id> report.md\n\nPUT https://md2pdf.studio/api/update/{id}\nContent-Type: text/plain\nX-Edit-Key: {editKey}\nX-Encrypted: aes-256-gcm\n\n<base64 ciphertext>\n\nResponse 200:\n{ "id": "BrOrr0N3", "url": "https://md2pdf.studio/s/BrOrr0N3", "expiresAt": "..." }\n\nResponse 403: { "error": "Unauthorized" }\nResponse 404: { "error": "Document not found" }' },
-            { title: t('apiCurl'), code: '# Command line (recommended)\nnpx -y md2pdf-studio share report.md\ncat notes.md | npx -y md2pdf-studio share\nnpx -y md2pdf-studio delete <link|id>\n\n# By hand (Python)\npython3 <<\'PY\'\nimport os, json, base64, urllib.request\nfrom cryptography.hazmat.primitives.ciphers.aead import AESGCM\n\nmarkdown = "# Hello World\\n\\nThis is my first document."\n\nkey = AESGCM.generate_key(bit_length=256)\niv  = os.urandom(12)\nct  = AESGCM(key).encrypt(iv, markdown.encode(), None)\nbody = base64.b64encode(iv + ct).decode()\nkey_b64url = base64.urlsafe_b64encode(key).rstrip(b"=").decode()\n\nreq = urllib.request.Request(\n    "https://md2pdf.studio/api/save",\n    data=body.encode(),\n    headers={"Content-Type": "text/plain", "X-Encrypted": "aes-256-gcm"},\n    method="POST",\n)\ndata = json.loads(urllib.request.urlopen(req).read())\nprint(f"{data[\'url\']}#k={key_b64url}")\nPY' },
-            { title: t('apiLimits'), code: 'Max document size: 500 KB of Markdown (UTF-8)\nRate limit: 10 writes/minute per IP; 100 writes/day (free)\nExpiration: 30 days after creation (updates do not extend it)\nOptional headers: X-Expires-In: <seconds> (shorter life), X-Burn: 1 (one-time link)\nDelete: DELETE /api/delete/{id} with X-Edit-Key\nEncryption: AES-256-GCM in the client; the server never sees key or plaintext\nResponse: 429 Too Many Requests' },
-        ];
-
-        sections.forEach(function (s) {
-            html += '<div class="api-section"><h4>' + s.title + '</h4><div class="api-code-block"><pre>' + escapeHtmlLight(s.code) + '</pre><button class="api-copy-btn">' + t('copy') + '</button></div></div>';
-        });
-
-        $('#tab-api').innerHTML = html;
-        bindCopyButtons('#tab-api');
-        document.querySelectorAll('#tab-api .api-copy-btn').forEach(function (btn) {
-            btn.addEventListener('click', function () { track('copy_api'); });
-        });
-    }
-
     function escapeHtmlLight(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-    function bindCopyButtons(containerSel) {
-        document.querySelectorAll(containerSel + ' .api-copy-btn').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var pre = btn.parentElement.querySelector('pre');
-                navigator.clipboard.writeText(pre.textContent).then(function () {
-                    btn.textContent = t('copied');
-                    setTimeout(function () { btn.textContent = t('copy'); }, 2000);
-                });
-            });
-        });
-    }
 
     // ── Styles ───────────────────────────────────────
 
@@ -2996,18 +2947,6 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         $('#apiPromptsBtn').addEventListener('click', () => { apiOverlay.classList.add('active'); fillSkillTab(); });
         apiCloseBtn.addEventListener('click', () => { apiOverlay.classList.remove('active'); });
         apiOverlay.addEventListener('click', (e) => { if (e.target === apiOverlay) apiOverlay.classList.remove('active'); });
-
-        // Tabs
-        document.querySelectorAll('.api-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.api-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.api-tab-content').forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-            });
-        });
-
-        // Copy buttons are bound dynamically in buildPromptsTab/buildApiTab
 
         // Editable file name
         fileNameEl.addEventListener('change', () => {

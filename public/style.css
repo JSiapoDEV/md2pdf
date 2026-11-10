@@ -1075,29 +1075,6 @@ body {
     flex: 1;
 }
 
-.api-tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 16px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 8px;
-}
-
-.api-tab {
-    font-family: var(--font-ui);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-2);
-    background: none;
-    border: none;
-    padding: 6px 14px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all var(--t-fast);
-}
-
-.api-tab:hover { color: var(--text-1); background: var(--btn-ghost-hover); }
-.api-tab.active { color: var(--accent); background: var(--accent-subtle); }
 
 .api-tab-content { display: none; }
 .api-tab-content.active { display: block; }
