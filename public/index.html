@@ -330,7 +330,7 @@
         <div class="info-bar">
             <button type="button" class="info-back" id="infoCloseBtn">&larr; Back to the editor</button>
         </div>
-        <div class="seo-container">
+        <div class="seo-container" id="infoEn">
             <h1>Markdown to PDF Converter — Free Online Tool</h1>
             <p>MD2PDF is a free, open-source Markdown to PDF converter that runs entirely in your browser. Convert any .md file to beautifully styled PDF, HTML, or PNG image. No signup, no cookies, and nothing is uploaded to convert your file.</p>
 
@@ -415,6 +415,95 @@
 
             <details><summary>Is MD2PDF open source?</summary><p>Yes. MD2PDF is MIT licensed and available on <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a>. Contributions are welcome.</p></details>
         </div>
+        <!-- Spanish version, shown when the app is in Spanish. A template is not
+             rendered, so the English text above stays the page's indexed copy. -->
+        <template id="infoEs">
+        <div class="seo-container" lang="es">
+            <h1>Conversor de Markdown a PDF — Herramienta gratuita en línea</h1>
+            <p>MD2PDF es un conversor de Markdown a PDF gratuito y de código abierto que funciona por completo en tu navegador. Convierte cualquier archivo .md en un PDF, HTML o imagen PNG con estilo. Sin registro, sin cookies, y no se sube nada para convertir tu archivo.</p>
+
+            <h2>Cómo convertir Markdown a PDF</h2>
+            <ol>
+                <li><strong>Escribe o sube tu Markdown</strong> — Pega tu contenido en el editor, arrastra un archivo .md o elige una plantilla para empezar.</li>
+                <li><strong>Elige un estilo visual</strong> — Hay 11 estilos: Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal y Pastel. Agrega tu propio CSS si quieres control total.</li>
+                <li><strong>Exporta tu documento</strong> — Pulsa Exportar para descargarlo en PDF, HTML o imagen PNG. O compártelo con un enlace que funciona en WhatsApp, Teams y Slack.</li>
+            </ol>
+
+            <h2>Funciones</h2>
+            <ul>
+                <li><strong>Vista previa en vivo</strong> — Ves el documento final mientras escribes</li>
+                <li><strong>11 estilos visuales</strong> — Del limpio Notion al oscuro Dracula, del formal Academic al divertido Handwritten</li>
+                <li><strong>Exporta a PDF, HTML e imagen</strong> — Descarga en cualquier formato con un clic</li>
+                <li><strong>Resaltado de código</strong> — Más de 180 lenguajes, con detección automática y botón para copiar</li>
+                <li><strong>Diagramas Mermaid</strong> — Diagramas de flujo, de secuencia, de Gantt, circulares y más, dibujados como SVG desde bloques de código</li>
+                <li><strong>Tabla de contenidos automática</strong> — Escribe [TOC] y se genera una tabla de contenidos enlazada a partir de tus títulos</li>
+                <li><strong>CSS propio</strong> — Agrega tus estilos para controlar por completo el resultado</li>
+                <li><strong>Plantillas</strong> — Empieza con un CV, un reporte, documentación, un changelog o notas de reunión</li>
+                <li><strong>Modo claro y oscuro</strong> — Elige el tema que prefieras</li>
+                <li><strong>Cifrado de extremo a extremo</strong> — Los enlaces que compartes se cifran en tu navegador con AES-256-GCM; la clave queda en la parte #k= del enlace y nunca llega al servidor</li>
+                <li><strong>Compartir con un enlace</strong> — Genera enlaces cifrados que abren el documento con estilo en cualquier navegador</li>
+                <li><strong>Buscar y reemplazar</strong> — Busca y reemplaza texto en el editor con Ctrl+F / Ctrl+H</li>
+                <li><strong>Guardado automático</strong> — Tu trabajo se guarda solo en tu navegador</li>
+                <li><strong>Listo para agentes de IA</strong> — Una skill instalable, el CLI md2pdf-studio y un servidor MCP permiten que Claude, Codex, Cursor, Gemini y otros agentes compartan documentos</li>
+                <li><strong>Privacidad primero</strong> — La conversión ocurre en tu navegador. Los enlaces se cifran antes de subirse. Sin cookies, sin cuenta</li>
+            </ul>
+
+            <h2>Sintaxis de Markdown soportada</h2>
+            <p>MD2PDF soporta GitHub-Flavored Markdown (GFM): títulos, párrafos, negrita, cursiva, tachado, listas numeradas y con viñetas, listas de tareas, bloques de código con resaltado, tablas, citas, imágenes, líneas horizontales, enlaces y bloques de diagramas Mermaid. Escribe [TOC] en una línea aparte para generar una tabla de contenidos enlazada.</p>
+
+            <h2>Estilos disponibles</h2>
+            <p>Elige entre 11 estilos visuales según el propósito de tu documento:</p>
+            <ul>
+                <li><strong>Notion</strong> — Sans-serif limpia y moderna. Es el estilo por defecto.</li>
+                <li><strong>GitHub</strong> — El Markdown clásico de GitHub, familiar para desarrolladores.</li>
+                <li><strong>Minimal</strong> — Tipografía serif elegante, sin adornos.</li>
+                <li><strong>Academic</strong> — Texto justificado y formal, con aire académico. Ideal para trabajos.</li>
+                <li><strong>Corporate</strong> — Diseño profesional con acentos azules y encabezados de tabla con estilo.</li>
+                <li><strong>LaTeX</strong> — Imita un artículo académico con la tipografía Libre Baskerville.</li>
+                <li><strong>Dracula</strong> — Morado, rosa y verde vibrantes sobre fondo oscuro.</li>
+                <li><strong>Newspaper</strong> — Tipografía editorial con títulos en Playfair Display.</li>
+                <li><strong>Handwritten</strong> — Letra cursiva sobre un fondo de cuaderno con líneas.</li>
+                <li><strong>Terminal</strong> — Monoespaciada verde sobre negro, estética hacker.</li>
+                <li><strong>Pastel</strong> — Rosa, morado y turquesa suaves, con bordes redondeados.</li>
+            </ul>
+
+            <h2>Skill de IA y CLI para agentes</h2>
+            <p>MD2PDF incluye una <strong>skill de IA</strong> instalable en el formato de Claude Skills. Cópiala o descárgala desde el botón Skill de IA de la barra superior e instálala en Claude, Codex o cualquier agente compatible. Así el agente puede crear, actualizar y compartir documentos con estilo por ti.</p>
+            <p>La skill usa la herramienta de línea de comandos <code>md2pdf-studio</code> a través de npx, que cifra en la máquina del agente e imprime el enlace. El mismo paquete es un servidor MCP para Claude Desktop, Cursor y otros clientes MCP. No hace falta registrarse.</p>
+
+            <h2>Preguntas frecuentes</h2>
+
+            <details><summary>¿MD2PDF es realmente gratis?</summary><p>Sí, totalmente gratis. Sin costos ocultos y sin registro. MD2PDF es de código abierto con licencia MIT.</p></details>
+
+            <details><summary>¿Cómo convierto un archivo Markdown a PDF?</summary><p>Abre md2pdf.studio, pega tu Markdown o arrastra un archivo .md, elige un estilo y pulsa Exportar &gt; Exportar PDF. El PDF se descarga al instante.</p></details>
+
+            <details><summary>¿Soporta GitHub-Flavored Markdown?</summary><p>Sí. MD2PDF soporta GFM por completo: tablas, listas de tareas, tachado, bloques de código con resaltado y más.</p></details>
+
+            <details><summary>¿Puedo personalizar el estilo del PDF?</summary><p>Sí. Elige uno de los 11 estilos o agrega tu propio CSS. Tu CSS se aplica a la vista previa y al documento exportado.</p></details>
+
+            <details><summary>¿Mis datos están seguros?</summary><p>La conversión ocurre en tu navegador: tu Markdown nunca se sube para convertirlo. Solo si creas un enlace para compartir se sube el documento, y antes se cifra en tu navegador, así que el servidor guarda un texto cifrado que no puede leer. Sin cookies, sin cuenta.</p></details>
+
+            <details><summary>¿Puedo compartir mis documentos?</summary><p>Sí. Pulsa Exportar &gt; Compartir para generar un enlace. Quien lo reciba verá tu documento con estilo en su navegador. Las vistas previas en las apps de chat muestran una tarjeta genérica, porque el servidor no puede leer el documento.</p></details>
+
+            <details><summary>¿Funciona sin conexión?</summary><p>El editor y la vista previa funcionan sin conexión después de cargar la página. Exportar y compartir necesitan internet.</p></details>
+
+            <details><summary>¿En qué formatos puedo exportar?</summary><p>PDF (una sola página continua), HTML (un archivo independiente con los estilos incluidos) e imagen PNG. Todos conservan el estilo que elegiste.</p></details>
+
+            <details><summary>¿Los agentes de IA pueden usar MD2PDF?</summary><p>Sí. MD2PDF ofrece una skill instalable en el formato de Claude Skills (SKILL.md) que funciona con Claude, Codex, Gemini y cualquier agente compatible. El CLI md2pdf-studio y su servidor MCP cifran en la máquina del agente, y las herramientas WebMCP del editor sirven a los agentes del navegador (experimental).</p></details>
+
+            <details><summary>¿Soporta diagramas Mermaid?</summary><p>Sí. Escribe el código Mermaid dentro de un bloque ```mermaid y se dibuja solo como un diagrama SVG: diagramas de flujo, de secuencia, de Gantt, circulares, de clases, de estados y más.</p></details>
+
+            <details><summary>¿Puedo generar una tabla de contenidos?</summary><p>Sí. Escribe [TOC] en una línea aparte en cualquier parte del documento, y MD2PDF genera una tabla de contenidos enlazada a partir de todos tus títulos.</p></details>
+
+            <details><summary>¿Los documentos compartidos están cifrados?</summary><p>Sí, todo documento guardado está cifrado con AES-256-GCM. Cuando compartes desde la app, se cifra en tu navegador y la clave vive solo en la parte #k= del enlace, que los navegadores nunca envían al servidor. El CLI md2pdf-studio cifra igual en la máquina del agente, y el servidor rechaza lo que llega sin cifrar. Solo quien tiene el enlace completo puede leer el documento.</p></details>
+
+            <details><summary>¿Qué lenguajes se resaltan?</summary><p>MD2PDF usa highlight.js, que soporta más de 180 lenguajes, entre ellos JavaScript, Python, Go, Rust, Java, SQL, Bash y TypeScript. Cada bloque de código tiene un botón para copiar.</p></details>
+
+            <details><summary>¿Cuánto duran los enlaces compartidos?</summary><p>Los enlaces duran 30 días desde que se crean. Puedes actualizar el contenido sin cambiar el enlace, y borrar cualquiera de tus enlaces cuando quieras desde Exportar &gt; Mis enlaces. Los enlaces creados antes de la actualización del 2 de octubre de 2026 vencen 90 días después de su última actualización.</p></details>
+
+            <details><summary>¿MD2PDF es de código abierto?</summary><p>Sí. MD2PDF tiene licencia MIT y está en <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a>. Las contribuciones son bienvenidas.</p></details>
+        </div>
+        </template>
     </section>
 
     <!-- HowTo Schema -->

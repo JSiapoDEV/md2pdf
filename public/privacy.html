@@ -36,10 +36,16 @@
             display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
         }
         @media (max-width: 600px) { h1 { font-size: 1.7em; } table { font-size: 0.85em; } }
+        .lang-switch { text-align: right; font-size: 0.85em; color: #6e7681; margin-bottom: 16px; }
+        .lang-switch a[aria-current] { color: #e6edf3; font-weight: 700; }
+        .note { color: #8b949e; font-size: 0.9em; }
     </style>
+    <script src="/legal-lang.js" defer></script>
 </head>
-<body>
+<body data-title-en="Privacy Policy — MD2PDF" data-title-es="Política de privacidad — MD2PDF">
     <div class="container">
+        <nav class="lang-switch" aria-label="Language"><a href="#en" hreflang="en">English</a> &middot; <a href="#es" hreflang="es">Español</a></nav>
+        <div id="docEn" lang="en">
         <h1>Privacy Policy</h1>
         <p class="subtitle">Effective November 10, 2026</p>
 
@@ -97,6 +103,69 @@
                 <a href="/terms">Terms</a>
             </span>
         </footer>
+        </div>
+        <template id="docEs">
+        <div lang="es">
+        <h1>Política de privacidad</h1>
+        <p class="subtitle">Vigente desde el 10 de noviembre de 2026</p>
+        <p class="note">Traducción de la versión en inglés. Si hay diferencias, prevalece la versión en inglés.</p>
+
+        <p>md2pdf.studio es operado por JSiapoDev, un desarrollador independiente con sede en Perú, responsable del tratamiento que se describe aquí. Contacto: <a href="mailto:jsiapo.dev@gmail.com">jsiapo.dev@gmail.com</a>.</p>
+
+        <h2>En resumen</h2>
+        <ul>
+            <li>La conversión ocurre en tu navegador. Tu Markdown no se sube para convertirlo.</li>
+            <li>Un documento llega a nuestro servidor solo si creas un enlace para compartir, y la app lo cifra antes en tu navegador. La clave queda en la parte <code>#k=</code> del enlace, que los navegadores no envían a los servidores, así que no podemos leerlo.</li>
+            <li>Nunca tienes que darnos datos personales. Compartir es opcional: si no compartes, ningún documento se envía a ninguna parte.</li>
+            <li>Sin cuentas, sin cookies, sin publicidad.</li>
+            <li>La app carga sus librerías y fuentes desde el propio md2pdf.studio, no desde terceros.</li>
+        </ul>
+
+        <h2>Qué se trata y por cuánto tiempo</h2>
+        <table>
+            <tr><th>Datos</th><th>Dónde</th><th>Para qué</th><th>Cuánto tiempo</th></tr>
+            <tr><td>Tus borradores, tu configuración y los enlaces que creaste, con sus claves</td><td>Solo en el almacenamiento local de tu navegador</td><td>Guardado automático y edición de tus propios enlaces</td><td>Hasta que borres los datos del navegador</td></tr>
+            <tr><td>Enlaces para compartir: el documento cifrado, su ID, una clave de edición, y las fechas de creación y de vencimiento</td><td>Cloudflare KV</td><td>Servir el enlace</td><td>30 días desde su creación, salvo que el autor haya elegido un plazo menor, o hasta que se borre. Un enlace de un solo uso también se borra al abrirse. Enlaces creados antes de la actualización del 2 de octubre de 2026: 90 días después de su última actualización</td></tr>
+            <tr><td>Contadores de uso diario: cuántas escrituras y bytes hoy, bajo un hash irreversible de tu dirección IP. No guardamos la dirección</td><td>Cloudflare Durable Objects</td><td>Límites diarios del uso gratuito, para frenar abusos</td><td>Hasta las 00:00 UTC del día en que se contaron. Los enlaces de un solo uso conservan durante 31 días una marca de que ya se abrieron</td></tr>
+            <tr><td>Enlaces y claves creados con la herramienta de línea de comandos <code>md2pdf-studio</code> o su servidor MCP</td><td>Solo en tu computadora (<code>~/.config/md2pdf-studio/links.json</code>, que solo tu usuario puede leer)</td><td>Actualizar o borrar tus propios enlaces más adelante</td><td>Hasta que borres el archivo o venza el enlace</td></tr>
+            <tr><td>Conteos anónimos: el nombre de un evento (se creó un enlace, se copió o descargó la skill, o se alcanzó un límite, y cuál) y el tipo de cliente (navegador, la herramienta <code>md2pdf-studio</code> u otro programa), leído de la cabecera que identifica al cliente. Sin dirección IP, sin identificadores, sin contenido</td><td>Cloudflare Workers Analytics Engine</td><td>Saber qué funciones se usan y qué límites alcanza la gente</td><td>Tres meses</td></tr>
+            <tr><td>Tu dirección IP, cuando creas, actualizas o borras un enlace</td><td>El limitador de solicitudes de Cloudflare, en memoria</td><td>Evitar abusos de los enlaces para compartir</td><td>Unos 60 segundos; no la guardamos</td></tr>
+            <tr><td>Datos estándar de cada solicitud (dirección IP, navegador, página, sitio de origen)</td><td>Cloudflare, que aloja el sitio</td><td>Servir y proteger el sitio; vemos cifras agregadas, como visitas por página y país</td><td>Según las políticas de retención de Cloudflare; no llevamos registros propios</td></tr>
+        </table>
+        <p>Los enlaces del formato antiguo <code>/share?doc=…</code>, que llevaban el documento completo sin cifrar en la dirección, ya no funcionan. Nunca los guardamos.</p>
+        <p>También usamos Cloudflare Web Analytics, que cuenta visitas a las páginas sin cookies y sin identificarte.</p>
+
+        <h2>Bancos de datos</h2>
+        <p>Dos bancos de datos: <strong>enlaces compartidos</strong> (documentos cifrados, IDs de enlaces, claves de edición, fechas de creación y de vencimiento) y <strong>control de abusos</strong> (direcciones IP, durante unos 60 segundos). Tu dirección IP se trata porque servir un sitio web lo requiere.</p>
+
+        <h2>Encargados y transferencias internacionales</h2>
+        <ul>
+            <li><strong>Cloudflare, Inc.</strong> (101 Townsend St, San Francisco, CA 94107, EE. UU.) aloja el sitio y el almacenamiento de enlaces, y trata estos datos por encargo nuestro en servidores de muchos países, incluido Estados Unidos, conforme a su Data Processing Addendum.</li>
+            <li>Las librerías y fuentes que la app necesita se sirven desde md2pdf.studio, así que usarla no envía tu dirección IP a ningún tercero aparte de Cloudflare. Un archivo HTML que exportes carga las fuentes de su tema desde md2pdf.studio cada vez que se abre.</li>
+            <li>Las imágenes, fuentes u hojas de estilo que un documento o tu CSS propio enlacen se cargan desde sus propios sitios, que reciben la dirección IP de quien lee.</li>
+            <li>Si usas la herramienta <code>md2pdf-studio</code>, la descargas de npm (npm, Inc., una empresa de GitHub, EE. UU.). Una vez al día le pregunta a npm cuál es su última versión, así que npm recibe tu dirección IP y el nombre y la versión de la herramienta, según su propia política. Con <code>MD2PDF_NO_UPDATE_CHECK=1</code> se desactiva esa consulta.</li>
+        </ul>
+        <p>No vendemos ni compartimos datos con nadie más, y no los usamos para publicidad.</p>
+
+        <h2>Tus derechos</h2>
+        <p>Puedes borrar cualquier enlace que hayas creado desde Exportar &gt; Mis enlaces, o con <code>md2pdf-studio delete</code> en la computadora que lo creó. Como no hay cuentas, por lo general no podemos saber qué documentos son tuyos. Si necesitas algo más, como acceso, rectificación, cancelación u oposición según la Ley de Protección de Datos Personales del Perú (Ley 29733), el RGPD u otras leyes similares, escríbenos y te responderemos dentro de los plazos legales. En el Perú también puedes presentar un reclamo ante la Autoridad Nacional de Protección de Datos Personales.</p>
+
+        <h2>Menores de edad</h2>
+        <p>El servicio no está dirigido a menores de 14 años.</p>
+
+        <h2>Cambios</h2>
+        <p>Si esta política cambia, actualizaremos la fecha de arriba. Consulta también los <a href="/terms#es">Términos de uso</a>.</p>
+
+        <footer>
+            <span>Hecho por <a href="https://jsiapo.dev">JSiapoDev</a></span>
+            <span>
+                <a href="/">Abrir el editor</a> &middot;
+                <a href="/about">Acerca de</a> &middot;
+                <a href="/terms#es">Términos</a>
+            </span>
+        </footer>
+        </div>
+        </template>
     </div>
 </body>
 </html>

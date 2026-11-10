@@ -33,10 +33,16 @@
             display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
         }
         @media (max-width: 600px) { h1 { font-size: 1.7em; } }
+        .lang-switch { text-align: right; font-size: 0.85em; color: #6e7681; margin-bottom: 16px; }
+        .lang-switch a[aria-current] { color: #e6edf3; font-weight: 700; }
+        .note { color: #8b949e; font-size: 0.9em; }
     </style>
+    <script src="/legal-lang.js" defer></script>
 </head>
-<body>
+<body data-title-en="Terms of Use — MD2PDF" data-title-es="Términos de uso — MD2PDF">
     <div class="container">
+        <nav class="lang-switch" aria-label="Language"><a href="#en" hreflang="en">English</a> &middot; <a href="#es" hreflang="es">Español</a></nav>
+        <div id="docEn" lang="en">
         <h1>Terms of Use</h1>
         <p class="subtitle">Effective November 10, 2026</p>
 
@@ -91,6 +97,66 @@
                 <a href="/privacy">Privacy</a>
             </span>
         </footer>
+        </div>
+        <template id="docEs">
+        <div lang="es">
+        <h1>Términos de uso</h1>
+        <p class="subtitle">Vigentes desde el 10 de noviembre de 2026</p>
+        <p class="note">Traducción de la versión en inglés. Si hay diferencias, prevalece la versión en inglés.</p>
+
+        <p>Estos términos se aplican al servicio alojado en md2pdf.studio, incluidos sus enlaces para compartir y la herramienta de línea de comandos <code>md2pdf-studio</code>. md2pdf.studio es operado por JSiapoDev, un desarrollador independiente con sede en Perú. El código fuente se publica por separado bajo la licencia MIT; estos términos cubren el servicio, no el código.</p>
+
+        <h2>1. El servicio</h2>
+        <p>MD2PDF convierte Markdown en PDF, HTML e imágenes en tu navegador. Es gratuito y se ofrece tal cual. Sus funciones pueden cambiar, y el servicio puede suspenderse o dejar de ofrecerse.</p>
+
+        <h2>2. Tu contenido</h2>
+        <p>Lo que escribes es tuyo. No se sube nada para convertir un archivo. Cuando creas un enlace para compartir, nos das permiso para guardar y servir ese documento cifrado mientras el enlace exista. Eres responsable de lo que compartes y de tener derecho a compartirlo.</p>
+
+        <h2>3. Enlaces para compartir</h2>
+        <ul>
+            <li>Un enlace dura <strong>30 días desde su creación</strong>, salvo que su autor haya elegido un plazo menor. Actualizar el documento no lo extiende. Un enlace de un solo uso deja de funcionar en cuanto se abre. Los enlaces creados antes de la actualización del 2 de octubre de 2026 conservan las condiciones con que se crearon: vencen 90 días después de su última actualización.</li>
+            <li>El uso gratuito tiene límites diarios por dirección (escrituras y tamaño total). Al alcanzarlos, no se puede escribir hasta las 00:00 UTC; los enlaces ya creados siguen funcionando.</li>
+            <li>Puedes borrar un enlace cuando quieras desde Exportar &gt; Mis enlaces, que lista todos los enlaces creados en ese navegador, o con <code>md2pdf-studio delete</code> en la computadora que lo creó.</li>
+            <li>Los enlaces del formato antiguo <code>/share?doc=…</code>, que llevaban el documento completo sin cifrar en la dirección, ya no funcionan.</li>
+            <li>Los enlaces pueden desaparecer antes si infringen estos términos o si el servicio deja de ofrecerse. Guarda tu propia copia: un enlace para compartir no es un respaldo.</li>
+            <li>Cualquiera que tenga el enlace completo (incluida la parte <code>#k=</code>) puede leer el documento. Trátalo como una contraseña.</li>
+        </ul>
+
+        <h2>4. Uso aceptable</h2>
+        <p>No uses md2pdf.studio para crear o compartir:</p>
+        <ul>
+            <li>páginas de phishing, formularios falsos de inicio de sesión o de pago, o cualquier cosa destinada a obtener credenciales o dinero mediante engaño;</li>
+            <li>malware, o enlaces a él;</li>
+            <li>material de abuso sexual infantil, o cualquier contenido que sexualice a menores;</li>
+            <li>contenido que infrinja los derechos de autor u otros derechos de terceros;</li>
+            <li>acoso, amenazas, o datos personales de otras personas compartidos sin una razón legítima;</li>
+            <li>spam, o contenido ilegal donde estés tú o tus lectores.</li>
+        </ul>
+        <p>No intentes eludir los límites de uso, sobrecargar el servicio ni buscar vulnerabilidades fuera de la <a href="https://github.com/JSiapoDEV/md2pdf/blob/main/SECURITY.md">política de divulgación responsable</a>.</p>
+
+        <h2>5. Denuncias de abuso y derechos de autor</h2>
+        <p>No podemos leer ni revisar los documentos guardados: están cifrados y no guardamos las claves. Los documentos compartidos desde la app web o la herramienta de línea de comandos se cifran en el dispositivo del autor antes de llegarnos. Los enlaces creados mediante la API en texto plano, y los que la app creó antes de la actualización del 2 de octubre de 2026, los cifró nuestro servidor, que vio su contenido durante esa solicitud; las solicitudes en texto plano ya no se aceptan. Dependemos de las denuncias. Para denunciar un enlace, escribe a <a href="mailto:jsiapo.dev@gmail.com?subject=Abuse%20report">jsiapo.dev@gmail.com</a> con el enlace completo y qué tiene de malo. Para reclamos de derechos de autor, incluye también la obra de tu propiedad, tus datos de contacto y una declaración de que eres el titular o estás autorizado a actuar en su nombre.</p>
+        <p>Podemos borrar cualquier enlace y bloquear su origen al recibir una denuncia creíble, sin avisar a su autor. Los orígenes que comparten repetidamente contenido infractor o abusivo se bloquean.</p>
+
+        <h2>6. Sin garantías, responsabilidad limitada</h2>
+        <p>El servicio se ofrece «tal cual» y «según disponibilidad», sin garantías de ningún tipo. En la medida en que la ley lo permita, JSiapoDev no es responsable por datos perdidos, enlaces vencidos o borrados, ni por daños indirectos derivados del uso del servicio.</p>
+
+        <h2>7. Cambios y ley aplicable</h2>
+        <p>Podemos actualizar estos términos; la fecha de arriba cambia cuando lo hacemos. Seguir usando el servicio significa que aceptas la versión vigente. Estos términos se rigen por las leyes del Perú.</p>
+
+        <h2>8. Contacto</h2>
+        <p><a href="mailto:jsiapo.dev@gmail.com">jsiapo.dev@gmail.com</a>. Consulta también la <a href="/privacy#es">Política de privacidad</a>.</p>
+
+        <footer>
+            <span>Hecho por <a href="https://jsiapo.dev">JSiapoDev</a></span>
+            <span>
+                <a href="/">Abrir el editor</a> &middot;
+                <a href="/about">Acerca de</a> &middot;
+                <a href="/privacy#es">Privacidad</a>
+            </span>
+        </footer>
+        </div>
+        </template>
     </div>
 </body>
 </html>

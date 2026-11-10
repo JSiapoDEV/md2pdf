@@ -99,6 +99,7 @@
             draftRestored: 'Draft restored', templateLoaded: 'Template loaded',
             newDocument: 'New document', sharedDocLoaded: 'Shared document loaded',
             newDoc: 'New', undo: 'Undo', fileOpened: 'File opened',
+            about: 'About', aboutTitle: 'About MD2PDF', backToEditor: '← Back to the editor',
             readOnlyTitle: 'Read-only document',
             readOnlyBody: 'This is a shared document. To make changes, create your own editable copy — the original stays untouched and you can refresh this link anytime to see updates.',
             createCopyBtn: 'Create editable copy', cancelBtn: 'Cancel',
@@ -157,6 +158,7 @@
             draftRestored: 'Borrador restaurado', templateLoaded: 'Plantilla cargada',
             newDocument: 'Nuevo documento', sharedDocLoaded: 'Documento compartido cargado',
             newDoc: 'Nuevo', undo: 'Deshacer', fileOpened: 'Archivo abierto',
+            about: 'Acerca de', aboutTitle: 'Acerca de MD2PDF', backToEditor: '← Volver al editor',
             readOnlyTitle: 'Documento de solo lectura',
             readOnlyBody: 'Este es un documento compartido. Para hacer cambios, crea tu propia copia editable — el original queda intacto y puedes recargar este enlace cuando quieras para ver actualizaciones.',
             createCopyBtn: 'Crear copia editable', cancelBtn: 'Cancelar',
@@ -259,6 +261,14 @@
         $('#reportAbuseLink').textContent = t('reportAbuse');
         $('#termsLink').textContent = t('terms');
         $('#privacyLink').textContent = t('privacy');
+        // The legal pages open in the language chosen here.
+        $('#termsLink').href = '/terms' + (lang === 'es' ? '#es' : '');
+        $('#privacyLink').href = '/privacy' + (lang === 'es' ? '#es' : '');
+        $('#aboutLink').lastChild.textContent = ' ' + t('about');
+        $('#aboutLink').title = t('aboutTitle');
+        $('#infoCloseBtn').textContent = t('backToEditor');
+        $('#info').setAttribute('aria-label', t('aboutTitle'));
+        showInfoLanguage(lang);
         shareCopyBtn.textContent = t('copy');
         shareDeleteBtn.textContent = t('deleteLink');
         shareUpdateBtn.textContent = t('updateLink');
@@ -1778,6 +1788,20 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     // editor, at /#info, so the browser's Back button returns to the editor.
     // The draft and the view stay put underneath. The link still points to
     // /about for crawlers and for anyone who opens it in a new tab.
+    // The English text is in the page (search engines read it); the Spanish one
+    // comes from a template the first time the app is in Spanish.
+    function showInfoLanguage(lang) {
+        const en = $('#infoEn');
+        let es = $('#infoEsBody');
+        if (lang === 'es' && !es) {
+            es = $('#infoEs').content.firstElementChild.cloneNode(true);
+            es.id = 'infoEsBody';
+            en.after(es);
+        }
+        en.hidden = lang === 'es';
+        if (es) es.hidden = lang !== 'es';
+    }
+
     function showInfo(open) {
         const info = $('#info');
         info.classList.toggle('open', open);
