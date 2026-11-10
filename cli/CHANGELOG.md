@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-10
+
+### Changed
+
+- When the network does not let a request reach md2pdf.studio, the error says so and how to allow it in a chat sandbox (claude.ai, Claude Desktop chat), instead of reporting a rejected edit key.
+- The skill covers chat sandboxes: what to tell the user when the network blocks the upload, and that links made there cannot be updated or deleted later.
+
 ## [0.1.2] - 2026-11-10
 
 ### Removed
@@ -36,7 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `skill [--install]`: prints the agent skill, or installs it for Claude Code.
 - A once-a-day check for a newer version on npm that never installs anything. `MD2PDF_NO_UPDATE_CHECK=1` turns it off.
 
-[unreleased]: https://github.com/JSiapoDEV/md2pdf/compare/md2pdf-studio-v0.1.2...HEAD
+[unreleased]: https://github.com/JSiapoDEV/md2pdf/compare/md2pdf-studio-v0.1.3...HEAD
+[0.1.3]: https://github.com/JSiapoDEV/md2pdf/compare/md2pdf-studio-v0.1.2...md2pdf-studio-v0.1.3
 [0.1.2]: https://github.com/JSiapoDEV/md2pdf/compare/md2pdf-studio-v0.1.1...md2pdf-studio-v0.1.2
 [0.1.1]: https://github.com/JSiapoDEV/md2pdf/compare/md2pdf-studio-v0.1.0...md2pdf-studio-v0.1.1
 [0.1.0]: https://github.com/JSiapoDEV/md2pdf/releases/tag/md2pdf-studio-v0.1.0

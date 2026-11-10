@@ -21,7 +21,7 @@
 - **Custom CSS** — Inject your own styles
 - **Share by URL** — end-to-end encrypted (AES-256-GCM) short links; the key never reaches the server
 - **Expiry and one-time links** — choose a shorter lifetime, or make a link open once
-- **CLI and MCP server** — [`npx -y md2pdf-studio@0.1.2 share file.md`](cli/README.md) encrypts locally and prints the link
+- **CLI and MCP server** — [`npx -y md2pdf-studio@0.1.3 share file.md`](cli/README.md) encrypts locally and prints the link
 - **Mermaid diagrams** — Flowcharts, sequence, Gantt, pie
 - **Auto table of contents**, **syntax highlighting** (180+ languages)
 - **Dark & Light Mode**, **Drag & Drop**, **Find & Replace**, **Scroll Sync**, **Fullscreen**, **Word Count**, **Auto-Save**
@@ -60,8 +60,8 @@ npx wrangler dev
 
 ## For AI Agents
 
-- CLI and MCP server: [`npx -y md2pdf-studio@0.1.2`](cli/README.md)
-- Install the skill: [md2pdf.studio/ai-skill](https://md2pdf.studio/ai-skill) (for Claude Code: `npx -y md2pdf-studio@0.1.2 skill --install`)
+- CLI and MCP server: [`npx -y md2pdf-studio@0.1.3`](cli/README.md)
+- Install the skill: [md2pdf.studio/ai-skill](https://md2pdf.studio/ai-skill) (for Claude Code: `npx -y md2pdf-studio@0.1.3 skill --install`)
 - How links work: [md2pdf.studio/api](https://md2pdf.studio/api)
 - LLM documentation: [md2pdf.studio/llms-full.txt](https://md2pdf.studio/llms-full.txt)
 - WebMCP: tools inside the editor, experimental (Chrome's origin trial)

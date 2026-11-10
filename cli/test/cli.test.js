@@ -382,3 +382,24 @@ test('the HTTP API is not advertised for direct use', async () => {
     assert.match(api, /<meta name="robots" content="noindex, follow">/);
     assert.doesNotMatch(await repoFile('public/sitemap.xml'), /md2pdf\.studio\/api</);
 });
+
+// In a chat sandbox the network often allows npm but not md2pdf.studio: the
+// error must say that, not blame the edit key.
+test('network blocks get a plain explanation with what to allow', async () => {
+    // Nothing listening: the request cannot leave.
+    const closed = createServer();
+    await new Promise((r) => closed.listen(0, '127.0.0.1', r));
+    const port = closed.address().port;
+    await new Promise((r) => closed.close(r));
+    await assert.rejects(shareDocument({ markdown: '# x', api: 'http://127.0.0.1:' + port }), /Could not reach 127\.0\.0\.1:\d+ .*network access to md2pdf\.studio/);
+    // A proxy answers instead of md2pdf.studio: 403 with no JSON.
+    const proxy = createServer((req, res) => { res.writeHead(403, { 'content-type': 'text/plain' }); res.end('host not allowed'); });
+    await new Promise((r) => proxy.listen(0, '127.0.0.1', r));
+    try {
+        const err = await shareDocument({ markdown: '# x', api: 'http://127.0.0.1:' + proxy.address().port }).catch((e) => e);
+        assert.match(err.message, /The network did not let the request reach .*HTTP 403.*Settings → Capabilities/);
+        assert.doesNotMatch(err.message, /edit key/);
+    } finally {
+        await new Promise((r) => proxy.close(r));
+    }
+});

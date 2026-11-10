@@ -120,12 +120,11 @@
             editorPlaceholder: 'Write or drop your Markdown here...',
             // Skill tab
             skillDesc: 'This is the whole skill: a fixed text you can read before installing it. It shares documents as end-to-end encrypted links and never tells the agent to fetch instructions from anywhere.',
-            skillHowClaudeAi: 'claude.ai: download the ZIP and upload it in Customize → Skills.',
+            skillHowClaudeAi: 'Claude Desktop or claude.ai: copy the skill, paste it in a chat and say "install this skill". Code execution needs network access to md2pdf.studio (Settings → Capabilities).',
             skillHowCode: 'Claude Code:',
             skillHowOthers: 'Codex, Cursor, MCP clients and more:',
             skillLoading: 'Loading the skill…',
             skillLoadFailed: 'Could not load the skill. Open it here:',
-            downloadZip: 'ZIP for claude.ai',
         },
         es: {
             markdown: 'Markdown', preview: 'Vista previa',
@@ -184,12 +183,11 @@
             editorPlaceholder: 'Escribe o arrastra tu Markdown aqui...',
             // Skill tab
             skillDesc: 'Esta es la skill completa: un texto fijo que puedes leer antes de instalarla. Comparte documentos como enlaces cifrados de extremo a extremo y nunca le pide al agente descargar instrucciones de ningún sitio.',
-            skillHowClaudeAi: 'claude.ai: descarga el ZIP y súbelo en Customize → Skills.',
+            skillHowClaudeAi: 'Claude Desktop o claude.ai: copia la skill, pégala en un chat y dile «instala esta skill». La ejecución de código necesita acceso a md2pdf.studio (Ajustes → Capacidades).',
             skillHowCode: 'Claude Code:',
             skillHowOthers: 'Codex, Cursor, clientes MCP y más:',
             skillLoading: 'Cargando la skill…',
             skillLoadFailed: 'No se pudo cargar la skill. Ábrela aquí:',
-            downloadZip: 'ZIP para claude.ai',
         },
     };
 
@@ -309,8 +307,8 @@
     function buildSkillTab() {
         var html = '<p class="api-desc">' + t('skillDesc') + '</p>';
         html += '<ul class="api-desc skill-how">';
-        html += '<li>' + t('skillHowClaudeAi') + '</li>';
         html += '<li>' + t('skillHowCode') + ' <code id="skillInstallCmd">npx -y md2pdf-studio skill --install</code></li>';
+        html += '<li>' + t('skillHowClaudeAi') + '</li>';
         html += '<li>' + t('skillHowOthers') + ' <a href="/ai-skill">md2pdf.studio/ai-skill</a></li>';
         html += '</ul>';
         html += '<div class="api-section">';
@@ -320,7 +318,6 @@
         html += '<div class="api-code-actions">';
         html += '<button class="api-copy-btn" id="skillCopyBtn" disabled>' + t('copy') + '</button>';
         html += '<button class="api-copy-btn" id="skillDownloadBtn" disabled>' + t('download') + '</button>';
-        html += '<a class="api-copy-btn" id="skillZipBtn" href="/md2pdf-skill.zip" download>' + t('downloadZip') + '</a>';
         html += '</div>';
         html += '</div>';
         html += '</div>';

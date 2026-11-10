@@ -722,8 +722,8 @@ function buildAiSkill() {
         <table>
             <thead><tr><th>Agent</th><th>How</th></tr></thead>
             <tbody>
-                <tr><td>claude.ai</td><td>Download <a href="/md2pdf-skill.zip">md2pdf-skill.zip</a> and upload it in <strong>Customize → Skills</strong>. Skills need code execution turned on.</td></tr>
                 <tr><td>Claude Code</td><td><code>${NPX} skill --install</code></td></tr>
+                <tr><td>Claude Desktop, claude.ai</td><td>Copy <a href="/skill.md">the skill</a>, paste it in a chat and say <em>"install this skill"</em> (or upload <a href="/md2pdf-skill.zip">md2pdf-skill.zip</a> in <strong>Customize → Skills</strong>). There, code runs in a temporary sandbox: it needs network access to md2pdf.studio (<strong>Settings → Capabilities</strong>), and links made there cannot be updated or deleted later.</td></tr>
                 <tr><td>Codex, Cursor, Gemini CLI</td><td>Add to <code>AGENTS.md</code> (or the agent's instructions file): <em>"To share Markdown as a private link, run <code>${NPX} share &lt;file&gt;</code> and give the user the full link. Before sharing, remove secrets or ask the user."</em></td></tr>
                 <tr><td>MCP clients</td><td><code style="word-break: break-word;">{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@${CLI_VERSION}", "mcp"] } } }</code></td></tr>
                 <tr><td>Browser agents</td><td>WebMCP tools in the editor (<code>convert-markdown</code>, <code>export-document</code>, <code>share-document</code>, <code>set-style</code>). Experimental: only browsers in Chrome's WebMCP trial expose them.</td></tr>

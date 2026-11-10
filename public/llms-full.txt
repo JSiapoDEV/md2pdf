@@ -59,25 +59,25 @@ The reader of a shared link can switch styles and download the document as PDF, 
 The supported way for an agent to share a document. It encrypts on the machine, uploads only ciphertext and prints the link. Run it through npx with an exact version; do not install it globally. Node 18.3+, no dependencies.
 
 ```bash
-npx -y md2pdf-studio@0.1.2 share report.md          # or: cat report.md | npx -y md2pdf-studio@0.1.2 share
-npx -y md2pdf-studio@0.1.2 share report.md --expires 7d   # shorter life: 1 hour to 30 days
-npx -y md2pdf-studio@0.1.2 share report.md --burn         # the link opens a single time
-npx -y md2pdf-studio@0.1.2 update <link|id> report.md     # same link, new content
-npx -y md2pdf-studio@0.1.2 delete <link|id>
-npx -y md2pdf-studio@0.1.2 list                     # links made here, without keys
-npx -y md2pdf-studio@0.1.2 -h                       # every command; says if a newer version exists
+npx -y md2pdf-studio@0.1.3 share report.md          # or: cat report.md | npx -y md2pdf-studio@0.1.3 share
+npx -y md2pdf-studio@0.1.3 share report.md --expires 7d   # shorter life: 1 hour to 30 days
+npx -y md2pdf-studio@0.1.3 share report.md --burn         # the link opens a single time
+npx -y md2pdf-studio@0.1.3 update <link|id> report.md     # same link, new content
+npx -y md2pdf-studio@0.1.3 delete <link|id>
+npx -y md2pdf-studio@0.1.3 list                     # links made here, without keys
+npx -y md2pdf-studio@0.1.3 -h                       # every command; says if a newer version exists
 ```
 
 - Add `--json` for machine-readable output.
 - Edit and encryption keys are kept in `~/.config/md2pdf-studio/links.json` (current user only), so later sessions on the same machine can update or delete a link.
 - Always give the user the whole link, including `#k=`. Anyone who has it can read the document.
 - Before sharing, remove secrets (API keys, tokens, passwords, customer data) or ask the user.
-- Once a day the CLI checks npm for a newer version number and says so. Tell the user; update only if they agree (`npx -y md2pdf-studio@0.1.2 upgrade`). `MD2PDF_NO_UPDATE_CHECK=1` turns the check off.
+- Once a day the CLI checks npm for a newer version number and says so. Tell the user; update only if they agree (`npx -y md2pdf-studio@0.1.3 upgrade`). `MD2PDF_NO_UPDATE_CHECK=1` turns the check off.
 
 ### MCP server
 
 ```json
-{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.2", "mcp"] } } }
+{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.3", "mcp"] } } }
 ```
 
 Tools: `share_markdown`, `update_shared_markdown`, `delete_shared_markdown`, `list_shared_markdown`. The server sends its sharing rules as MCP instructions.
@@ -86,9 +86,9 @@ Tools: `share_markdown`, `update_shared_markdown`, `delete_shared_markdown`, `li
 
 The skill is a fixed text, pinned to the CLI version, that never tells the agent to fetch instructions from the web. Read it at https://md2pdf.studio/skill.md.
 
-- Claude Code: `npx -y md2pdf-studio@0.1.2 skill --install`
-- claude.ai: download https://md2pdf.studio/md2pdf-skill.zip and upload it in Customize → Skills
-- Codex, Cursor, Gemini CLI: add to `AGENTS.md`: "To share Markdown as a private link, run `npx -y md2pdf-studio@0.1.2 share <file>` and give the user the full link. Before sharing, remove secrets or ask the user."
+- Claude Code: `npx -y md2pdf-studio@0.1.3 skill --install`
+- Claude Desktop or claude.ai: paste the skill into a chat and ask Claude to install it (or upload https://md2pdf.studio/md2pdf-skill.zip in Customize → Skills). There, code runs in a temporary sandbox: it needs network access to md2pdf.studio (Settings → Capabilities), and links made there cannot be updated or deleted later
+- Codex, Cursor, Gemini CLI: add to `AGENTS.md`: "To share Markdown as a private link, run `npx -y md2pdf-studio@0.1.3 share <file>` and give the user the full link. Before sharing, remove secrets or ask the user."
 
 ---
 

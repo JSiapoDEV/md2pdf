@@ -12,9 +12,9 @@ Last updated: 2026-11-10
 
 ## For agents
 
-- [md2pdf-studio CLI and MCP server](https://www.npmjs.com/package/md2pdf-studio): `npx -y md2pdf-studio@0.1.2 share file.md` encrypts locally and prints the private link; also update, delete, list, `--expires`, `--burn` (one-time links), and an MCP server (`mcp`). Run it through npx with the exact version.
+- [md2pdf-studio CLI and MCP server](https://www.npmjs.com/package/md2pdf-studio): `npx -y md2pdf-studio@0.1.3 share file.md` encrypts locally and prints the private link; also update, delete, list, `--expires`, `--burn` (one-time links), and an MCP server (`mcp`). Run it through npx with the exact version.
 - [AI Skill](https://md2pdf.studio/skill.md): A fixed skill file for Claude, Codex, Cursor, Gemini CLI and compatible agents, pinned to the CLI version
-- [Install guide](https://md2pdf.studio/ai-skill): Claude Code, claude.ai (ZIP), AGENTS.md and MCP configuration
+- [Install guide](https://md2pdf.studio/ai-skill): Claude Code, Claude Desktop and claude.ai (paste the skill and ask Claude to install it), AGENTS.md and MCP configuration
 - [How links work](https://md2pdf.studio/api): What is encrypted on the device and what reaches the server
 
 ## Styles

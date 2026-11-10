@@ -7,10 +7,10 @@ The document is encrypted on your machine with AES-256-GCM before it is uploaded
 No dependencies. Node 18.3 or later.
 
 ```bash
-npx -y md2pdf-studio@0.1.2 share report.md
+npx -y md2pdf-studio@0.1.3 share report.md
 # https://md2pdf.studio/s/AbCd1234#k=...      <- give people the whole link
 
-cat notes.md | npx -y md2pdf-studio@0.1.2 share       # from stdin
+cat notes.md | npx -y md2pdf-studio@0.1.3 share       # from stdin
 ```
 
 ## Commands
@@ -42,19 +42,19 @@ Every command here names an exact version, so what an agent runs does not change
 Install the skill for Claude Code:
 
 ```bash
-npx -y md2pdf-studio@0.1.2 skill --install
+npx -y md2pdf-studio@0.1.3 skill --install
 ```
 
-For claude.ai, download the skill as a ZIP from [md2pdf.studio/ai-skill](https://md2pdf.studio/ai-skill) and upload it in Skills.
+For Claude Desktop or claude.ai, paste the skill (`npx -y md2pdf-studio@0.1.3 skill` prints it) into a chat and ask Claude to install it. There the CLI runs in a temporary sandbox: code execution needs network access to md2pdf.studio (Settings → Capabilities), and links made there cannot be updated or deleted later.
 
 For Codex, Cursor, Gemini CLI and others, add a line to the agent's instructions file (`AGENTS.md` or equivalent):
 
-> To share Markdown as a private link, run `npx -y md2pdf-studio@0.1.2 share <file>` and give the user the full link. Before sharing, remove secrets or ask the user.
+> To share Markdown as a private link, run `npx -y md2pdf-studio@0.1.3 share <file>` and give the user the full link. Before sharing, remove secrets or ask the user.
 
 For MCP clients, register the server:
 
 ```json
-{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.2", "mcp"] } } }
+{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.3", "mcp"] } } }
 ```
 
 Tools: `share_markdown`, `update_shared_markdown`, `delete_shared_markdown`, `list_shared_markdown`. The server also sends the sharing rules (remove secrets, give the whole link) as its MCP instructions.

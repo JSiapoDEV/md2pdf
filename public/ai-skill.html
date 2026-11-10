@@ -141,7 +141,7 @@
         <div class="info-grid">
             <div class="info-card">
                 <div class="label">CLI and MCP server</div>
-                <div class="value"><code>npx -y md2pdf-studio@0.1.2</code> — encrypts locally, prints the link</div>
+                <div class="value"><code>npx -y md2pdf-studio@0.1.3</code> — encrypts locally, prints the link</div>
             </div>
             <div class="info-card">
                 <div class="label">Claude Skill</div>
@@ -170,10 +170,10 @@
         <table>
             <thead><tr><th>Agent</th><th>How</th></tr></thead>
             <tbody>
-                <tr><td>claude.ai</td><td>Download <a href="/md2pdf-skill.zip">md2pdf-skill.zip</a> and upload it in <strong>Customize → Skills</strong>. Skills need code execution turned on.</td></tr>
-                <tr><td>Claude Code</td><td><code>npx -y md2pdf-studio@0.1.2 skill --install</code></td></tr>
-                <tr><td>Codex, Cursor, Gemini CLI</td><td>Add to <code>AGENTS.md</code> (or the agent's instructions file): <em>"To share Markdown as a private link, run <code>npx -y md2pdf-studio@0.1.2 share &lt;file&gt;</code> and give the user the full link. Before sharing, remove secrets or ask the user."</em></td></tr>
-                <tr><td>MCP clients</td><td><code style="word-break: break-word;">{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.2", "mcp"] } } }</code></td></tr>
+                <tr><td>Claude Code</td><td><code>npx -y md2pdf-studio@0.1.3 skill --install</code></td></tr>
+                <tr><td>Claude Desktop, claude.ai</td><td>Copy <a href="/skill.md">the skill</a>, paste it in a chat and say <em>"install this skill"</em> (or upload <a href="/md2pdf-skill.zip">md2pdf-skill.zip</a> in <strong>Customize → Skills</strong>). There, code runs in a temporary sandbox: it needs network access to md2pdf.studio (<strong>Settings → Capabilities</strong>), and links made there cannot be updated or deleted later.</td></tr>
+                <tr><td>Codex, Cursor, Gemini CLI</td><td>Add to <code>AGENTS.md</code> (or the agent's instructions file): <em>"To share Markdown as a private link, run <code>npx -y md2pdf-studio@0.1.3 share &lt;file&gt;</code> and give the user the full link. Before sharing, remove secrets or ask the user."</em></td></tr>
+                <tr><td>MCP clients</td><td><code style="word-break: break-word;">{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.3", "mcp"] } } }</code></td></tr>
                 <tr><td>Browser agents</td><td>WebMCP tools in the editor (<code>convert-markdown</code>, <code>export-document</code>, <code>share-document</code>, <code>set-style</code>). Experimental: only browsers in Chrome's WebMCP trial expose them.</td></tr>
             </tbody>
         </table>
@@ -202,7 +202,7 @@
         <h2>FAQ</h2>
         <details>
             <summary>Does MD2PDF support MCP?</summary>
-            <p>Yes. The npm package includes a local MCP server (<code>npx -y md2pdf-studio@0.1.2 mcp</code>) with four tools: share, update, delete and list links. In the browser, the editor also exposes WebMCP tools, which are still experimental in Chrome.</p>
+            <p>Yes. The npm package includes a local MCP server (<code>npx -y md2pdf-studio@0.1.3 mcp</code>) with four tools: share, update, delete and list links. In the browser, the editor also exposes WebMCP tools, which are still experimental in Chrome.</p>
         </details>
         <details>
             <summary>Do agents need an account?</summary>
@@ -210,7 +210,7 @@
         </details>
         <details>
             <summary>Can agents update previously-created documents?</summary>
-            <p>Yes, from the same machine: <code>npx -y md2pdf-studio@0.1.2 update &lt;link&gt; file.md</code> keeps the link and replaces its content. The CLI keeps each link's edit key in <code>~/.config/md2pdf-studio/links.json</code>, readable by the current user only.</p>
+            <p>Yes, from the same machine: <code>npx -y md2pdf-studio@0.1.3 update &lt;link&gt; file.md</code> keeps the link and replaces its content. The CLI keeps each link's edit key in <code>~/.config/md2pdf-studio/links.json</code>, readable by the current user only.</p>
         </details>
         <details>
             <summary>Are agent-created documents encrypted?</summary>

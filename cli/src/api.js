@@ -48,15 +48,27 @@ function optionHeaders({ apiKey, expiresInSec, burn, title, description }) {
     return headers;
 }
 
+// Chat sandboxes (claude.ai, Claude Desktop chat) often allow only package
+// registries, so npx works but the upload is blocked.
+const SANDBOX_HINT = 'In a sandbox such as a claude.ai or Claude Desktop chat, code execution needs network access to md2pdf.studio (Settings → Capabilities).';
+
 async function call(base, method, path, { body, editKey, options = {} } = {}) {
     // The User-Agent names the client and its version, nothing about the user.
     const headers = { 'content-type': 'text/plain', 'user-agent': 'md2pdf-studio/' + VERSION, ...optionHeaders(options) };
     if (body !== undefined) headers['x-encrypted'] = 'aes-256-gcm';
     if (editKey) headers['x-edit-key'] = editKey;
-    const res = await fetch(base + path, { method, headers, body });
-    let data = {};
-    try { data = await res.json(); } catch (_) { /* non-JSON error page */ }
-    if (res.ok) return data;
+    let res;
+    try {
+        res = await fetch(base + path, { method, headers, body });
+    } catch (err) {
+        throw new Error('Could not reach ' + new URL(base).host + ' (' + (err.cause && err.cause.code || err.message) + '). ' + SANDBOX_HINT);
+    }
+    let data = null;
+    try { data = await res.json(); } catch (_) { /* not an answer from md2pdf.studio */ }
+    if (res.ok && data) return data;
+    // The API always answers JSON. Anything else came from something in
+    // between, typically a sandbox's network proxy refusing the host.
+    if (!data) throw new Error('The network did not let the request reach ' + new URL(base).host + ' (HTTP ' + res.status + '). ' + SANDBOX_HINT);
     // The server explains these in plain words.
     if (['pro_required', 'daily_quota', 'invalid_api_key', 'bad_expiry', 'bad_option', 'too_large'].includes(data.code)) {
         const wait = res.status === 429 && res.headers.get('retry-after') ? ' Try again in ' + Math.ceil(Number(res.headers.get('retry-after')) / 60) + ' min.' : '';
