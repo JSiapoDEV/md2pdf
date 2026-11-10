@@ -34,3 +34,10 @@ new_sqlite_classes = ["QuotaCounter"]
 #   node scripts/pro-key.mjs        (prints the key to hand over and its hash)
 #   npx wrangler secret put PRO_KEY_HASHES   (comma-separated hashes)
 # The Worker only ever sees hashes; the keys themselves are not stored anywhere.
+
+# Anonymous counts: event name, kind of client and, for Pro signals, which
+# limit was hit. No IP address, no identifier, no content. Cloudflare creates
+# the dataset on the first write and keeps data points for three months.
+[[analytics_engine_datasets]]
+binding = "EVENTS"
+dataset = "md2pdf_events"

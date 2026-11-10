@@ -1000,6 +1000,10 @@ body {
 
 .share-url-input:focus { border-color: var(--accent); }
 
+.share-star { margin: 8px 0 0; font-size: 12px; }
+.share-star a { color: var(--text-2); }
+.share-star a:hover { color: var(--accent); }
+
 .share-hint {
     font-size: 11px;
     color: var(--text-3);

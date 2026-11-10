@@ -93,6 +93,57 @@ function proRequired(what) {
     return jsonResponse({ error: what + ' needs a Pro API key.', code: 'pro_required' }, 403);
 }
 
+// --- Anonymous counts (Workers Analytics Engine) ---
+// Each data point is an event name, the kind of client (read from the
+// User-Agent) and, for Pro signals, which limit was hit. Never an IP address,
+// an identifier or any content. Without the EVENTS binding nothing is written.
+// Anyone can inflate these counts, so they guide decisions; they bill nobody.
+
+var BEACON_EVENTS = ['copy_skill', 'download_skill', 'copy_api'];
+
+function clientKind(request) {
+    var ua = request.headers.get('user-agent') || '';
+    if (/^md2pdf-studio\//.test(ua)) return 'cli';
+    if (/Mozilla\//.test(ua)) return 'browser';
+    return 'other';
+}
+
+function countEvent(env, request, name, detail) {
+    if (!env.EVENTS) return;
+    try {
+        env.EVENTS.writeDataPoint({ indexes: [name], blobs: [name, clientKind(request), detail || ''], doubles: [1] });
+    } catch (_) { /* counting never breaks a request */ }
+}
+
+// What a free user ran into, as a short tag: the demand a Pro plan would meet.
+function proSignal(body) {
+    if (!body) return null;
+    if (body.code === 'pro_required') {
+        if (/longer than 30 days/.test(body.error)) return 'expiry';
+        if (/title and description/.test(body.error)) return 'preview';
+        if (/Extending/.test(body.error)) return 'extend';
+        return 'other';
+    }
+    if (body.code === 'too_large' && /free plan/.test(body.error)) return 'size';
+    if (body.code === 'daily_quota' && /address/.test(body.error)) return 'quota';
+    return null;
+}
+
+async function countOutcome(request, env, response) {
+    var path = new URL(request.url).pathname;
+    var status = response.status;
+    if (path === '/api/save' && request.method === 'POST' && status === 200) return countEvent(env, request, 'link_created');
+    if (path === '/md2pdf-skill.zip' && request.method === 'GET' && status === 200) return countEvent(env, request, 'download_skill_zip');
+    if (path === '/skill.md' && request.method === 'GET' && status === 200) return countEvent(env, request, 'skill_md');
+    var writing = (path === '/api/save' && request.method === 'POST') || (path.startsWith('/api/update/') && request.method === 'PUT');
+    if (writing && (status === 403 || status === 413 || status === 429)) {
+        try {
+            var signal = proSignal(await response.clone().json());
+            if (signal) countEvent(env, request, 'pro_required', signal);
+        } catch (_) { /* not JSON: nothing to count */ }
+    }
+}
+
 // --- Daily quota ---
 // A Durable Object counts each client's writes and bytes for the current UTC
 // day. The Workers rate limiter only reaches 60-second windows. The object keeps
@@ -478,8 +529,26 @@ function describeDocument(url, id, meta, editKey) {
 // --- Worker entry point ---
 
 export default {
-    async fetch(request, env) {
+    async fetch(request, env, ctx) {
+        var response = await route(request, env);
+        var counting = countOutcome(request, env, response);
+        if (ctx && ctx.waitUntil) ctx.waitUntil(counting);
+        return response;
+    },
+};
+
+async function route(request, env) {
         var url = new URL(request.url);
+
+        // --- POST /api/event — a click the page reports (copy or download the skill, copy an API example) ---
+        if (url.pathname === '/api/event' && request.method === 'POST') {
+            if (Number(request.headers.get('content-length') || 0) > 64) return new Response(null, { status: 413 });
+            var eventName = (await request.text()).trim();
+            if (eventName.length > 64) return new Response(null, { status: 413 });
+            if (BEACON_EVENTS.indexOf(eventName) !== -1) countEvent(env, request, eventName);
+            return new Response(null, { status: 204 });
+        }
+
         // --- POST /api/save — store a client-encrypted document, return short URL ---
         if (url.pathname === '/api/save' && request.method === 'POST') {
             try {
@@ -681,5 +750,4 @@ export default {
 
         // --- Serve static assets for everything else ---
         return env.ASSETS.fetch(request);
-    },
-};
+}

@@ -72,6 +72,7 @@
             find: 'Find...', replace: 'Replace...',
             replaceBtn: 'Replace', replaceAll: 'All',
             builtBy: 'Built by', starGithub: 'Star on GitHub',
+            starAfterShare: 'Useful? A star on GitHub helps other people find md2pdf.',
             apiPrompts: 'AI Skill',
             linkCreated: 'Link created!', linkHint: 'Anyone with the full link can read this document.',
             linkExpires: 'Link expires on {date}. Anyone with the full link can read it.',
@@ -133,6 +134,7 @@
             find: 'Buscar...', replace: 'Reemplazar...',
             replaceBtn: 'Reemplazar', replaceAll: 'Todo',
             builtBy: 'Creado por', starGithub: 'Estrella en GitHub',
+            starAfterShare: '¿Te sirvió? Una estrella en GitHub ayuda a que otros encuentren md2pdf.',
             apiPrompts: 'Skill de IA',
             linkCreated: 'Enlace creado!', linkHint: 'Cualquiera con el enlace completo puede leer este documento.',
             linkExpires: 'El enlace vence el {date}. Cualquiera con el enlace completo puede leerlo.',
@@ -198,6 +200,11 @@
         }).then(function (text) { skillText = text; return text; });
     }
 
+    // Anonymous click count: only the event name goes to the server (see /privacy).
+    function track(eventName) {
+        try { if (navigator.sendBeacon) navigator.sendBeacon('/api/event', eventName); } catch (_) { /* never matters */ }
+    }
+
     function saveBlob(blob, filename) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -251,6 +258,7 @@
 
         // Share modal
         $('#shareModalTitle').textContent = t('linkCreated');
+        $('#shareStarLink').textContent = t('starAfterShare');
         $('#apiModalTitle').textContent = t('apiPrompts');
         updateShareHint();
         $('#reportAbuseLink').textContent = t('reportAbuse');
@@ -311,6 +319,7 @@
         if (skillText || $('#apiOverlay')?.classList.contains('active')) fillSkillTab();
 
         $('#skillCopyBtn').addEventListener('click', function () {
+            track('copy_skill');
             navigator.clipboard.writeText(skillText).then(function () {
                 $('#skillCopyBtn').textContent = t('copied');
                 setTimeout(function () { $('#skillCopyBtn').textContent = t('copy'); }, 2000);
@@ -318,6 +327,7 @@
         });
 
         $('#skillDownloadBtn').addEventListener('click', function () {
+            track('download_skill');
             saveBlob(new Blob([skillText], { type: 'text/markdown;charset=utf-8' }), 'SKILL.md');
         });
 
@@ -353,6 +363,9 @@
 
         $('#tab-api').innerHTML = html;
         bindCopyButtons('#tab-api');
+        document.querySelectorAll('#tab-api .api-copy-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { track('copy_api'); });
+        });
     }
 
     function escapeHtmlLight(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -2304,6 +2317,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         shareModalDocId = null;
         $('#shareModalTitle').textContent = t('myLinks');
         $('#shareUrlRow').hidden = true;
+        $('#shareStar').hidden = true;
         shareDeleteBtn.hidden = true;
         shareUpdateBtn.hidden = true;
         renderShareLinks(true);
@@ -2316,6 +2330,8 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         shareModalDocId = docId || null;
         $('#shareModalTitle').textContent = fresh ? t('linkCreated') : t('shareLinkTitle');
         $('#shareUrlRow').hidden = false;
+        // A quiet ask, only right after a link is made: the moment it was useful.
+        $('#shareStar').hidden = !fresh;
         shareUrlInput.value = url;
         disarm(shareDeleteBtn, t('deleteLink'));
         shareDeleteBtn.hidden = !shareModalDocId;

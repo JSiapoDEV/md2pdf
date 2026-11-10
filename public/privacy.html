@@ -41,7 +41,7 @@
 <body>
     <div class="container">
         <h1>Privacy Policy</h1>
-        <p class="subtitle">Effective October 6, 2026</p>
+        <p class="subtitle">Effective November 10, 2026</p>
 
         <p>md2pdf.studio is operated by JSiapoDev, an individual developer based in Peru, who is responsible for the processing described here. Contact: <a href="mailto:jsiapo.dev@gmail.com">jsiapo.dev@gmail.com</a>.</p>
 
@@ -64,10 +64,11 @@
             <tr><td>Daily usage counters: how many writes and bytes today, under an irreversible hash of your IP address (or of your Pro API key). We do not store the address itself</td><td>Cloudflare Durable Objects</td><td>Daily limits on free use, to stop abuse</td><td>Until 00:00 UTC of the day they were counted. One-time links keep a marker that they were opened for 31 days</td></tr>
             <tr><td>A hash of each Pro API key (never the key)</td><td>Our server configuration</td><td>Recognising a paid key</td><td>While the key is active</td></tr>
             <tr><td>Links and keys created with the <code>md2pdf-studio</code> command-line tool or MCP server</td><td>Your computer only (<code>~/.config/md2pdf-studio/links.json</code>, readable by your user)</td><td>Updating or deleting your own links later</td><td>Until you delete the file or the link expires</td></tr>
+            <tr><td>Anonymous counts: the name of an event (a link was created, the skill was copied or downloaded, an API example was copied, or a free limit or Pro-only option was hit, and which one) and the kind of client (browser, the <code>md2pdf-studio</code> tool, or another program), read from the User-Agent. No IP address, no identifier, no content</td><td>Cloudflare Workers Analytics Engine</td><td>Knowing which features are used, and whether a paid plan is wanted</td><td>Three months</td></tr>
             <tr><td>Your IP address, when you create, update or delete a link</td><td>Cloudflare's rate limiter, in memory</td><td>Preventing abuse of share links</td><td>About 60 seconds; we do not store it</td></tr>
             <tr><td>Standard request data (IP address, browser, page, referring site)</td><td>Cloudflare, which hosts the site</td><td>Delivering and protecting the site; we see aggregate counts such as visits per page and country</td><td>Under Cloudflare's retention policies; we keep no logs of our own</td></tr>
         </table>
-        <p>Links in the old <code>/share?doc=…</code> format, which carried the whole document unencrypted in the address, stopped working on October 6, 2026. We never stored them.</p>
+        <p>Links in the old <code>/share?doc=…</code> format, which carried the whole document unencrypted in the address, no longer work. We never stored them.</p>
         <p>We also use Cloudflare Web Analytics, which counts page views without cookies and without identifying you.</p>
 
         <h2>Data banks</h2>
@@ -78,6 +79,7 @@
             <li><strong>Cloudflare, Inc.</strong> (101 Townsend St, San Francisco, CA 94107, USA) hosts the site, the API and the share-link storage, and processes this data on our behalf on servers in many countries, including the United States, under its Data Processing Addendum.</li>
             <li>The libraries and fonts the app needs are served from md2pdf.studio, so using it sends your IP address to no third party besides Cloudflare. An HTML file you export loads its theme fonts from md2pdf.studio each time it is opened.</li>
             <li>Images, fonts or stylesheets that a document or your custom CSS links to load from their own sites, which receive the reader's IP address.</li>
+            <li>If you use the <code>md2pdf-studio</code> tool, you download it from npm (npm, Inc., a GitHub company, USA). Once a day it asks npm for its latest version number, so npm receives your IP address and the tool's name and version under its own policy. Set <code>MD2PDF_NO_UPDATE_CHECK=1</code> to turn the check off.</li>
         </ul>
         <p>We do not sell or share data with anyone else, and we do not use it for advertising.</p>
 
