@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Claude Skill for Markdown to PDF — AI Agents | MD2PDF</title>
-    <meta name="description" content="Installable Claude Skill, WebMCP, and REST API. Let AI agents create, update, and share styled Markdown documents.">
-    <meta name="keywords" content="claude skill, markdown claude skill, ai markdown to pdf, webmcp, mcp server, ai document generator, anthropic skill">
+    <meta name="description" content="An installable skill, a CLI and an MCP server that let AI agents share styled Markdown documents as end-to-end encrypted links.">
+    <meta name="keywords" content="claude skill, markdown claude skill, ai markdown to pdf, mcp server, md2pdf cli, ai document generator, anthropic skill">
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
     <meta name="author" content="JSiapoDev">
     <link rel="canonical" href="https://md2pdf.studio/ai-skill">
@@ -13,13 +13,13 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://md2pdf.studio/ai-skill">
     <meta property="og:title" content="Claude Skill for Markdown to PDF — AI Agents | MD2PDF">
-    <meta property="og:description" content="Installable Claude Skill, WebMCP, and REST API. Let AI agents create, update, and share styled Markdown documents.">
+    <meta property="og:description" content="An installable skill, a CLI and an MCP server that let AI agents share styled Markdown documents as end-to-end encrypted links.">
     <meta property="og:image" content="https://md2pdf.studio/og-image.png">
     <meta property="og:site_name" content="MD2PDF">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Claude Skill for Markdown to PDF — AI Agents | MD2PDF">
-    <meta name="twitter:description" content="Installable Claude Skill, WebMCP, and REST API. Let AI agents create, update, and share styled Markdown documents.">
+    <meta name="twitter:description" content="An installable skill, a CLI and an MCP server that let AI agents share styled Markdown documents as end-to-end encrypted links.">
     <meta name="twitter:image" content="https://md2pdf.studio/og-image.png">
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f0883e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><polyline points='10 9 9 9 8 9'/></svg>">
@@ -29,7 +29,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "MD2PDF Claude Skill",
-  "description": "Installable Claude Skill that lets AI agents create, update, and share styled Markdown documents via MD2PDF.",
+  "description": "Installable skill, CLI and MCP server that let AI agents share styled Markdown documents as end-to-end encrypted MD2PDF links.",
   "url": "https://md2pdf.studio/ai-skill",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Any",
@@ -129,12 +129,11 @@
         <h1><span class="accent">AI Skill</span> for Markdown</h1>
         <p class="tagline">Let AI agents create, update, and share styled documents.</p>
 
-        <p>MD2PDF is built for the AI era. Install the skill, run the npm CLI or MCP server, or call the public REST API — agents produce beautifully styled PDFs, HTML, and images and hand recipients a shareable link.</p>
+        <p>Install the skill, or run the <code>md2pdf-studio</code> CLI or its MCP server. Agents turn Markdown into an end-to-end encrypted link that opens as a styled document the reader can download as PDF, HTML or an image.</p>
 
         <div class="cta-row">
             <a href="#install" class="cta">Install</a>
             <a href="/skill.md" class="cta-secondary">Read the skill</a>
-            <a href="/api" class="cta-secondary">REST API</a>
         </div>
 
         <h2>Integration Options</h2>
@@ -151,10 +150,6 @@
             <div class="info-card">
                 <div class="label">WebMCP</div>
                 <div class="value">Tools inside the editor for browser agents. Experimental: Chrome's origin trial</div>
-            </div>
-            <div class="info-card">
-                <div class="label">REST API</div>
-                <div class="value"><a href="/api">/api</a> — anonymous, rate-limited</div>
             </div>
             <div class="info-card">
                 <div class="label">LLM Docs</div>
@@ -180,7 +175,6 @@
                 <tr><td>Codex, Cursor, Gemini CLI</td><td>Add to <code>AGENTS.md</code> (or the agent's instructions file): <em>"To share Markdown as a private link, run <code>npx -y md2pdf-studio@0.1.2 share &lt;file&gt;</code> and give the user the full link. Before sharing, remove secrets or ask the user."</em></td></tr>
                 <tr><td>MCP clients</td><td><code style="word-break: break-word;">{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.2", "mcp"] } } }</code></td></tr>
                 <tr><td>Browser agents</td><td>WebMCP tools in the editor (<code>convert-markdown</code>, <code>export-document</code>, <code>share-document</code>, <code>set-style</code>). Experimental: only browsers in Chrome's WebMCP trial expose them.</td></tr>
-                <tr><td>Scripts</td><td>The <a href="/api">REST API</a>. It accepts only content encrypted before upload.</td></tr>
             </tbody>
         </table>
         <p>Once a day the CLI and the MCP server check npm for a newer version number and say how to update: <code>changelog</code> shows what changed and <code>upgrade</code> reinstalls the skill. Nothing is installed on its own; <code>MD2PDF_NO_UPDATE_CHECK=1</code> turns the check off.</p>
@@ -211,16 +205,16 @@
             <p>Yes. The npm package includes a local MCP server (<code>npx -y md2pdf-studio@0.1.2 mcp</code>) with four tools: share, update, delete and list links. In the browser, the editor also exposes WebMCP tools, which are still experimental in Chrome.</p>
         </details>
         <details>
-            <summary>Do agents need an API key?</summary>
-            <p>No. The public API is anonymous, rate-limited by IP. For higher limits, self-host via <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a>.</p>
+            <summary>Do agents need an account?</summary>
+            <p>No. There is no sign-up. Writes are limited per address: 10 a minute and 100 a day.</p>
         </details>
         <details>
             <summary>Can agents update previously-created documents?</summary>
-            <p>Yes. Agents receive an <code>editKey</code> when saving, which authorizes subsequent <code>PUT /api/update/:id</code> calls.</p>
+            <p>Yes, from the same machine: <code>npx -y md2pdf-studio@0.1.2 update &lt;link&gt; file.md</code> keeps the link and replaces its content. The CLI keeps each link's edit key in <code>~/.config/md2pdf-studio/links.json</code>, readable by the current user only.</p>
         </details>
         <details>
             <summary>Are agent-created documents encrypted?</summary>
-            <p>Yes — every document is AES-256-GCM encrypted on the agent's machine before upload (<code>npx -y md2pdf-studio@0.1.2 share</code> does it for you, or see the <a href="/api">API reference</a>). The server never sees the key or the plaintext, and it rejects plaintext requests.</p>
+            <p>Yes. The CLI encrypts every document with AES-256-GCM on the agent's machine before upload, and the key stays in the link's <code>#k=</code> part. The server never sees the key or the text, and it rejects plaintext. <a href="/api">How links work</a>.</p>
         </details>
 
         <div class="footer">

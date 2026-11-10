@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REST API — Markdown to PDF | MD2PDF</title>
-    <meta name="description" content="Public REST API for MD2PDF. Create, update, and share Markdown documents programmatically. JSON, no auth required, rate-limited.">
-    <meta name="keywords" content="markdown api, markdown to pdf api, markdown rest api, programmatic pdf, document api, agent api">
-    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <title>How share links work — MD2PDF</title>
+    <meta name="description" content="What MD2PDF encrypts on your device, what reaches the server, and the protocol the web app and the md2pdf-studio CLI speak.">
+    <meta name="keywords" content="md2pdf encryption, end-to-end encrypted markdown, share link protocol">
+    <meta name="robots" content="noindex, follow">
     <meta name="author" content="JSiapoDev">
     <link rel="canonical" href="https://md2pdf.studio/api">
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://md2pdf.studio/api">
-    <meta property="og:title" content="REST API — Markdown to PDF | MD2PDF">
-    <meta property="og:description" content="Public REST API for MD2PDF. Create, update, and share Markdown documents programmatically. JSON, no auth required, rate-limited.">
+    <meta property="og:title" content="How share links work — MD2PDF">
+    <meta property="og:description" content="What MD2PDF encrypts on your device, what reaches the server, and the protocol the web app and the md2pdf-studio CLI speak.">
     <meta property="og:image" content="https://md2pdf.studio/og-image.png">
     <meta property="og:site_name" content="MD2PDF">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="REST API — Markdown to PDF | MD2PDF">
-    <meta name="twitter:description" content="Public REST API for MD2PDF. Create, update, and share Markdown documents programmatically. JSON, no auth required, rate-limited.">
+    <meta name="twitter:title" content="How share links work — MD2PDF">
+    <meta name="twitter:description" content="What MD2PDF encrypts on your device, what reaches the server, and the protocol the web app and the md2pdf-studio CLI speak.">
     <meta name="twitter:image" content="https://md2pdf.studio/og-image.png">
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f0883e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><polyline points='10 9 9 9 8 9'/></svg>">
@@ -27,9 +27,9 @@
     <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "APIReference",
-  "name": "MD2PDF REST API",
-  "description": "Public REST API for creating, updating, and sharing Markdown documents programmatically.",
+  "@type": "TechArticle",
+  "name": "How MD2PDF share links work",
+  "description": "The protocol behind MD2PDF share links: what is encrypted where, and what reaches the server.",
   "url": "https://md2pdf.studio/api",
   "isPartOf": {
     "@type": "WebApplication",
@@ -48,7 +48,7 @@
       {
         "@type": "ListItem",
         "position": 2,
-        "name": "API",
+        "name": "How links work",
         "item": "https://md2pdf.studio/api"
       }
     ]
@@ -117,118 +117,65 @@
 </head>
 <body>
     <div class="container">
-        <nav class="breadcrumb"><a href="/">MD2PDF</a> / <span>API</span></nav>
+        <nav class="breadcrumb"><a href="/">MD2PDF</a> / <span>How links work</span></nav>
 
-        <h1>MD2PDF <span class="accent">REST API</span></h1>
-        <p class="tagline">Create, update, and share Markdown documents programmatically.</p>
+        <h1>How share <span class="accent">links work</span></h1>
+        <p class="tagline">What is encrypted where, and what reaches the server.</p>
 
-        <p>The public API lets AI agents, scripts, and integrations produce styled, shareable documents in Markdown — no signup, no API key. Rate-limited to 10 writes (save, update and delete combined) per IP per minute and 100 writes per day.</p>
+        <p>MD2PDF is used through the <a href="/">web editor</a> and the <code>md2pdf-studio</code> command-line tool, which agents run through the <a href="/ai-skill">skill or the MCP server</a>. This page describes the protocol both speak, so anyone can check what the server receives. It is not a public API: it can change, and pages on other websites cannot call it.</p>
 
         <div class="cta-row">
-            <a href="/" class="cta">Try in Browser</a>
-            <a href="/ai-skill" class="cta-secondary">AI Skill</a>
-            <a href="/llms-full.txt" class="cta-secondary">llms-full.txt</a>
+            <a href="/" class="cta">Open the editor</a>
+            <a href="/ai-skill" class="cta-secondary">Skill and CLI</a>
         </div>
 
-        <h2>Command line first</h2>
-        <p>You do not need to write crypto code. <code>md2pdf-studio</code> encrypts on your machine, uploads only ciphertext and prints the link (Node 18.3+, no dependencies):</p>
-        <pre><code>npx -y md2pdf-studio share report.md
-cat notes.md | npx -y md2pdf-studio share
-npx -y md2pdf-studio update &lt;link|id&gt; report.md
-npx -y md2pdf-studio delete &lt;link|id&gt;
-npx -y md2pdf-studio mcp      # MCP server over stdio</code></pre>
-
-        <h2>One path: end-to-end encrypted</h2>
-        <p>Encrypt locally with AES-256-GCM and send the ciphertext with header <code>X-Encrypted: aes-256-gcm</code>. The server stores the blob as-is and never sees the key or the plaintext. Plaintext requests are rejected with <code>400 e2ee_required</code>, and a request that carries the key (<code>X-Enc-Key</code>) is rejected with <code>400 key_leak_blocked</code>.</p>
-
-        <h2>Endpoints</h2>
-
-        <h3>POST /api/save</h3>
-        <p>Python example. Generates a 256-bit key locally, encrypts, POSTs ciphertext.</p>
-<pre><code>import os, json, base64, urllib.request
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
-markdown = "# Hello\n\nThis is a shared document."
-
-key = AESGCM.generate_key(bit_length=256)
-iv  = os.urandom(12)
-ct  = AESGCM(key).encrypt(iv, markdown.encode(), None)
-body = base64.b64encode(iv + ct).decode()
-key_b64url = base64.urlsafe_b64encode(key).rstrip(b"=").decode()
-
-req = urllib.request.Request(
-    "https://md2pdf.studio/api/save",
-    data=body.encode(),
-    headers={"Content-Type": "text/plain", "X-Encrypted": "aes-256-gcm"},
-    method="POST",
-)
-data = json.loads(urllib.request.urlopen(req).read())
-print(f"{data['url']}#k={key_b64url}")</code></pre>
-        <p>Response (no <code>key</code> field — the server does not have it):</p>
-<pre><code>{
-  "id": "aB3xY9zK",
-  "editKey": "…",
-  "url": "https://md2pdf.studio/s/aB3xY9zK"
-}</code></pre>
-
-        <h3>PUT /api/update/:id</h3>
-        <p>Reuse the same key and generate a fresh IV for every update, then send the new ciphertext.</p>
-        <pre><code>curl -X PUT https://md2pdf.studio/api/update/aB3xY9zK \
-  -H "Content-Type: text/plain" \
-  -H "X-Edit-Key: YOUR_EDIT_KEY" \
-  -H "X-Encrypted: aes-256-gcm" \
-  --data-binary "&lt;base64 ciphertext&gt;"</code></pre>
-
-        <h3>Options (headers on save and update)</h3>
-        <table>
-            <tr><th>Header</th><th>Effect</th></tr>
-            <tr><td><code>X-Expires-In: 604800</code></td><td>Seconds until the link expires: 3600 to 2592000 (30 days) on the free plan. On update it can only shorten the life</td></tr>
-            <tr><td><code>X-Burn: 1</code></td><td>Save only. The link can be opened one time. <code>GET /s/{id}</code> serves a page without content and <code>POST /api/open/{id}</code> returns the ciphertext once, so link-preview bots cannot use it up</td></tr>
-        </table>
-        <p>When the daily quota is spent the API answers <code>429 daily_quota</code> with <code>Retry-After</code> until 00:00 UTC; deleting is never limited.</p>
-
-        <h3>GET /s/:id</h3>
-        <p>Load a shared document. Links get the same generic preview card in chat apps, because the server does not read document titles or content.</p>
-
-        <h2>Rate Limits</h2>
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="label">Writes per IP (save + update + delete)</div>
-                <div class="value">10 / minute</div>
-            </div>
-            <div class="info-card">
-                <div class="label">Max document size</div>
-                <div class="value">500 KB</div>
-            </div>
-            <div class="info-card">
-                <div class="label">Retention</div>
-                <div class="value">30 days from creation by default, or what you choose (links before the Oct 2, 2026 update: 90 days after last update)</div>
-            </div>
-            <div class="info-card">
-                <div class="label">Auth</div>
-                <div class="value">None (anonymous)</div>
-            </div>
-        </div>
+        <h2>From the command line</h2>
+        <pre><code>npx -y md2pdf-studio@0.1.2 share report.md
+npx -y md2pdf-studio@0.1.2 -h</code></pre>
 
         <h2>Encryption</h2>
-        <p>Every document is encrypted in the client with AES-256-GCM before upload: the key is generated by the caller and never reaches the server, which stores ciphertext only. The web editor, the CLI and the API all work this way.</p>
-        <p>The full URL, including <code>#k=</code>, is a bearer token. Treat it like a password: never paste it in channels that may log or cache URLs.</p>
+        <p>The client generates a random 256-bit key and encrypts the Markdown with AES-256-GCM. What it uploads is <code>base64(IV ‖ ciphertext ‖ tag)</code>. The key is base64url-encoded into the link after <code>#k=</code>; browsers never send that part to a server, so md2pdf.studio stores ciphertext it cannot read.</p>
+        <p>The server rejects plaintext (<code>400 e2ee_required</code>) and any request that carries the key (<code>400 key_leak_blocked</code>). The whole link, including <code>#k=</code>, works like a password: anyone who has it can read the document.</p>
 
-        <h2>For AI Agents</h2>
-        <p>See <a href="/ai-skill">/ai-skill</a> for the installable skill and MCP server, <a href="/llms-full.txt">/llms-full.txt</a> for the full LLM documentation, and <a href="/skill.md">/skill.md</a> for the skill manifest.</p>
+        <h2>Requests</h2>
+        <table>
+            <tr><th>Request</th><th>What it does</th></tr>
+            <tr><td><code>POST /api/save</code></td><td>Stores the ciphertext (header <code>X-Encrypted: aes-256-gcm</code>) and answers <code>{ id, editKey, url, expiresAt }</code>. No key in the answer: the server never has it.</td></tr>
+            <tr><td><code>PUT /api/update/{id}</code></td><td>Replaces the ciphertext. Needs <code>X-Edit-Key</code>; the client reuses the key with a fresh IV.</td></tr>
+            <tr><td><code>DELETE /api/delete/{id}</code></td><td>Deletes the document. Needs <code>X-Edit-Key</code>.</td></tr>
+            <tr><td><code>GET /s/{id}</code></td><td>The page that opens a link. Every link gets the same generic preview card in chat apps, because the server cannot read titles.</td></tr>
+            <tr><td><code>POST /api/open/{id}</code></td><td>Returns the ciphertext of a one-time link once, so link-preview bots cannot use it up.</td></tr>
+        </table>
+        <p>Optional headers on save and update: <code>X-Expires-In</code> (seconds, 3600 to 2592000; an update can only shorten it) and <code>X-Burn: 1</code> (save only: a one-time link).</p>
+
+        <h2>Limits</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="label">Writes per address</div>
+                <div class="value">10 a minute, 100 a day</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Document size</div>
+                <div class="value">500 KB of Markdown</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Lifetime</div>
+                <div class="value">30 days from creation, or less if you choose</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Account</div>
+                <div class="value">None</div>
+            </div>
+        </div>
 
         <h2>FAQ</h2>
         <details>
-            <summary>Do I need an API key?</summary>
-            <p>No. The API is anonymous and rate-limited by IP. For higher limits, self-host via the <a href="https://github.com/JSiapoDEV/md2pdf">open-source repo</a>.</p>
+            <summary>Can I delete a link?</summary>
+            <p>Yes: in the editor from <strong>Export → My links</strong>, or with <code>md2pdf-studio delete &lt;link&gt;</code> on the machine that created it. Otherwise it expires 30 days after creation.</p>
         </details>
         <details>
-            <summary>Is there an OpenAPI / Swagger spec?</summary>
-            <p>Not yet. See <a href="/llms-full.txt">llms-full.txt</a> for a complete machine-readable description.</p>
-        </details>
-        <details>
-            <summary>Can I delete a document?</summary>
-            <p>Yes: <code>DELETE /api/delete/{id}</code> with the <code>X-Edit-Key</code> header. Otherwise documents expire automatically 30 days after creation.</p>
+            <summary>Can I check the code?</summary>
+            <p>Yes. The web app, the server and the CLI are open source on <a href="https://github.com/JSiapoDEV/md2pdf">GitHub</a>.</p>
         </details>
 
         <div class="footer">

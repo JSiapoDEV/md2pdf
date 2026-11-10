@@ -1,11 +1,11 @@
 # MD2PDF — Complete Documentation for AI Agents
 
-> MD2PDF is a free, open-source online tool that converts Markdown (.md) files into beautifully styled PDFs, HTML files, and PNG images. Features include Mermaid diagram rendering, auto table of contents, syntax highlighting for 180+ languages, and end-to-end encryption (AES-256-GCM). Conversion runs in the browser with no signup; only share links are stored server-side, encrypted. Includes a public REST API and an installable AI Skill.
+> MD2PDF is a free, open-source online tool that converts Markdown (.md) into styled PDFs, HTML files and PNG images, with Mermaid diagrams, an auto table of contents and syntax highlighting for 180+ languages. Conversion runs in the browser with no signup. Documents can also be shared as end-to-end encrypted links (AES-256-GCM). Agents share through the md2pdf-studio CLI, its MCP server, or an installable AI skill built on it.
 
 Website: https://md2pdf.studio
 GitHub: https://github.com/JSiapoDEV/md2pdf
-Last updated: 2026-04-16
-API version: 1.0 (stable)
+npm: https://www.npmjs.com/package/md2pdf-studio
+Last updated: 2026-11-10
 
 ---
 
@@ -15,23 +15,22 @@ API version: 1.0 (stable)
 - GitHub-Flavored Markdown (GFM) support
 - Syntax highlighting for 180+ programming languages (via highlight.js)
 - **Mermaid diagram rendering** (flowcharts, sequence diagrams, Gantt charts, pie charts, etc.)
-- **Auto table of contents** — write `[TOC]` anywhere to generate a linked TOC from headings
+- **Auto table of contents** — write `[TOC]` on its own line to generate a linked TOC from headings
 - 11 visual styles for document rendering
 - Custom CSS injection for full styling control
 - Export to PDF (continuous single page), HTML (standalone with inlined styles), and PNG image
-- **Encryption** — every shared document is stored encrypted with AES-256-GCM; end-to-end (key never reaches the server) when the client encrypts, as the web app does
-- Share documents via encrypted URL; link previews show a generic card because the server cannot read the content
+- **End-to-end encrypted share links** — the document is encrypted on the device (AES-256-GCM) and the key stays in the link's `#k=` part, which never reaches the server
+- One-time links and links with a shorter life than the 30-day default
+- Link previews in chat apps show a generic card, because the server cannot read the content
 - Dark and light theme toggle
-- Drag-and-drop .md file upload
-- 5 built-in document templates
+- New document, 5 built-in templates, and drag-and-drop .md upload, with Undo when they replace the current text
 - Word count and reading time indicator
-- Auto-save drafts to browser localStorage
+- Auto-save of the draft to browser localStorage
 - Find and replace (Ctrl+F / Ctrl+H)
 - Copy button on every code block
-- Installable AI Skill in Claude Skills format
-- Public REST API for programmatic access
-- WebMCP declarative forms for browser-based AI agent integration
-- No cookies, no account; conversion never uploads your file, share links are encrypted
+- Installable AI skill in the Claude Skills format, the md2pdf-studio CLI and an MCP server
+- WebMCP tools in the editor for browser agents (experimental: Chrome's origin trial)
+- No cookies, no account; converting never uploads your file
 
 ---
 
@@ -51,186 +50,62 @@ API version: 1.0 (stable)
 | terminal | Green-on-black monospace, hacker aesthetic |
 | pastel | Soft pink, purple, and teal with rounded elements |
 
+The reader of a shared link can switch styles and download the document as PDF, HTML or PNG.
+
 ---
 
-## Command line and MCP: `md2pdf-studio` (npm)
+## Sharing from an agent: `md2pdf-studio`
 
-The easiest way for an agent to share a document. It encrypts on the machine, uploads only ciphertext and prints the link. Node 18.3+, no dependencies.
+The supported way for an agent to share a document. It encrypts on the machine, uploads only ciphertext and prints the link. Run it through npx with an exact version; do not install it globally. Node 18.3+, no dependencies.
 
 ```bash
 npx -y md2pdf-studio@0.1.2 share report.md          # or: cat report.md | npx -y md2pdf-studio@0.1.2 share
-npx -y md2pdf-studio@0.1.2 update <link|id> report.md
+npx -y md2pdf-studio@0.1.2 share report.md --expires 7d   # shorter life: 1 hour to 30 days
+npx -y md2pdf-studio@0.1.2 share report.md --burn         # the link opens a single time
+npx -y md2pdf-studio@0.1.2 update <link|id> report.md     # same link, new content
 npx -y md2pdf-studio@0.1.2 delete <link|id>
-npx -y md2pdf-studio@0.1.2 list                     # without keys
-npx -y md2pdf-studio@0.1.2 mcp                      # MCP server over stdio
-npx -y md2pdf-studio@0.1.2 skill --install          # installs the skill for Claude
+npx -y md2pdf-studio@0.1.2 list                     # links made here, without keys
+npx -y md2pdf-studio@0.1.2 -h                       # every command; says if a newer version exists
 ```
 
-Options: `--expires 7d` (shorter life, free: 1 hour to 30 days), and `--burn` (the link opens a single time; link-preview bots do not use it up). Add `--json` for machine-readable output. Edit and encryption keys are kept in `~/.config/md2pdf-studio/links.json` (current user only), so later sessions can update or delete the link. Always give the user the whole link, including `#k=`.
+- Add `--json` for machine-readable output.
+- Edit and encryption keys are kept in `~/.config/md2pdf-studio/links.json` (current user only), so later sessions on the same machine can update or delete a link.
+- Always give the user the whole link, including `#k=`. Anyone who has it can read the document.
+- Before sharing, remove secrets (API keys, tokens, passwords, customer data) or ask the user.
+- Once a day the CLI checks npm for a newer version number and says so. Tell the user; update only if they agree (`npx -y md2pdf-studio@0.1.2 upgrade`). `MD2PDF_NO_UPDATE_CHECK=1` turns the check off.
+
+### MCP server
+
+```json
+{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.2", "mcp"] } } }
+```
+
+Tools: `share_markdown`, `update_shared_markdown`, `delete_shared_markdown`, `list_shared_markdown`. The server sends its sharing rules as MCP instructions.
+
+### AI skill
+
+The skill is a fixed text, pinned to the CLI version, that never tells the agent to fetch instructions from the web. Read it at https://md2pdf.studio/skill.md.
+
+- Claude Code: `npx -y md2pdf-studio@0.1.2 skill --install`
+- claude.ai: download https://md2pdf.studio/md2pdf-skill.zip and upload it in Customize → Skills
+- Codex, Cursor, Gemini CLI: add to `AGENTS.md`: "To share Markdown as a private link, run `npx -y md2pdf-studio@0.1.2 share <file>` and give the user the full link. Before sharing, remove secrets or ask the user."
 
 ---
 
-## REST API Reference
+## How links work
 
-No authentication required. Every document is end-to-end encrypted: the caller encrypts with AES-256-GCM and the server stores only ciphertext. Plaintext requests are rejected.
-
-### Trust model
-
-The caller encrypts locally and sends header `X-Encrypted: aes-256-gcm`. The server stores the blob as-is; it never sees the key or the plaintext, and so cannot read, search or moderate it. A request without `X-Encrypted` gets 400 `e2ee_required`; a request carrying `X-Enc-Key` gets 400 `key_leak_blocked`.
-
-### Create
-
-Steps: (1) generate a 256-bit key, (2) generate a 12-byte IV, (3) AES-256-GCM encrypt, (4) base64-encode `IV ‖ ciphertext ‖ 16-byte tag`, (5) POST.
-
-```
-POST https://md2pdf.studio/api/save
-Content-Type: text/plain
-X-Encrypted: aes-256-gcm
-
-<base64 ciphertext>
-```
-
-**Response (JSON):**
-```json
-{
-  "id": "BrOrr0N3",
-  "editKey": "a1b2c3d4e5f6...",
-  "url": "https://md2pdf.studio/s/BrOrr0N3",
-  "expiresAt": "2026-11-05T12:00:00.000Z"
-}
-```
-
-No `key` field: the server does not have it. Build the shareable link yourself: `{url}#k={your base64url key}`. Store the key only in the caller's process and in the URL you hand to the user.
-
-### Update
-
-Reuse the same key; generate a fresh IV.
-
-```
-PUT https://md2pdf.studio/api/update/{id}
-Content-Type: text/plain
-X-Edit-Key: {editKey}
-X-Encrypted: aes-256-gcm
-
-<base64 ciphertext>
-```
-
-Updating does not extend the link: it expires 30 days after creation. The response includes `expiresAt` (ISO 8601).
-
-### Delete a document
-
-```
-DELETE https://md2pdf.studio/api/delete/{id}
-X-Edit-Key: {editKey}
-```
-
-Response 200: `{ "id": "...", "deleted": true }`. 403 with a wrong edit key, 404 if it no longer exists.
-
-### Example
-
-**Python:**
-```python
-import os, json, base64, urllib.request
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
-markdown = "# Hello World\n\nThis is a styled document created via the API."
-
-key = AESGCM.generate_key(bit_length=256)
-iv  = os.urandom(12)
-ct  = AESGCM(key).encrypt(iv, markdown.encode(), None)
-body = base64.b64encode(iv + ct).decode()
-key_b64url = base64.urlsafe_b64encode(key).rstrip(b"=").decode()
-
-req = urllib.request.Request(
-    "https://md2pdf.studio/api/save",
-    data=body.encode(),
-    headers={"Content-Type": "text/plain", "X-Encrypted": "aes-256-gcm"},
-    method="POST",
-)
-data = json.loads(urllib.request.urlopen(req).read())
-print(f"{data['url']}#k={key_b64url}")
-```
-
-### Security
-
-- Documents are encrypted in the client with **AES-256-GCM** before upload. The key is generated by the caller and never leaves the caller's process.
-- The `#k=` hash fragment is never sent to the server.
-- Cloudflare KV stores only ciphertext.
-- The full URL, including `#k=`, is a bearer token. Never paste it in channels that may log or cache URLs.
+- The client (the web app or the CLI) generates a random 256-bit key and encrypts the Markdown with AES-256-GCM. It uploads `base64(IV ‖ ciphertext ‖ tag)`.
+- The key is base64url-encoded into the link after `#k=`. Browsers never send that part to a server, so md2pdf.studio stores ciphertext it cannot read, search or moderate.
+- The server rejects plaintext and any request that carries the key. Pages on other websites cannot call it.
 - Shared pages are served with `X-Robots-Tag: noindex, nofollow, noarchive`.
+- Details for anyone who wants to check: https://md2pdf.studio/api
 
 ### Limits
 
-- **Max document size:** 500 KB of Markdown (UTF-8)
-- **Rate limit:** 10 writes per minute per IP (save, update and delete combined)
-- **Daily quota (free):** 100 writes and 25 MB per address per UTC day (deleting is never limited)
-- **Link expiration:** 30 days after creation by default (updates do not extend it). `X-Expires-In: <seconds>` (3600 to 2592000) shortens it
-- **One-time links:** `X-Burn: 1` on create. `GET /s/{id}` then serves a page without content, and `POST /api/open/{id}` returns the ciphertext once
-
-### Error Responses
-
-| Status | Meaning | Body |
-|--------|---------|------|
-| 400 | Empty content | `{"error": "Empty content"}` |
-| 400 | No `X-Encrypted: aes-256-gcm` header (plaintext is not accepted) | `{"error": "...", "code": "e2ee_required"}` |
-| 400 | The body is not base64 ciphertext | `{"error": "...", "code": "not_ciphertext"}` |
-| 400 | `X-Enc-Key` sent: the key must never reach the server | `{"error": "...", "code": "key_leak_blocked"}` |
-| 413 | Document too large (>500KB) | `{"error": "Document too large (max 500KB)"}` |
-| 429 | Rate limit exceeded (`Retry-After: 60`) | `{"error": "Too many requests. Try again in a minute."}` |
-| 429 | Daily quota reached (`Retry-After` until 00:00 UTC) | `{"error": "...", "code": "daily_quota"}` |
-| 403 | The option is not available (longer than 30 days, extending a link) | `{"error": "...", "code": "pro_required"}` |
-| 400 | Invalid `X-Expires-In` or option | `{"error": "...", "code": "bad_expiry"}` / `"bad_option"` |
-| 403 | Invalid edit key on update or delete | `{"error": "Unauthorized"}` |
-| 404 | Document not found, expired, or within its last minute | `{"error": "Document not found"}` |
-
-Every API response, including errors, carries `Access-Control-Allow-Origin: *`.
-
----
-
-## AI Skill (Claude Skills Format)
-
-The skill below can be installed in Claude, Codex, Cursor, Gemini CLI or any agent that reads instruction files. The full, current version is always at https://md2pdf.studio/skill.md.
-
-```markdown
----
-name: md2pdf
-description: Create and share styled PDF, HTML, and image documents from Markdown via md2pdf.studio. Use when the user wants to export, share, or create a visually styled document from markdown content.
----
-
-# MD2PDF Skill
-
-Use this skill when the user asks you to export or share Markdown, make a styled document, or get a shareable link.
-
-## Before you share anything
-
-Every link is end-to-end encrypted, but anyone holding the full link can read it. Remove or ask about secrets (API keys, tokens, passwords, customer data) first. Give the user the whole link including `#k=`. Links expire 30 days after creation and can be deleted.
-
-## Share
-
-    npx -y md2pdf-studio@0.1.2 share report.md
-    cat notes.md | npx -y md2pdf-studio@0.1.2 share
-    npx -y md2pdf-studio@0.1.2 share report.md --expires 7d --burn
-
-## Update or delete (links made on this machine)
-
-    npx -y md2pdf-studio@0.1.2 update <link|id> report.md
-    npx -y md2pdf-studio@0.1.2 delete <link|id>
-
-## Without npm
-
-Encrypt locally with AES-256-GCM, POST `base64(IV ‖ ciphertext ‖ tag)` to /api/save with `X-Encrypted: aes-256-gcm`, and build the link as {url}#k={base64url key}. Plaintext is rejected; never send the key. See https://md2pdf.studio/skill.md for code.
-
-## Available styles
-
-notion (default), github, minimal, academic, corporate, latex, dracula, newspaper, handwritten, terminal, pastel
-
-## Limits
-
-- Max document size: 500 KB of Markdown (UTF-8)
-- Rate limit: 10 writes/min per IP, 100 writes/day (free)
-- Expiration: 30 days after creation (updates do not extend it); --expires shortens it; --burn makes a link one-time
-- No authentication required
-```
+- **Document size:** 500 KB of Markdown (UTF-8)
+- **Writes:** 10 per minute and 100 per day per address (save, update and delete combined; deleting is never limited by the daily quota)
+- **Link lifetime:** 30 days after creation; updating does not extend it. A shorter life or a one-time link can be chosen when sharing
+- **Account:** none
 
 ---
 
@@ -275,6 +150,7 @@ MD2PDF supports full GitHub-Flavored Markdown (GFM) plus extensions:
 | Ctrl+F / Cmd+F | Find in editor |
 | Ctrl+H / Cmd+H | Find and replace |
 | Ctrl+Shift+L / Cmd+Shift+L | Toggle dark/light theme |
+| F11 | Fullscreen |
 | Tab | Insert tab in editor |
 
 ---
@@ -282,11 +158,12 @@ MD2PDF supports full GitHub-Flavored Markdown (GFM) plus extensions:
 ## Technical Details
 
 - Pure HTML, CSS, and JavaScript — no framework, no build step
-- marked.js (v12.0.1) for Markdown parsing
+- marked.js (v12.0.1) for Markdown parsing, DOMPurify for sanitizing
 - highlight.js (v11.9.0) for syntax highlighting (180+ languages)
-- html2canvas (v1.4.1) for image export
-- GitHub Markdown CSS (v5.5.1) as base styling
-- Hosted on Cloudflare Workers + KV for shared documents
+- Mermaid for diagrams, html2canvas (v1.4.1) for image export
+- GitHub Markdown CSS as base styling
+- Libraries and fonts are served from md2pdf.studio itself: the app makes no third-party requests
+- Hosted on Cloudflare Workers, with encrypted share links in Cloudflare KV
 - Browser native print dialog for PDF export
 
 ---

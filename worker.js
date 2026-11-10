@@ -159,7 +159,6 @@ async function takeQuota(env, request, planInfo, bytes) {
     if (out.ok) return null;
     return jsonResponse({ error: 'Daily limit reached for this ' + (planInfo.owner ? 'key' : 'address') + '. It resets at 00:00 UTC.', code: 'daily_quota' }, 429, {
         'retry-after': String(out.retryAfter),
-        'access-control-expose-headers': 'retry-after',
     });
 }
 
@@ -341,9 +340,11 @@ function htmlHeaders(noindex) {
 function jsonResponse(body, status, extraHeaders) {
     return new Response(JSON.stringify(body), {
         status: status || 200,
+        // No CORS headers: only md2pdf.studio's own pages (same origin), the CLI
+        // and other non-browser clients can use the API. Another website can
+        // no longer call it from its visitors' browsers.
         headers: Object.assign({
             'content-type': 'application/json',
-            'access-control-allow-origin': '*',
             'x-content-type-options': 'nosniff',
         }, extraHeaders || {}),
     });
@@ -352,7 +353,6 @@ function jsonResponse(body, status, extraHeaders) {
 function tooManyRequests() {
     return jsonResponse({ error: 'Too many requests. Try again in a minute.' }, 429, {
         'retry-after': '60',
-        'access-control-expose-headers': 'retry-after',
     });
 }
 
@@ -388,7 +388,7 @@ async function readCiphertext(request, plan) {
     }
     if (request.headers.get('x-encrypted') !== 'aes-256-gcm') {
         return { error: jsonResponse({
-            error: 'End-to-end encryption is required. Encrypt with AES-256-GCM locally and send header `X-Encrypted: aes-256-gcm`. Or let the CLI do it: npx -y md2pdf-studio share <file>. API reference: https://md2pdf.studio/api.',
+            error: 'End-to-end encryption is required. Encrypt with AES-256-GCM locally and send header `X-Encrypted: aes-256-gcm`. Or let the CLI do it: npx -y md2pdf-studio share <file>. How links work: https://md2pdf.studio/api.',
             code: 'e2ee_required',
         }, 400) };
     }
@@ -671,15 +671,9 @@ async function route(request, env) {
             }
         }
 
-        // --- CORS preflight for /api/* ---
+        // --- Cross-origin preflight for /api/*: refused, so browsers on other sites cannot write ---
         if (url.pathname.startsWith('/api/') && request.method === 'OPTIONS') {
-            return new Response(null, {
-                headers: {
-                    'access-control-allow-origin': '*',
-                    'access-control-allow-methods': 'POST, PUT, DELETE, OPTIONS',
-                    'access-control-allow-headers': 'Content-Type, Authorization, X-Edit-Key, X-Encrypted, X-Expires-In, X-Burn, X-Doc-Title, X-Doc-Description',
-                },
-            });
+            return new Response(null, { status: 403 });
         }
 
         // --- GET /s/:id — load document from KV ---

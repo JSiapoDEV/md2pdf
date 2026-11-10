@@ -362,7 +362,7 @@ function buildPage(style) {
         </details>
         <details>
             <summary>Can AI agents use this style?</summary>
-            <p>Yes. MD2PDF provides a REST API and an installable AI Skill. Agents can create documents and recipients can view them in any style, including ${style.name}.</p>
+            <p>Yes. With the installable AI skill or the md2pdf-studio CLI, agents can create documents and recipients can view them in any style, including ${style.name}.</p>
         </details>
 
         <div class="footer">

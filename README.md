@@ -5,9 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-f0883e.svg)](LICENSE)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-f38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![AI Skill](https://img.shields.io/badge/AI-Skill-cc9862)](https://md2pdf.studio/ai-skill)
-[![WebMCP](https://img.shields.io/badge/WebMCP-ready-8b5cf6)](https://md2pdf.studio/ai-skill)
+[![npm](https://img.shields.io/npm/v/md2pdf-studio)](https://www.npmjs.com/package/md2pdf-studio)
 [![llms.txt](https://img.shields.io/badge/llms.txt-ready-10b981)](https://md2pdf.studio/llms-full.txt)
-[![REST API](https://img.shields.io/badge/REST-API-06b6d4)](https://md2pdf.studio/api)
 
 ![MD2PDF — Markdown to PDF](public/og-image.png)
 
@@ -26,13 +25,13 @@
 - **Mermaid diagrams** — Flowcharts, sequence, Gantt, pie
 - **Auto table of contents**, **syntax highlighting** (180+ languages)
 - **Dark & Light Mode**, **Drag & Drop**, **Find & Replace**, **Scroll Sync**, **Fullscreen**, **Word Count**, **Auto-Save**
-- **AI Skill** — Installable [skill for Claude, Codex and other agents](https://md2pdf.studio/ai-skill) + public [REST API](https://md2pdf.studio/api) + WebMCP
+- **AI Skill** — Installable [skill for Claude, Codex and other agents](https://md2pdf.studio/ai-skill), built on the CLI, plus WebMCP tools in the editor (experimental)
 - **AI Discoverable** — `llms.txt`, `robots.txt`, JSON-LD, Open Graph, `ai-plugin.json`
 
 ## Tech Stack
 
 - Pure **HTML**, **CSS**, **JavaScript** — no framework, no build step
-- **Cloudflare Workers** — edge compute for shared-document rendering and the REST API
+- **Cloudflare Workers** — edge compute for shared-document rendering and storing encrypted links
 - **Cloudflare KV** — AES-256-GCM encrypted document storage
 Libraries and fonts are vendored in `public/vendor` and `public/fonts`: the app makes no third-party requests.
 
@@ -62,10 +61,10 @@ npx wrangler dev
 ## For AI Agents
 
 - CLI and MCP server: [`npx -y md2pdf-studio@0.1.2`](cli/README.md)
-- Install the Claude Skill: [md2pdf.studio/skill.md](https://md2pdf.studio/skill.md)
-- REST API docs: [md2pdf.studio/api](https://md2pdf.studio/api)
+- Install the skill: [md2pdf.studio/ai-skill](https://md2pdf.studio/ai-skill) (for Claude Code: `npx -y md2pdf-studio@0.1.2 skill --install`)
+- How links work: [md2pdf.studio/api](https://md2pdf.studio/api)
 - LLM documentation: [md2pdf.studio/llms-full.txt](https://md2pdf.studio/llms-full.txt)
-- WebMCP: supported inline on the main app
+- WebMCP: tools inside the editor, experimental (Chrome's origin trial)
 
 ## Keyboard Shortcuts
 

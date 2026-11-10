@@ -83,7 +83,7 @@ The edit key and encryption key of every link you create are saved in `~/.config
 
 ## Privacy
 
-The server receives ciphertext, your IP address (for the per-minute limit, held about a minute, and counted by hash for the daily limit until 00:00 UTC) and the edit key. It never receives the encryption key or your text. Requests carry the User-Agent `md2pdf-studio/<version>`. The daily update check sends npm only that same User-Agent. See the [privacy policy](https://md2pdf.studio/privacy) and the [API reference](https://md2pdf.studio/api).
+The server receives ciphertext, your IP address (for the per-minute limit, held about a minute, and counted by hash for the daily limit until 00:00 UTC) and the edit key. It never receives the encryption key or your text. Requests carry the User-Agent `md2pdf-studio/<version>`. The daily update check sends npm only that same User-Agent. See the [privacy policy](https://md2pdf.studio/privacy) and [how links work](https://md2pdf.studio/api).
 
 If md2pdf-studio is useful to you, a star on [GitHub](https://github.com/JSiapoDEV/md2pdf) helps other people find it.
 

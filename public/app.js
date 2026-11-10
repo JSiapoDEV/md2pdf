@@ -1209,13 +1209,8 @@ interface Document {
   encrypted: boolean;
 }
 
-async function createDocument(md: string): Promise<Document> {
-  const res = await fetch("https://md2pdf.studio/api/save", {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body: md,
-  });
-  return res.json();
+function wordCount(doc: Document): number {
+  return doc.content.split(/\\s+/).filter(Boolean).length;
 }
 \`\`\`
 
@@ -1266,14 +1261,12 @@ graph TD
 sequenceDiagram
     participant User
     participant Browser
-    participant API
-    participant KV
+    participant Server
 
     User->>Browser: Write Markdown
-    Browser->>API: POST /api/save
-    API->>API: Encrypt (AES-256-GCM)
-    API->>KV: Store ciphertext
-    API-->>Browser: { url, key }
+    Browser->>Browser: Encrypt (AES-256-GCM)
+    Browser->>Server: Upload ciphertext only
+    Server-->>Browser: { url }
     Browser-->>User: Share link with #k=key
 \`\`\`
 

@@ -8,6 +8,9 @@ const { execSync } = require('child_process');
 
 const SITE = 'https://md2pdf.studio';
 const GH_REPO = 'https://github.com/JSiapoDEV/md2pdf';
+// Every command on these pages names the exact CLI version the skill is pinned to.
+const CLI_VERSION = require('./cli/package.json').version;
+const NPX = `npx -y md2pdf-studio@${CLI_VERSION}`;
 
 // ── Shared chrome ─────────────────────────────────────
 
@@ -81,7 +84,7 @@ function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function pageHead({ title, desc, canonical, keywords, jsonLd }) {
+function pageHead({ title, desc, canonical, keywords, jsonLd, robots }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -90,7 +93,7 @@ function pageHead({ title, desc, canonical, keywords, jsonLd }) {
     <title>${esc(title)}</title>
     <meta name="description" content="${esc(desc)}">
     <meta name="keywords" content="${esc(keywords)}">
-    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <meta name="robots" content="${robots || 'index, follow, max-snippet:-1, max-image-preview:large'}">
     <meta name="author" content="JSiapoDev">
     <link rel="canonical" href="${canonical}">
 
@@ -297,7 +300,7 @@ function buildTemplate(t) {
         </details>
         <details>
             <summary>Can AI agents generate this template programmatically?</summary>
-            <p>Yes. MD2PDF exposes a <a href="/api">REST API</a> and a <a href="/ai-skill">Claude Skill</a>. Agents can create filled-in versions of any template and share them by URL.</p>
+            <p>Yes. With the <a href="/ai-skill">md2pdf skill</a> or the <code>md2pdf-studio</code> CLI, agents can fill in any template and share it as an end-to-end encrypted link.</p>
         </details>
         <details>
             <summary>Where is my document stored?</summary>
@@ -373,11 +376,11 @@ const VS = [
       { feature: 'Live preview', md2pdf: { v: 'Yes', c: 'yes' }, other: { v: 'No', c: 'no' } },
       { feature: 'Visual styles out of the box', md2pdf: { v: '11 styles', c: 'yes' }, other: { v: 'Via templates / LaTeX', c: 'mid' } },
       { feature: 'Mermaid diagrams', md2pdf: { v: 'Built-in', c: 'yes' }, other: { v: 'Via filter/plugin', c: 'mid' } },
-      { feature: 'CLI / scripting', md2pdf: { v: 'REST API', c: 'mid' }, other: { v: 'Native CLI', c: 'yes' } },
+      { feature: 'CLI / scripting', md2pdf: { v: 'CLI for sharing links (md2pdf-studio)', c: 'mid' }, other: { v: 'Native CLI', c: 'yes' } },
       { feature: 'Output formats', md2pdf: { v: 'PDF, HTML, PNG', c: 'mid' }, other: { v: 'Everything (40+)', c: 'yes' } },
       { feature: 'Custom CSS', md2pdf: { v: 'Yes, inline in browser', c: 'yes' }, other: { v: 'Yes, via templates', c: 'yes' } },
       { feature: 'Free', md2pdf: { v: 'Yes', c: 'yes' }, other: { v: 'Yes (open source)', c: 'yes' } },
-      { feature: 'AI-agent ready', md2pdf: { v: 'Yes — Claude Skill + API', c: 'yes' }, other: { v: 'No', c: 'no' } },
+      { feature: 'AI-agent ready', md2pdf: { v: 'Yes — skill, CLI and MCP server', c: 'yes' }, other: { v: 'No', c: 'no' } },
     ],
     whenToUse: {
       md2pdf: 'You want to preview and export a Markdown document quickly, with a polished visual style, without installing anything. Ideal for CVs, reports, docs, and sharing with non-technical recipients.',
@@ -388,7 +391,7 @@ const VS = [
     key: 'typora',
     name: 'Typora',
     tagline: 'MD2PDF vs Typora — which to use',
-    description: 'Typora is a beloved desktop Markdown editor — but it requires a paid license, installation on each machine, and lives locally. MD2PDF is free, browser-based, with shareable URLs, an AI Skill, and a REST API for automation.',
+    description: 'Typora is a beloved desktop Markdown editor — but it requires a paid license, installation on each machine, and lives locally. MD2PDF is free, browser-based, with shareable URLs, an AI skill and a CLI for agents.',
     keywords: 'md2pdf vs typora, typora alternative, free typora, typora online, typora browser',
     rows: [
       { feature: 'Price', md2pdf: { v: 'Free', c: 'yes' }, other: { v: 'Paid ($14.99)', c: 'no' } },
@@ -399,7 +402,7 @@ const VS = [
       { feature: 'Shareable URLs', md2pdf: { v: 'Yes — encrypted', c: 'yes' }, other: { v: 'No', c: 'no' } },
       { feature: 'Mermaid diagrams', md2pdf: { v: 'Built-in', c: 'yes' }, other: { v: 'Built-in', c: 'yes' } },
       { feature: 'Auto table of contents', md2pdf: { v: 'Yes', c: 'yes' }, other: { v: 'Yes', c: 'yes' } },
-      { feature: 'AI-agent ready', md2pdf: { v: 'Claude Skill + API', c: 'yes' }, other: { v: 'No', c: 'no' } },
+      { feature: 'AI-agent ready', md2pdf: { v: 'Skill, CLI and MCP server', c: 'yes' }, other: { v: 'No', c: 'no' } },
     ],
     whenToUse: {
       md2pdf: 'You want a polished editor with shareable links, no install, and no license fee. Ideal for collaborators, AI agents, and anyone switching between devices.',
@@ -410,7 +413,7 @@ const VS = [
     key: 'stackedit',
     name: 'StackEdit',
     tagline: 'MD2PDF vs StackEdit — which to use',
-    description: 'StackEdit is a classic in-browser Markdown editor focused on syncing with cloud drives. MD2PDF focuses on beautiful PDF/HTML/image export: 11 visual styles, live preview, Mermaid diagrams, and an AI Skill / REST API for agent workflows.',
+    description: 'StackEdit is a classic in-browser Markdown editor focused on syncing with cloud drives. MD2PDF focuses on beautiful PDF/HTML/image export: 11 visual styles, live preview, Mermaid diagrams, and an AI skill and CLI for agent workflows.',
     keywords: 'md2pdf vs stackedit, stackedit alternative, markdown editor online, free markdown pdf',
     rows: [
       { feature: 'Price', md2pdf: { v: 'Free', c: 'yes' }, other: { v: 'Free (with ads) / paid', c: 'mid' } },
@@ -421,7 +424,7 @@ const VS = [
       { feature: 'Mermaid diagrams', md2pdf: { v: 'Built-in', c: 'yes' }, other: { v: 'Built-in', c: 'yes' } },
       { feature: 'Auto table of contents', md2pdf: { v: 'Yes', c: 'yes' }, other: { v: 'Yes', c: 'yes' } },
       { feature: 'Cloud sync (Drive, Dropbox)', md2pdf: { v: 'No — URL sharing', c: 'mid' }, other: { v: 'Yes', c: 'yes' } },
-      { feature: 'AI-agent ready', md2pdf: { v: 'Claude Skill + API', c: 'yes' }, other: { v: 'No', c: 'no' } },
+      { feature: 'AI-agent ready', md2pdf: { v: 'Skill, CLI and MCP server', c: 'yes' }, other: { v: 'No', c: 'no' } },
     ],
     whenToUse: {
       md2pdf: 'You care about final output — beautiful, styled PDFs and shareable previews. Ideal for sending documents to non-technical recipients or letting AI agents produce polished files.',
@@ -504,7 +507,7 @@ function buildVs(v) {
         </details>
         <details>
             <summary>Can AI agents use MD2PDF?</summary>
-            <p>Yes. MD2PDF exposes a <a href="/api">REST API</a>, an installable <a href="/ai-skill">Claude Skill</a>, and WebMCP for direct agent interaction.</p>
+            <p>Yes. MD2PDF has an installable <a href="/ai-skill">skill</a>, the <code>md2pdf-studio</code> CLI and MCP server, and WebMCP tools in the editor (experimental in Chrome).</p>
         </details>
 
         ${FOOTER}
@@ -556,142 +559,90 @@ function buildVsIndex() {
 </html>`;
 }
 
-// ── /api ──────────────────────────────────────────────
+// ── /api: how links work, for anyone who wants to check ──
+// Not a public API: people use the web app or the CLI. The page stays so the
+// protocol can be audited, out of search results and the sitemap.
 
 function buildApi() {
   const url = `${SITE}/api`;
-  const trail = [{ name: 'MD2PDF', href: '/' }, { name: 'API', href: '/api' }];
+  const trail = [{ name: 'MD2PDF', href: '/' }, { name: 'How links work', href: '/api' }];
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'APIReference',
-    name: 'MD2PDF REST API',
-    description: 'Public REST API for creating, updating, and sharing Markdown documents programmatically.',
+    '@type': 'TechArticle',
+    name: 'How MD2PDF share links work',
+    description: 'The protocol behind MD2PDF share links: what is encrypted where, and what reaches the server.',
     url,
     isPartOf: { '@type': 'WebApplication', name: 'MD2PDF', url: SITE },
     breadcrumb: breadcrumbJsonLd(trail),
   };
 
   return pageHead({
-    title: 'REST API — Markdown to PDF | MD2PDF',
-    desc: 'Public REST API for MD2PDF. Create, update, and share Markdown documents programmatically. JSON, no auth required, rate-limited.',
+    title: 'How share links work — MD2PDF',
+    desc: 'What MD2PDF encrypts on your device, what reaches the server, and the protocol the web app and the md2pdf-studio CLI speak.',
     canonical: url,
-    keywords: 'markdown api, markdown to pdf api, markdown rest api, programmatic pdf, document api, agent api',
+    keywords: 'md2pdf encryption, end-to-end encrypted markdown, share link protocol',
     jsonLd,
+    robots: 'noindex, follow',
   }) + `
         ${breadcrumb(trail)}
 
-        <h1>MD2PDF <span class="accent">REST API</span></h1>
-        <p class="tagline">Create, update, and share Markdown documents programmatically.</p>
+        <h1>How share <span class="accent">links work</span></h1>
+        <p class="tagline">What is encrypted where, and what reaches the server.</p>
 
-        <p>The public API lets AI agents, scripts, and integrations produce styled, shareable documents in Markdown — no signup, no API key. Rate-limited to 10 writes (save, update and delete combined) per IP per minute and 100 writes per day.</p>
+        <p>MD2PDF is used through the <a href="/">web editor</a> and the <code>md2pdf-studio</code> command-line tool, which agents run through the <a href="/ai-skill">skill or the MCP server</a>. This page describes the protocol both speak, so anyone can check what the server receives. It is not a public API: it can change, and pages on other websites cannot call it.</p>
 
         <div class="cta-row">
-            <a href="/" class="cta">Try in Browser</a>
-            <a href="/ai-skill" class="cta-secondary">AI Skill</a>
-            <a href="/llms-full.txt" class="cta-secondary">llms-full.txt</a>
+            <a href="/" class="cta">Open the editor</a>
+            <a href="/ai-skill" class="cta-secondary">Skill and CLI</a>
         </div>
 
-        <h2>Command line first</h2>
-        <p>You do not need to write crypto code. <code>md2pdf-studio</code> encrypts on your machine, uploads only ciphertext and prints the link (Node 18.3+, no dependencies):</p>
-        <pre><code>npx -y md2pdf-studio share report.md
-cat notes.md | npx -y md2pdf-studio share
-npx -y md2pdf-studio update &lt;link|id&gt; report.md
-npx -y md2pdf-studio delete &lt;link|id&gt;
-npx -y md2pdf-studio mcp      # MCP server over stdio</code></pre>
-
-        <h2>One path: end-to-end encrypted</h2>
-        <p>Encrypt locally with AES-256-GCM and send the ciphertext with header <code>X-Encrypted: aes-256-gcm</code>. The server stores the blob as-is and never sees the key or the plaintext. Plaintext requests are rejected with <code>400 e2ee_required</code>, and a request that carries the key (<code>X-Enc-Key</code>) is rejected with <code>400 key_leak_blocked</code>.</p>
-
-        <h2>Endpoints</h2>
-
-        <h3>POST /api/save</h3>
-        <p>Python example. Generates a 256-bit key locally, encrypts, POSTs ciphertext.</p>
-<pre><code>import os, json, base64, urllib.request
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
-markdown = "# Hello\\n\\nThis is a shared document."
-
-key = AESGCM.generate_key(bit_length=256)
-iv  = os.urandom(12)
-ct  = AESGCM(key).encrypt(iv, markdown.encode(), None)
-body = base64.b64encode(iv + ct).decode()
-key_b64url = base64.urlsafe_b64encode(key).rstrip(b"=").decode()
-
-req = urllib.request.Request(
-    "https://md2pdf.studio/api/save",
-    data=body.encode(),
-    headers={"Content-Type": "text/plain", "X-Encrypted": "aes-256-gcm"},
-    method="POST",
-)
-data = json.loads(urllib.request.urlopen(req).read())
-print(f"{data['url']}#k={key_b64url}")</code></pre>
-        <p>Response (no <code>key</code> field — the server does not have it):</p>
-<pre><code>{
-  "id": "aB3xY9zK",
-  "editKey": "…",
-  "url": "https://md2pdf.studio/s/aB3xY9zK"
-}</code></pre>
-
-        <h3>PUT /api/update/:id</h3>
-        <p>Reuse the same key and generate a fresh IV for every update, then send the new ciphertext.</p>
-        <pre><code>curl -X PUT https://md2pdf.studio/api/update/aB3xY9zK \\
-  -H "Content-Type: text/plain" \\
-  -H "X-Edit-Key: YOUR_EDIT_KEY" \\
-  -H "X-Encrypted: aes-256-gcm" \\
-  --data-binary "&lt;base64 ciphertext&gt;"</code></pre>
-
-        <h3>Options (headers on save and update)</h3>
-        <table>
-            <tr><th>Header</th><th>Effect</th></tr>
-            <tr><td><code>X-Expires-In: 604800</code></td><td>Seconds until the link expires: 3600 to 2592000 (30 days) on the free plan. On update it can only shorten the life, unless you use a Pro key</td></tr>
-            <tr><td><code>X-Burn: 1</code></td><td>Save only. The link can be opened one time. <code>GET /s/{id}</code> serves a page without content and <code>POST /api/open/{id}</code> returns the ciphertext once, so link-preview bots cannot use it up</td></tr>
-            <tr><td><code>Authorization: Bearer &lt;key&gt;</code></td><td>Pro API key: links up to 365 days, 5 MB documents, a larger daily quota. Unknown keys get <code>401 invalid_api_key</code></td></tr>
-            <tr><td><code>X-Doc-Title</code>, <code>X-Doc-Description</code></td><td>Pro. Percent-encoded UTF-8, up to 100 and 300 bytes. Chat apps cannot read an encrypted document, so these set the preview card, and they are stored <strong>unencrypted</strong></td></tr>
-        </table>
-        <p>Without a Pro key, a header that needs one answers <code>403 pro_required</code>. When the daily quota is spent the API answers <code>429 daily_quota</code> with <code>Retry-After</code> until 00:00 UTC; deleting is never limited.</p>
-
-        <h3>GET /s/:id</h3>
-        <p>Load a shared document. Links get the same generic preview card in chat apps, because the server does not read document titles or content. Only a link whose author set a Pro title and description shows those.</p>
-
-        <h2>Rate Limits</h2>
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="label">Writes per IP (save + update + delete)</div>
-                <div class="value">10 / minute</div>
-            </div>
-            <div class="info-card">
-                <div class="label">Max document size</div>
-                <div class="value">500 KB (5 MB with a Pro key)</div>
-            </div>
-            <div class="info-card">
-                <div class="label">Retention</div>
-                <div class="value">30 days from creation by default, or what you choose (links before the Oct 2, 2026 update: 90 days after last update)</div>
-            </div>
-            <div class="info-card">
-                <div class="label">Auth</div>
-                <div class="value">None (anonymous)</div>
-            </div>
-        </div>
+        <h2>From the command line</h2>
+        <pre><code>${NPX} share report.md
+${NPX} -h</code></pre>
 
         <h2>Encryption</h2>
-        <p>Every document is encrypted in the client with AES-256-GCM before upload: the key is generated by the caller and never reaches the server, which stores ciphertext only. The web editor, the CLI and the API all work this way.</p>
-        <p>The full URL, including <code>#k=</code>, is a bearer token. Treat it like a password: never paste it in channels that may log or cache URLs.</p>
+        <p>The client generates a random 256-bit key and encrypts the Markdown with AES-256-GCM. What it uploads is <code>base64(IV ‖ ciphertext ‖ tag)</code>. The key is base64url-encoded into the link after <code>#k=</code>; browsers never send that part to a server, so md2pdf.studio stores ciphertext it cannot read.</p>
+        <p>The server rejects plaintext (<code>400 e2ee_required</code>) and any request that carries the key (<code>400 key_leak_blocked</code>). The whole link, including <code>#k=</code>, works like a password: anyone who has it can read the document.</p>
 
-        <h2>For AI Agents</h2>
-        <p>See <a href="/ai-skill">/ai-skill</a> for the installable skill and MCP server, <a href="/llms-full.txt">/llms-full.txt</a> for the full LLM documentation, and <a href="/skill.md">/skill.md</a> for the skill manifest.</p>
+        <h2>Requests</h2>
+        <table>
+            <tr><th>Request</th><th>What it does</th></tr>
+            <tr><td><code>POST /api/save</code></td><td>Stores the ciphertext (header <code>X-Encrypted: aes-256-gcm</code>) and answers <code>{ id, editKey, url, expiresAt }</code>. No key in the answer: the server never has it.</td></tr>
+            <tr><td><code>PUT /api/update/{id}</code></td><td>Replaces the ciphertext. Needs <code>X-Edit-Key</code>; the client reuses the key with a fresh IV.</td></tr>
+            <tr><td><code>DELETE /api/delete/{id}</code></td><td>Deletes the document. Needs <code>X-Edit-Key</code>.</td></tr>
+            <tr><td><code>GET /s/{id}</code></td><td>The page that opens a link. Every link gets the same generic preview card in chat apps, because the server cannot read titles.</td></tr>
+            <tr><td><code>POST /api/open/{id}</code></td><td>Returns the ciphertext of a one-time link once, so link-preview bots cannot use it up.</td></tr>
+        </table>
+        <p>Optional headers on save and update: <code>X-Expires-In</code> (seconds, 3600 to 2592000; an update can only shorten it) and <code>X-Burn: 1</code> (save only: a one-time link).</p>
+
+        <h2>Limits</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="label">Writes per address</div>
+                <div class="value">10 a minute, 100 a day</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Document size</div>
+                <div class="value">500 KB of Markdown</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Lifetime</div>
+                <div class="value">30 days from creation, or less if you choose</div>
+            </div>
+            <div class="info-card">
+                <div class="label">Account</div>
+                <div class="value">None</div>
+            </div>
+        </div>
 
         <h2>FAQ</h2>
         <details>
-            <summary>Do I need an API key?</summary>
-            <p>No. The API is anonymous and rate-limited by IP. For higher limits, self-host via the <a href="${GH_REPO}">open-source repo</a>.</p>
+            <summary>Can I delete a link?</summary>
+            <p>Yes: in the editor from <strong>Export → My links</strong>, or with <code>md2pdf-studio delete &lt;link&gt;</code> on the machine that created it. Otherwise it expires 30 days after creation.</p>
         </details>
         <details>
-            <summary>Is there an OpenAPI / Swagger spec?</summary>
-            <p>Not yet. See <a href="/llms-full.txt">llms-full.txt</a> for a complete machine-readable description.</p>
-        </details>
-        <details>
-            <summary>Can I delete a document?</summary>
-            <p>Yes: <code>DELETE /api/delete/{id}</code> with the <code>X-Edit-Key</code> header. Otherwise documents expire automatically 30 days after creation.</p>
+            <summary>Can I check the code?</summary>
+            <p>Yes. The web app, the server and the CLI are open source on <a href="${GH_REPO}">GitHub</a>.</p>
         </details>
 
         ${FOOTER}
@@ -709,7 +660,7 @@ function buildAiSkill() {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: 'MD2PDF Claude Skill',
-    description: 'Installable Claude Skill that lets AI agents create, update, and share styled Markdown documents via MD2PDF.',
+    description: 'Installable skill, CLI and MCP server that let AI agents share styled Markdown documents as end-to-end encrypted MD2PDF links.',
     url,
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Any',
@@ -720,9 +671,9 @@ function buildAiSkill() {
 
   return pageHead({
     title: 'Claude Skill for Markdown to PDF — AI Agents | MD2PDF',
-    desc: 'Installable Claude Skill, WebMCP, and REST API. Let AI agents create, update, and share styled Markdown documents.',
+    desc: 'An installable skill, a CLI and an MCP server that let AI agents share styled Markdown documents as end-to-end encrypted links.',
     canonical: url,
-    keywords: 'claude skill, markdown claude skill, ai markdown to pdf, webmcp, mcp server, ai document generator, anthropic skill',
+    keywords: 'claude skill, markdown claude skill, ai markdown to pdf, mcp server, md2pdf cli, ai document generator, anthropic skill',
     jsonLd,
   }) + `
         ${breadcrumb(trail)}
@@ -730,12 +681,11 @@ function buildAiSkill() {
         <h1><span class="accent">AI Skill</span> for Markdown</h1>
         <p class="tagline">Let AI agents create, update, and share styled documents.</p>
 
-        <p>MD2PDF is built for the AI era. Install the skill, run the npm CLI or MCP server, or call the public REST API — agents produce beautifully styled PDFs, HTML, and images and hand recipients a shareable link.</p>
+        <p>Install the skill, or run the <code>md2pdf-studio</code> CLI or its MCP server. Agents turn Markdown into an end-to-end encrypted link that opens as a styled document the reader can download as PDF, HTML or an image.</p>
 
         <div class="cta-row">
-            <a href="/skill.md" class="cta">Install Skill</a>
-            <a href="/api" class="cta-secondary">REST API</a>
-            <a href="/llms-full.txt" class="cta-secondary">llms-full.txt</a>
+            <a href="#install" class="cta">Install</a>
+            <a href="/skill.md" class="cta-secondary">Read the skill</a>
         </div>
 
         <h2>Integration Options</h2>
@@ -743,19 +693,15 @@ function buildAiSkill() {
         <div class="info-grid">
             <div class="info-card">
                 <div class="label">CLI and MCP server</div>
-                <div class="value"><code>npx -y md2pdf-studio</code> — encrypts locally, prints the link</div>
+                <div class="value"><code>${NPX}</code> — encrypts locally, prints the link</div>
             </div>
             <div class="info-card">
                 <div class="label">Claude Skill</div>
-                <div class="value"><a href="/skill.md">/skill.md</a> — Skills format manifest</div>
+                <div class="value"><a href="/skill.md">/skill.md</a> — the whole skill, a fixed file</div>
             </div>
             <div class="info-card">
                 <div class="label">WebMCP</div>
-                <div class="value">Inline MCP in the app — agents call tools directly</div>
-            </div>
-            <div class="info-card">
-                <div class="label">REST API</div>
-                <div class="value"><a href="/api">/api</a> — anonymous, rate-limited</div>
+                <div class="value">Tools inside the editor for browser agents. Experimental: Chrome's origin trial</div>
             </div>
             <div class="info-card">
                 <div class="label">LLM Docs</div>
@@ -771,14 +717,19 @@ function buildAiSkill() {
             </div>
         </div>
 
-        <h2>Install</h2>
-        <h3>Claude</h3>
-        <ol style="padding-left: 24px; color: #c9d1d9;">
-            <li style="margin-bottom: 8px;">Run <code>npx -y md2pdf-studio skill --install</code>, or open Claude, go to <strong>Skills</strong> and paste the URL <code>${SITE}/skill.md</code>.</li>
-            <li style="margin-bottom: 8px;">Claude can now create Markdown documents and share them as private <code>/s/{id}#k=…</code> links. Everything is encrypted on your machine first.</li>
-        </ol>
-        <h3>Codex, Cursor, Gemini CLI and others</h3>
-        <p>Add this to the agent's instructions file (for example <code>AGENTS.md</code>): <em>"To share Markdown as a private link, run <code>npx -y md2pdf-studio share &lt;file&gt;</code> and give the user the full link."</em> Agents that speak MCP can run <code>npx -y md2pdf-studio mcp</code> instead.</p>
+        <h2 id="install">Install</h2>
+        <p>The skill is a fixed text you can <a href="/skill.md">read before installing</a>. It never tells an agent to fetch instructions from this site, and every command names an exact version of the CLI, so what your agent runs does not change until you decide to update.</p>
+        <table>
+            <thead><tr><th>Agent</th><th>How</th></tr></thead>
+            <tbody>
+                <tr><td>claude.ai</td><td>Download <a href="/md2pdf-skill.zip">md2pdf-skill.zip</a> and upload it in <strong>Customize → Skills</strong>. Skills need code execution turned on.</td></tr>
+                <tr><td>Claude Code</td><td><code>${NPX} skill --install</code></td></tr>
+                <tr><td>Codex, Cursor, Gemini CLI</td><td>Add to <code>AGENTS.md</code> (or the agent's instructions file): <em>"To share Markdown as a private link, run <code>${NPX} share &lt;file&gt;</code> and give the user the full link. Before sharing, remove secrets or ask the user."</em></td></tr>
+                <tr><td>MCP clients</td><td><code style="word-break: break-word;">{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@${CLI_VERSION}", "mcp"] } } }</code></td></tr>
+                <tr><td>Browser agents</td><td>WebMCP tools in the editor (<code>convert-markdown</code>, <code>export-document</code>, <code>share-document</code>, <code>set-style</code>). Experimental: only browsers in Chrome's WebMCP trial expose them.</td></tr>
+            </tbody>
+        </table>
+        <p>Once a day the CLI and the MCP server check npm for a newer version number and say how to update: <code>changelog</code> shows what changed and <code>upgrade</code> reinstalls the skill. Nothing is installed on its own; <code>MD2PDF_NO_UPDATE_CHECK=1</code> turns the check off.</p>
 
         <h2>Example Prompts</h2>
 
@@ -799,19 +750,19 @@ function buildAiSkill() {
         <h2>FAQ</h2>
         <details>
             <summary>Does MD2PDF support MCP?</summary>
-            <p>Yes — WebMCP (in-browser MCP) lets agents interact with the editor directly. A remote MCP server is on the roadmap.</p>
+            <p>Yes. The npm package includes a local MCP server (<code>${NPX} mcp</code>) with four tools: share, update, delete and list links. In the browser, the editor also exposes WebMCP tools, which are still experimental in Chrome.</p>
         </details>
         <details>
-            <summary>Do agents need an API key?</summary>
-            <p>No. The public API is anonymous, rate-limited by IP. For higher limits, self-host via <a href="${GH_REPO}">GitHub</a>.</p>
+            <summary>Do agents need an account?</summary>
+            <p>No. There is no sign-up. Writes are limited per address: 10 a minute and 100 a day.</p>
         </details>
         <details>
             <summary>Can agents update previously-created documents?</summary>
-            <p>Yes. Agents receive an <code>editKey</code> when saving, which authorizes subsequent <code>PUT /api/update/:id</code> calls.</p>
+            <p>Yes, from the same machine: <code>${NPX} update &lt;link&gt; file.md</code> keeps the link and replaces its content. The CLI keeps each link's edit key in <code>~/.config/md2pdf-studio/links.json</code>, readable by the current user only.</p>
         </details>
         <details>
             <summary>Are agent-created documents encrypted?</summary>
-            <p>Yes — every document is AES-256-GCM encrypted on the agent's machine before upload (<code>npx md2pdf-studio share</code> does it for you, or the agent follows the worked examples in <a href="/skill.md">skill.md</a>). The server never sees the key or the plaintext, and it rejects plaintext requests.</p>
+            <p>Yes. The CLI encrypts every document with AES-256-GCM on the agent's machine before upload, and the key stays in the link's <code>#k=</code> part. The server never sees the key or the text, and it rejects plaintext. <a href="/api">How links work</a>.</p>
         </details>
 
         ${FOOTER}

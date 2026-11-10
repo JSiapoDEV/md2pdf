@@ -1,21 +1,21 @@
 # MD2PDF
 
-> Free online Markdown to PDF converter. Convert .md files to beautifully styled PDFs, HTML, and images with 11 visual styles, Mermaid diagrams, auto table of contents, and syntax highlighting for 180+ languages. No signup; conversion runs entirely in the browser and share links are end-to-end encrypted (AES-256-GCM) before upload. Includes an npm CLI and MCP server (md2pdf-studio), a public REST API and an installable AI Skill for Claude, Codex and other AI agents.
+> Free online Markdown to PDF converter. Convert .md files to styled PDFs, HTML, and images with 11 visual styles, Mermaid diagrams, auto table of contents, and syntax highlighting for 180+ languages. No signup; conversion runs entirely in the browser, and share links are end-to-end encrypted (AES-256-GCM) before upload. Agents share documents with the md2pdf-studio CLI (npm), its MCP server, or an installable AI skill for Claude, Codex and other agents.
 
-Last updated: 2026-10-06
+Last updated: 2026-11-10
 
 ## Main
 
 - [MD2PDF App](https://md2pdf.studio/): Online Markdown editor with live preview, 11 visual styles, Mermaid diagrams, TOC, and export to PDF/HTML/image
 - [About MD2PDF](https://md2pdf.studio/about): Background, features, and how it works
-- [Full AI Documentation](https://md2pdf.studio/llms-full.txt): Complete reference for LLMs — features, API, AI Skill, styles, and usage
-- [AI Skill (downloadable)](https://md2pdf.studio/skill.md): Installable skill file for Claude, Codex, Cursor, Gemini CLI, and compatible agents
+- [Full AI Documentation](https://md2pdf.studio/llms-full.txt): Complete reference for LLMs — features, CLI, MCP server, AI skill, styles, and usage
 
-## API
+## For agents
 
-- [CLI and MCP server — npx -y md2pdf-studio@0.1.2](https://md2pdf.studio/llms-full.txt): `npx -y md2pdf-studio@0.1.2 share file.md` encrypts locally and prints the private link; also update, delete, list, `--expires`, `--burn` (one-time links), and an MCP server over stdio.
-- [Create Document — POST /api/save](https://md2pdf.studio/llms-full.txt): Encrypt locally with AES-256-GCM, send ciphertext with header X-Encrypted: aes-256-gcm. Plaintext is rejected. The server never sees plaintext or key.
-- [Update Document — PUT /api/update/{id}](https://md2pdf.studio/llms-full.txt): Reuse editKey. Send X-Encrypted: aes-256-gcm with fresh ciphertext and the same key.
+- [md2pdf-studio CLI and MCP server](https://www.npmjs.com/package/md2pdf-studio): `npx -y md2pdf-studio@0.1.2 share file.md` encrypts locally and prints the private link; also update, delete, list, `--expires`, `--burn` (one-time links), and an MCP server (`mcp`). Run it through npx with the exact version.
+- [AI Skill](https://md2pdf.studio/skill.md): A fixed skill file for Claude, Codex, Cursor, Gemini CLI and compatible agents, pinned to the CLI version
+- [Install guide](https://md2pdf.studio/ai-skill): Claude Code, claude.ai (ZIP), AGENTS.md and MCP configuration
+- [How links work](https://md2pdf.studio/api): What is encrypted on the device and what reaches the server
 
 ## Styles
 

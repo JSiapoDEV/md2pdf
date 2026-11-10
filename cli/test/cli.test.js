@@ -209,7 +209,7 @@ test('the skill is self-contained and every command in it and in the docs is pin
     assert.ok(skill.includes('# md2pdf (skill ' + VERSION + ')'));
     // The old installable text sent agents to fetch and obey a remote file.
     assert.doesNotMatch(skill, /always fetch|follow those instructions/i);
-    for (const file of ['public/skill.md', 'cli/README.md', 'public/ai-skill.html', 'public/llms.txt', 'public/llms-full.txt', 'README.md', 'public/.well-known/ai-plugin.json']) {
+    for (const file of ['public/skill.md', 'cli/README.md', 'public/ai-skill.html', 'public/llms.txt', 'public/llms-full.txt', 'README.md', 'public/.well-known/ai-plugin.json', 'public/about.html', 'public/index.html', 'public/api.html']) {
         const text = await repoFile(file);
         assert.doesNotMatch(text, /npx (-y )?md2pdf-studio(?!@)/, file + ' has an unpinned npx command');
         assert.doesNotMatch(text, /(&quot;|")-y\1,\s*\1md2pdf-studio(?!@)/, file + ' has an unpinned MCP config');
@@ -363,4 +363,22 @@ test('no public text mentions Pro, API keys or the longer limits yet', async () 
     assert.doesNotMatch(allowed((await run(['-h'])).stdout), PRO);
     const { tools } = await handle({ method: 'tools/list' }, api);
     assert.doesNotMatch(allowed(JSON.stringify(tools)), PRO);
+});
+
+// People use the web app or the CLI; the HTTP API is described, not offered.
+test('the HTTP API is not advertised for direct use', async () => {
+    const API = /REST API|public API|Access-Control-Allow-Origin|api\/save[^\n]*(curl|fetch|urllib)|"api":\s*\{/;
+    const pages = ['README.md', 'cli/README.md', 'public/index.html', 'public/about.html', 'public/ai-skill.html', 'public/llms.txt', 'public/llms-full.txt',
+        'public/.well-known/ai-plugin.json', 'public/vs/pandoc.html', 'public/vs/typora.html', 'public/vs/stackedit.html', 'public/templates/cv.html', 'public/styles/notion.html'];
+    for (const file of pages) {
+        const hit = (await repoFile(file)).match(API);
+        assert.equal(hit, null, file + ' advertises the API: "' + (hit && hit[0]) + '"');
+    }
+    const app = await repoFile('public/app.js');
+    assert.doesNotMatch(app, /id="tab-api"|buildApiTab/);
+    // The welcome document must not show code that posts plaintext to the API.
+    assert.doesNotMatch(app, /fetch\("https:\/\/md2pdf\.studio\/api\/save"/);
+    const api = await repoFile('public/api.html');
+    assert.match(api, /<meta name="robots" content="noindex, follow">/);
+    assert.doesNotMatch(await repoFile('public/sitemap.xml'), /md2pdf\.studio\/api</);
 });
