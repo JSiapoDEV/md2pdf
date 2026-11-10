@@ -1261,6 +1261,26 @@ a.api-copy-btn { text-decoration: none; line-height: normal; }
     transition: background var(--t-normal), color var(--t-normal);
 }
 
+/* The editor fills the screen and the page does not scroll until "About" in
+   the footer opens the section below; then the page scrolls like any other,
+   and scrolling inside the editor or the preview does not drag the page. */
+html.info-open, html.info-open body { height: auto; overflow: auto; }
+html.info-open #editor, html.info-open .preview-container { overscroll-behavior: contain; }
+
+.seo-back {
+    margin-bottom: 24px;
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--text-2);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.seo-back:hover { color: var(--accent); border-color: var(--accent); }
+
 .seo-container {
     max-width: 760px;
     margin: 0 auto;

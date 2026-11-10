@@ -1774,6 +1774,19 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         });
     }
 
+    // "About" in the footer opens the section below the editor instead of
+    // leaving it, so the draft and the view stay put. The link still points to
+    // /about for crawlers and for anyone who opens it in a new tab.
+    function openInfo() {
+        document.documentElement.classList.add('info-open');
+        $('#info').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closeInfo() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => document.documentElement.classList.remove('info-open'), 500);
+    }
+
     function newDocument() {
         replaceDocument('', 'untitled.md', t('newDocument'));
         editor.focus();
@@ -3007,6 +3020,13 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         $('#applyCSSBtn').addEventListener('click', () => applyCustomCSS(true));
 
         $('#newDocBtn').addEventListener('click', newDocument);
+        $('#aboutLink').addEventListener('click', (e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+            e.preventDefault();
+            openInfo();
+        });
+        $('#seoBackBtn').addEventListener('click', closeInfo);
+        if (location.hash === '#info') openInfo();
 
         // Templates
         document.querySelectorAll('[data-template]').forEach(btn => {

@@ -310,7 +310,7 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     <span id="starText">Star on GitHub</span>
                 </a>
-                <a href="/about" class="star-link" title="About MD2PDF">
+                <a href="/about" class="star-link" id="aboutLink" title="About MD2PDF">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                     About
                 </a>
@@ -324,9 +324,11 @@
         </footer>
     </div>
 
-    <!-- SEO Content (below the fold — visible to search engines, accessible via scroll) -->
-    <section class="seo-content">
+    <!-- About MD2PDF, below the editor. The page does not scroll while the editor
+         is in use; "About" in the footer opens this section (see openInfo). -->
+    <section class="seo-content" id="info">
         <div class="seo-container">
+            <button type="button" class="seo-back" id="seoBackBtn">&uarr; Back to the editor</button>
             <h1>Markdown to PDF Converter — Free Online Tool</h1>
             <p>MD2PDF is a free, open-source Markdown to PDF converter that runs entirely in your browser. Convert any .md file to beautifully styled PDF, HTML, or PNG image. No signup, no cookies, and nothing is uploaded to convert your file.</p>
 
