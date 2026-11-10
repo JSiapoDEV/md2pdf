@@ -99,7 +99,7 @@
             shareFailed: 'Share failed', docTooLarge: 'Share failed — document too large',
             draftRestored: 'Draft restored', templateLoaded: 'Template loaded',
             newDocument: 'New document', sharedDocLoaded: 'Shared document loaded',
-            newDoc: 'New', undo: 'Undo',
+            newDoc: 'New', undo: 'Undo', fileOpened: 'File opened',
             readOnlyTitle: 'Read-only document',
             readOnlyBody: 'This is a shared document. To make changes, create your own editable copy — the original stays untouched and you can refresh this link anytime to see updates.',
             createCopyBtn: 'Create editable copy', cancelBtn: 'Cancel',
@@ -162,7 +162,7 @@
             shareFailed: 'Error al compartir', docTooLarge: 'Error — documento muy grande',
             draftRestored: 'Borrador restaurado', templateLoaded: 'Plantilla cargada',
             newDocument: 'Nuevo documento', sharedDocLoaded: 'Documento compartido cargado',
-            newDoc: 'Nuevo', undo: 'Deshacer',
+            newDoc: 'Nuevo', undo: 'Deshacer', fileOpened: 'Archivo abierto',
             readOnlyTitle: 'Documento de solo lectura',
             readOnlyBody: 'Este es un documento compartido. Para hacer cambios, crea tu propia copia editable — el original queda intacto y puedes recargar este enlace cuando quieras para ver actualizaciones.',
             createCopyBtn: 'Crear copia editable', cancelBtn: 'Cancelar',
@@ -1719,13 +1719,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     function loadTemplate(key) {
         const tpl = TEMPLATES[key];
         if (tpl === undefined) return;
-        editor.value = tpl;
-        startNewDoc();
-        currentFileName = key === 'blank' ? 'untitled.md' : `${key}.md`;
-        fileNameEl.value = currentFileName;
-        render();
-        saveDraft();
-        showToast(key === 'blank' ? t('newDocument') : t('templateLoaded'));
+        replaceDocument(tpl, key === 'blank' ? 'untitled.md' : `${key}.md`, key === 'blank' ? t('newDocument') : t('templateLoaded'));
     }
 
     // ── File handling ────────────────────────────────
@@ -1734,12 +1728,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
-            editor.value = e.target.result;
-            startNewDoc();
-            currentFileName = file.name;
-            fileNameEl.value = file.name;
-            render();
-            saveDraft();
+            replaceDocument(e.target.result, file.name, t('fileOpened'));
         };
         reader.readAsText(file);
     }
@@ -1810,24 +1799,24 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
 
     // Each draft has its own id. Share links are tracked per draft, never per
     // file name, so a new "untitled.md" can't overwrite an earlier link.
-    // This browser keeps a single draft, so a new document replaces it. For a
-    // few seconds the toast offers it back. In a shared view the editor shows
-    // someone else's document, so what is replaced is this browser's own draft.
-    function newDocument() {
+    // This browser keeps a single draft, so anything that replaces the document
+    // (New, a template, an opened or dropped file) offers it back for a few
+    // seconds. In a shared view the editor shows someone else's document, so
+    // what is replaced is this browser's own draft.
+    function replaceDocument(text, name, message) {
         let previous = { text: editor.value, id: currentDocId, name: currentFileName };
         if (isSharedView) {
             try { previous = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null') || {}; } catch (_) { previous = {}; }
             leaveSharedView();
         }
-        editor.value = '';
+        editor.value = text;
         startNewDoc();
-        currentFileName = 'untitled.md';
+        currentFileName = name;
         fileNameEl.value = currentFileName;
         render();
         saveDraft();
-        editor.focus();
-        if (!previous.text || !previous.text.trim()) { showToast(t('newDocument')); return; }
-        showToast(t('newDocument'), {
+        if (!previous.text || !previous.text.trim() || previous.text === text) { showToast(message); return; }
+        showToast(message, {
             label: t('undo'),
             run: () => {
                 editor.value = previous.text;
@@ -1839,6 +1828,11 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
                 saveDraft();
             },
         });
+    }
+
+    function newDocument() {
+        replaceDocument('', 'untitled.md', t('newDocument'));
+        editor.focus();
     }
 
     function startNewDoc() {
