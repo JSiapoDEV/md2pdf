@@ -1153,6 +1153,8 @@ a.api-copy-btn { text-decoration: none; line-height: normal; }
 .skill-how { padding-left: 18px; }
 .skill-how li { margin-bottom: 4px; }
 .skill-how code { font-size: 12px; word-break: break-word; }
+.skill-how a { color: var(--accent); }
+.skill-how a:hover { text-decoration: underline; }
 
 /* =========================================
    Toast
