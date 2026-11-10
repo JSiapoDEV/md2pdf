@@ -1774,19 +1774,25 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         });
     }
 
-    // "About" in the footer opens the information as a dialog over the editor,
-    // so the draft and the view stay put. The link still points to /about for
-    // crawlers and for anyone who opens it in a new tab.
-    function openInfo() {
+    // "About" in the footer opens the information as a full page over the
+    // editor, at /#info, so the browser's Back button returns to the editor.
+    // The draft and the view stay put underneath. The link still points to
+    // /about for crawlers and for anyone who opens it in a new tab.
+    function showInfo(open) {
         const info = $('#info');
-        info.classList.add('open');
-        info.scrollTop = 0;
-        $('#infoCloseBtn').focus();
+        info.classList.toggle('open', open);
+        if (open) { info.scrollTop = 0; $('#infoCloseBtn').focus(); }
+    }
+
+    function openInfo() {
+        if (location.hash !== '#info') history.pushState({ info: true }, '', '#info');
+        showInfo(true);
     }
 
     function closeInfo() {
-        $('#info').classList.remove('open');
-        if (location.hash === '#info') history.replaceState(null, '', location.pathname + location.search);
+        // Opened from the editor: going back also tidies the address and history.
+        if (history.state && history.state.info) history.back();
+        else { history.replaceState(null, '', location.pathname + location.search); showInfo(false); }
     }
 
     function newDocument() {
@@ -3028,9 +3034,9 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             openInfo();
         });
         $('#infoCloseBtn').addEventListener('click', closeInfo);
-        $('#info').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeInfo(); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#info').classList.contains('open')) closeInfo(); });
-        if (location.hash === '#info') openInfo();
+        window.addEventListener('popstate', () => showInfo(location.hash === '#info'));
+        if (location.hash === '#info') showInfo(true);
 
         // Templates
         document.querySelectorAll('[data-template]').forEach(btn => {

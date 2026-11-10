@@ -1256,52 +1256,43 @@ a.api-copy-btn { text-decoration: none; line-height: normal; }
 
 .seo-content { color: var(--text-2); }
 
-/* "About" in the footer shows this section as a dialog over the editor, with
-   its own scroll; the editor never moves. Closed, it is not displayed. */
+/* "About" in the footer shows this section as a full page over the editor,
+   with its own scroll; the editor stays as it was underneath. Closed, it is
+   not displayed. */
 .seo-content {
     position: fixed;
     inset: 0;
     z-index: 1000;
     overflow-y: auto;
     overscroll-behavior: contain;
-    background: var(--bg-overlay);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: var(--bg-app);
     display: none;
 }
 
 .seo-content.open { display: block; }
 
-.seo-content .seo-container {
-    position: relative;
-    margin: 40px auto;
-    background: var(--bg-app);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    animation: dropdown-in 150ms var(--ease);
-}
-
-.info-close {
+.info-bar {
     position: sticky;
     top: 0;
-    float: right;
-    margin: -24px -8px 0 0;
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-    color: var(--text-2);
+    z-index: 1;
+    padding: 10px 24px;
     background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.info-back {
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-1);
+    background: none;
     border: 1px solid var(--border);
-    border-radius: 50%;
+    border-radius: 6px;
     cursor: pointer;
 }
 
-.info-close:hover { color: var(--accent); border-color: var(--accent); }
-
-@media (max-width: 768px) {
-    .seo-content .seo-container { margin: 12px; }
-}
+.info-back:hover { color: var(--accent); border-color: var(--accent); }
 
 .seo-container {
     max-width: 760px;
