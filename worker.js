@@ -102,7 +102,11 @@ function proRequired(message, feature) {
 // an identifier or any content. Without the EVENTS binding nothing is written.
 // Anyone can inflate these counts, so they guide decisions; they bill nobody.
 
-var BEACON_EVENTS = ['copy_skill', 'download_skill'];
+var BEACON_EVENTS = [
+    'copy_skill', 'download_skill', 'open_skill', 'open_about',
+    'export_pdf', 'export_html', 'export_image', 'copy_formatted', 'copy_formatted_big',
+    'new_document', 'template_cv', 'template_report', 'template_docs', 'template_changelog', 'template_meeting',
+];
 
 function clientKind(request) {
     var ua = request.headers.get('user-agent') || '';
@@ -538,7 +542,7 @@ export default {
 async function route(request, env) {
         var url = new URL(request.url);
 
-        // --- POST /api/event — a click the page reports (copy or download the skill) ---
+        // --- POST /api/event — a click the page reports (skill, About, export, copy, new document, template) ---
         if (url.pathname === '/api/event' && request.method === 'POST') {
             if (Number(request.headers.get('content-length') || 0) > 64) return new Response(null, { status: 413 });
             var eventName = (await request.text()).trim();

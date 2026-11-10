@@ -100,6 +100,11 @@
             newDocument: 'New document', sharedDocLoaded: 'Shared document loaded',
             newDoc: 'New', undo: 'Undo', fileOpened: 'File opened',
             about: 'About', aboutTitle: 'About MD2PDF', backToEditor: '← Back to the editor',
+            copyFormatted: 'Copy', copyFormattedTitle: 'Copy with formatting, to paste into Teams, Outlook or Docs',
+            copiedFormatted: 'Copied with formatting. Paste it into Teams, Outlook or Docs.',
+            copiedOmitted: 'Copied. {n} diagram(s) or embedded image(s) cannot be pasted as text and were left out.',
+            copiedTooBig: 'Copied, but it is {kb} KB: Teams takes about 80 KB per message. A link works better.',
+            copyFailed: 'Could not copy. Select the preview and copy it by hand.', diagramOmitted: 'Diagram: open the shared link to see it',
             readOnlyTitle: 'Read-only document',
             readOnlyBody: 'This is a shared document. To make changes, create your own editable copy — the original stays untouched and you can refresh this link anytime to see updates.',
             createCopyBtn: 'Create editable copy', cancelBtn: 'Cancel',
@@ -159,6 +164,11 @@
             newDocument: 'Nuevo documento', sharedDocLoaded: 'Documento compartido cargado',
             newDoc: 'Nuevo', undo: 'Deshacer', fileOpened: 'Archivo abierto',
             about: 'Acerca de', aboutTitle: 'Acerca de MD2PDF', backToEditor: '← Volver al editor',
+            copyFormatted: 'Copiar', copyFormattedTitle: 'Copiar con formato, para pegar en Teams, Outlook o Docs',
+            copiedFormatted: 'Copiado con formato. Pégalo en Teams, Outlook o Docs.',
+            copiedOmitted: 'Copiado. {n} diagrama(s) o imagen(es) incrustada(s) no se pueden pegar como texto y quedaron fuera.',
+            copiedTooBig: 'Copiado, pero pesa {kb} KB: Teams acepta unos 80 KB por mensaje. Un enlace funciona mejor.',
+            copyFailed: 'No se pudo copiar. Selecciona la vista previa y cópiala a mano.', diagramOmitted: 'Diagrama: abre el enlace compartido para verlo',
             readOnlyTitle: 'Documento de solo lectura',
             readOnlyBody: 'Este es un documento compartido. Para hacer cambios, crea tu propia copia editable — el original queda intacto y puedes recargar este enlace cuando quieras para ver actualizaciones.',
             createCopyBtn: 'Crear copia editable', cancelBtn: 'Cancelar',
@@ -266,6 +276,8 @@
         $('#privacyLink').href = '/privacy' + (lang === 'es' ? '#es' : '');
         $('#aboutLink').lastChild.textContent = ' ' + t('about');
         $('#aboutLink').title = t('aboutTitle');
+        $('#copyFormattedLabel').textContent = t('copyFormatted');
+        $('#copyFormattedBtn').title = t('copyFormattedTitle');
         $('#infoCloseBtn').textContent = t('backToEditor');
         $('#info').setAttribute('aria-label', t('aboutTitle'));
         showInfoLanguage(lang);
@@ -1546,6 +1558,89 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         });
     }
 
+    // ── Copy with formatting ─────────────────────────
+    // Copies the rendered document for chat and mail apps (Teams, Outlook,
+    // Docs): clean HTML plus plain text. Those apps keep headings, emphasis,
+    // lists, tables, links and code but drop the theme's CSS, so no CSS is
+    // sent, which also keeps the copy small. Diagrams and embedded images
+    // cannot be pasted as text: they are left out and the toast says so.
+    // Teams takes roughly 80 KB per message, formatting included.
+
+    const PASTE_LIMIT_BYTES = 80 * 1024;
+    const PASTE_ATTRS = { a: ['href'], img: ['src', 'alt'], th: ['colspan', 'rowspan'], td: ['colspan', 'rowspan'], ol: ['start'] };
+
+    function cleanCopyOfPreview() {
+        const clone = preview.cloneNode(true);
+        let omitted = 0;
+        clone.querySelectorAll('.code-block-header, button, script, style').forEach(n => n.remove());
+        clone.querySelectorAll('.mermaid-block').forEach(n => {
+            omitted++;
+            const note = document.createElement('p');
+            note.textContent = '[' + t('diagramOmitted') + ']';
+            n.replaceWith(note);
+        });
+        clone.querySelectorAll('svg').forEach(n => { omitted++; n.remove(); });
+        clone.querySelectorAll('img').forEach(img => {
+            if (!/^https?:/i.test(img.getAttribute('src') || '')) { omitted++; img.remove(); }
+        });
+        clone.querySelectorAll('input[type="checkbox"]').forEach(box => box.replaceWith((box.checked ? '☑' : '☐') + ' '));
+        clone.querySelectorAll('pre code').forEach(code => { code.textContent = code.textContent; });
+        clone.querySelectorAll('.code-block-wrapper').forEach(w => w.replaceWith(...w.childNodes));
+        clone.querySelectorAll('*').forEach(el => {
+            const keep = PASTE_ATTRS[el.tagName.toLowerCase()] || [];
+            Array.from(el.attributes).forEach(a => { if (!keep.includes(a.name)) el.removeAttribute(a.name); });
+            // In-page links (the table of contents) mean nothing once pasted.
+            if (el.tagName === 'A' && (el.getAttribute('href') || '').startsWith('#')) el.removeAttribute('href');
+        });
+        return { clone, omitted };
+    }
+
+    function copyBySelection(node) {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        const ok = document.execCommand('copy');
+        sel.removeAllRanges();
+        return ok;
+    }
+
+    async function copyFormatted() {
+        const { clone, omitted } = cleanCopyOfPreview();
+        // Off screen but rendered, so innerText keeps line breaks and the
+        // selection fallback has something to select.
+        const holder = document.createElement('div');
+        holder.style.cssText = 'position:fixed;left:-99999px;top:0;width:800px;';
+        holder.appendChild(clone);
+        document.body.appendChild(holder);
+        const html = clone.innerHTML;
+        const text = holder.innerText;
+        const size = new Blob([html]).size;
+        let copied = false;
+        try {
+            if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+                await navigator.clipboard.write([new ClipboardItem({
+                    'text/html': new Blob([html], { type: 'text/html' }),
+                    'text/plain': new Blob([text], { type: 'text/plain' }),
+                })]);
+                copied = true;
+            }
+        } catch (_) { /* fall back to selecting the clean copy */ }
+        if (!copied) {
+            try { copied = copyBySelection(clone); } catch (_) { copied = false; }
+        }
+        holder.remove();
+        if (!copied) { showToast(t('copyFailed')); return; }
+        if (size > PASTE_LIMIT_BYTES) {
+            track('copy_formatted_big');
+            showToast(t('copiedTooBig').replace('{kb}', Math.round(size / 1024)), { label: t('shareLink'), run: shareByURL });
+            return;
+        }
+        track('copy_formatted');
+        showToast(omitted ? t('copiedOmitted').replace('{n}', omitted) : t('copiedFormatted'));
+    }
+
     function addCodeCopyButtons() {
         preview.querySelectorAll('pre').forEach(pre => {
             if (pre.querySelector('.code-copy-btn')) return;
@@ -1673,6 +1768,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     function loadTemplate(key) {
         const tpl = TEMPLATES[key];
         if (tpl === undefined) return;
+        track('template_' + key);
         replaceDocument(tpl, key === 'blank' ? 'untitled.md' : `${key}.md`, key === 'blank' ? t('newDocument') : t('templateLoaded'));
     }
 
@@ -1811,6 +1907,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     function openInfo() {
         if (location.hash !== '#info') history.pushState({ info: true }, '', '#info');
         showInfo(true);
+        track('open_about');
     }
 
     function closeInfo() {
@@ -1820,6 +1917,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     }
 
     function newDocument() {
+        track('new_document');
         replaceDocument('', 'untitled.md', t('newDocument'));
         editor.focus();
     }
@@ -1918,6 +2016,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     }
 
     async function exportPDF() {
+        track('export_pdf');
         const btnLabel = exportBtn.querySelector('span');
         exportBtn.classList.add('loading');
         if (btnLabel) btnLabel.textContent = 'Preparing...';
@@ -2033,6 +2132,7 @@ body {
     // ── HTML Export ──────────────────────────────────
 
     async function exportHTML() {
+        track('export_html');
         const style    = STYLES[currentStyle] || STYLES.notion;
         const dark     = style.dark;
         const css      = await fetchPrintCSS(dark);
@@ -2184,6 +2284,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
     // ── Export Image ─────────────────────────────────
 
     async function exportImage() {
+        track('export_image');
         exportOverlay.classList.add('active');
 
         try {
@@ -2982,7 +3083,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         const apiOverlay  = $('#apiOverlay');
         const apiCloseBtn = $('#apiCloseBtn');
 
-        $('#apiPromptsBtn').addEventListener('click', () => { apiOverlay.classList.add('active'); fillSkillTab(); });
+        $('#apiPromptsBtn').addEventListener('click', () => { apiOverlay.classList.add('active'); fillSkillTab(); track('open_skill'); });
         apiCloseBtn.addEventListener('click', () => { apiOverlay.classList.remove('active'); });
         apiOverlay.addEventListener('click', (e) => { if (e.target === apiOverlay) apiOverlay.classList.remove('active'); });
 
@@ -3052,6 +3153,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         $('#applyCSSBtn').addEventListener('click', () => applyCustomCSS(true));
 
         $('#newDocBtn').addEventListener('click', newDocument);
+        $('#copyFormattedBtn').addEventListener('click', copyFormatted);
         $('#aboutLink').addEventListener('click', (e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
             e.preventDefault();

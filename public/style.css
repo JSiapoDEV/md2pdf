@@ -1223,6 +1223,7 @@ a.api-copy-btn { text-decoration: none; line-height: normal; }
 
     .counter { display: none; }
     .new-doc-label { display: none; }
+    .copy-formatted-label { display: none; }
 
     /* Hide non-essential toolbar buttons on mobile */
     #fullscreenBtn { padding: 4px !important; }
