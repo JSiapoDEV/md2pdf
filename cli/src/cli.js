@@ -28,9 +28,6 @@ Share the whole link. Links expire 30 days after creation.
 Options for share and update:
   --expires <t>        Shorter lifetime, e.g. 1h, 7d (free: 1 hour to 30 days)
   --burn               share only: the link can be opened a single time
-  --title <text>       Preview title in chats (Pro)
-  --description <text> Preview description in chats (Pro)
-  --api-key <key>      Pro API key (or MD2PDF_API_KEY)
 
 Options:
   --json         Machine-readable output

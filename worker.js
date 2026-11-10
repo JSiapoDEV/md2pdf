@@ -89,8 +89,11 @@ async function planOf(request, env) {
     return { plan: PLANS.pro, owner: hash.slice(0, 32) };
 }
 
-function proRequired(what) {
-    return jsonResponse({ error: what + ' needs a Pro API key.', code: 'pro_required' }, 403);
+// Options of a paid plan that is not offered yet. The message names the limit
+// only; `feature` lets the counter see which one people asked for. The code
+// stays pro_required because published CLIs already show its message.
+function proRequired(message, feature) {
+    return jsonResponse({ error: message, code: 'pro_required', feature: feature }, 403);
 }
 
 // --- Anonymous counts (Workers Analytics Engine) ---
@@ -118,13 +121,8 @@ function countEvent(env, request, name, detail) {
 // What a free user ran into, as a short tag: the demand a Pro plan would meet.
 function proSignal(body) {
     if (!body) return null;
-    if (body.code === 'pro_required') {
-        if (/longer than 30 days/.test(body.error)) return 'expiry';
-        if (/title and description/.test(body.error)) return 'preview';
-        if (/Extending/.test(body.error)) return 'extend';
-        return 'other';
-    }
-    if (body.code === 'too_large' && /free plan/.test(body.error)) return 'size';
+    if (body.code === 'pro_required') return body.feature || 'other';
+    if (body.code === 'too_large' && body.feature === 'size') return 'size';
     if (body.code === 'daily_quota' && /address/.test(body.error)) return 'quota';
     return null;
 }
@@ -251,7 +249,7 @@ function readOptions(request, plan) {
             return { error: jsonResponse({ error: 'X-Expires-In is a number of seconds, at least ' + MIN_EXPIRY_SEC + '.', code: 'bad_expiry' }, 400) };
         }
         if (Number(expires) > plan.maxExpirySec) {
-            if (plan.name === 'free' && Number(expires) <= PLANS.pro.maxExpirySec) return { error: proRequired('Keeping a link longer than 30 days') };
+            if (plan.name === 'free' && Number(expires) <= PLANS.pro.maxExpirySec) return { error: proRequired('Links last at most 30 days.', 'expiry') };
             return { error: jsonResponse({ error: 'X-Expires-In is above the ' + (plan.maxExpirySec / DAY_SEC) + '-day maximum.', code: 'bad_expiry' }, 400) };
         }
         out.expiresInSec = Number(expires);
@@ -265,7 +263,7 @@ function readOptions(request, plan) {
     var description = readOptionHeader(request, 'x-doc-description', MAX_DESCRIPTION_BYTES);
     if (description.error) return { error: description.error };
     if ((title.present && title.value) || (description.present && description.value)) {
-        if (!plan.customPreview) return { error: proRequired('A custom title and description') };
+        if (!plan.customPreview) return { error: proRequired('A custom title and description are not available.', 'preview') };
     }
     if (title.present) out.title = title.value;
     if (description.present) out.description = description.value;
@@ -397,7 +395,7 @@ async function readCiphertext(request, plan) {
     var body = stripBase64Whitespace(await request.text());
     if (!body.trim()) return { error: jsonResponse({ error: 'Empty content' }, 400) };
     if (body.length > maxCiphertextChars(plan)) {
-        return { error: jsonResponse({ error: 'Document too large (max ' + Math.round(plan.maxBytes / 1000) + ' KB on the ' + plan.name + ' plan)', code: 'too_large' }, 413) };
+        return { error: jsonResponse({ error: 'Document too large (max ' + Math.round(plan.maxBytes / 1000) + ' KB)', code: 'too_large', feature: plan.name === 'free' ? 'size' : undefined }, 413) };
     }
     // X-Encrypted promises ciphertext. Plain Markdown sent with it would be
     // stored in clear while everything says it is encrypted.
@@ -613,7 +611,7 @@ async function route(request, env) {
                     var newExpiry = Date.now() + changes.expiresInSec * 1000;
                     // Only a paid key can push the end date out; anyone may shorten it.
                     if (newExpiry > expiresAtOf(existingMeta) && updater.plan.name !== 'pro') {
-                        return proRequired('Extending a link');
+                        return proRequired('A link\'s expiry can only be shortened.', 'extend');
                     }
                     updatedMeta.expiresAt = newExpiry;
                 }

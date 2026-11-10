@@ -58,15 +58,15 @@ API version: 1.0 (stable)
 The easiest way for an agent to share a document. It encrypts on the machine, uploads only ciphertext and prints the link. Node 18.3+, no dependencies.
 
 ```bash
-npx -y md2pdf-studio@0.1.1 share report.md          # or: cat report.md | npx -y md2pdf-studio@0.1.1 share
-npx -y md2pdf-studio@0.1.1 update <link|id> report.md
-npx -y md2pdf-studio@0.1.1 delete <link|id>
-npx -y md2pdf-studio@0.1.1 list                     # without keys
-npx -y md2pdf-studio@0.1.1 mcp                      # MCP server over stdio
-npx -y md2pdf-studio@0.1.1 skill --install          # installs the skill for Claude
+npx -y md2pdf-studio@0.1.2 share report.md          # or: cat report.md | npx -y md2pdf-studio@0.1.2 share
+npx -y md2pdf-studio@0.1.2 update <link|id> report.md
+npx -y md2pdf-studio@0.1.2 delete <link|id>
+npx -y md2pdf-studio@0.1.2 list                     # without keys
+npx -y md2pdf-studio@0.1.2 mcp                      # MCP server over stdio
+npx -y md2pdf-studio@0.1.2 skill --install          # installs the skill for Claude
 ```
 
-Options: `--expires 7d` (shorter life, free: 1 hour to 30 days), `--burn` (the link opens a single time; link-preview bots do not use it up), and, with a Pro API key (`--api-key` or `MD2PDF_API_KEY`), `--title` / `--description` for the preview card chat apps show. Those two fields are stored unencrypted. Add `--json` for machine-readable output. Edit and encryption keys are kept in `~/.config/md2pdf-studio/links.json` (current user only), so later sessions can update or delete the link. Always give the user the whole link, including `#k=`.
+Options: `--expires 7d` (shorter life, free: 1 hour to 30 days), and `--burn` (the link opens a single time; link-preview bots do not use it up). Add `--json` for machine-readable output. Edit and encryption keys are kept in `~/.config/md2pdf-studio/links.json` (current user only), so later sessions can update or delete the link. Always give the user the whole link, including `#k=`.
 
 ---
 
@@ -161,12 +161,11 @@ print(f"{data['url']}#k={key_b64url}")
 
 ### Limits
 
-- **Max document size:** 500 KB of Markdown (UTF-8); 5 MB with a Pro API key
+- **Max document size:** 500 KB of Markdown (UTF-8)
 - **Rate limit:** 10 writes per minute per IP (save, update and delete combined)
-- **Daily quota (free):** 100 writes and 25 MB per address per UTC day (deleting is never limited); a Pro key has a larger quota
-- **Link expiration:** 30 days after creation by default (updates do not extend it). `X-Expires-In: <seconds>` (3600 to 2592000) shortens it; a Pro key allows up to 365 days and may extend a link on update
+- **Daily quota (free):** 100 writes and 25 MB per address per UTC day (deleting is never limited)
+- **Link expiration:** 30 days after creation by default (updates do not extend it). `X-Expires-In: <seconds>` (3600 to 2592000) shortens it
 - **One-time links:** `X-Burn: 1` on create. `GET /s/{id}` then serves a page without content, and `POST /api/open/{id}` returns the ciphertext once
-- **Preview (Pro):** `Authorization: Bearer <key>` plus `X-Doc-Title` / `X-Doc-Description` (percent-encoded UTF-8, max 100 and 300 bytes). Stored unencrypted; chat apps cannot read the document, so this is the only way to customise the card
 
 ### Error Responses
 
@@ -179,9 +178,8 @@ print(f"{data['url']}#k={key_b64url}")
 | 413 | Document too large (>500KB) | `{"error": "Document too large (max 500KB)"}` |
 | 429 | Rate limit exceeded (`Retry-After: 60`) | `{"error": "Too many requests. Try again in a minute."}` |
 | 429 | Daily quota reached (`Retry-After` until 00:00 UTC) | `{"error": "...", "code": "daily_quota"}` |
-| 403 | The option needs a Pro key (longer than 30 days, custom preview, extending a link) | `{"error": "...", "code": "pro_required"}` |
-| 401 | Unknown API key | `{"error": "Unknown API key.", "code": "invalid_api_key"}` |
-| 400 | Invalid `X-Expires-In` or preview header | `{"error": "...", "code": "bad_expiry"}` / `"bad_option"` |
+| 403 | The option is not available (longer than 30 days, extending a link) | `{"error": "...", "code": "pro_required"}` |
+| 400 | Invalid `X-Expires-In` or option | `{"error": "...", "code": "bad_expiry"}` / `"bad_option"` |
 | 403 | Invalid edit key on update or delete | `{"error": "Unauthorized"}` |
 | 404 | Document not found, expired, or within its last minute | `{"error": "Document not found"}` |
 
@@ -209,14 +207,14 @@ Every link is end-to-end encrypted, but anyone holding the full link can read it
 
 ## Share
 
-    npx -y md2pdf-studio@0.1.1 share report.md
-    cat notes.md | npx -y md2pdf-studio@0.1.1 share
-    npx -y md2pdf-studio@0.1.1 share report.md --expires 7d --burn
+    npx -y md2pdf-studio@0.1.2 share report.md
+    cat notes.md | npx -y md2pdf-studio@0.1.2 share
+    npx -y md2pdf-studio@0.1.2 share report.md --expires 7d --burn
 
 ## Update or delete (links made on this machine)
 
-    npx -y md2pdf-studio@0.1.1 update <link|id> report.md
-    npx -y md2pdf-studio@0.1.1 delete <link|id>
+    npx -y md2pdf-studio@0.1.2 update <link|id> report.md
+    npx -y md2pdf-studio@0.1.2 delete <link|id>
 
 ## Without npm
 

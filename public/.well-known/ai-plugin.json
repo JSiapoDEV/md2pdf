@@ -1,17 +1,17 @@
 {
-  "schema_version": "v1",
-  "name_for_human": "MD2PDF",
-  "name_for_model": "md2pdf",
-  "description_for_human": "Convert Markdown to beautifully styled PDFs and HTML in your browser, and share documents as private, end-to-end encrypted links. 11 visual styles, custom CSS, templates, syntax highlighting, dark mode. No signup. Includes an npm CLI and installable AI Skill.",
-  "description_for_model": "MD2PDF (md2pdf.studio) shares Markdown as private, end-to-end encrypted links and renders it in 11 visual styles. Preferred: run `npx -y md2pdf-studio share <file>` (or pipe Markdown into stdin); it encrypts locally and prints the full link, including the #k= key fragment. `npx -y md2pdf-studio update <link|id> <file>` and `delete <link|id>` manage links created on the same machine; `npx -y md2pdf-studio mcp` runs an MCP server. Without npm, encrypt with AES-256-GCM yourself and POST base64(IV || ciphertext || tag) to https://md2pdf.studio/api/save with headers Content-Type: text/plain and X-Encrypted: aes-256-gcm. The API returns { id, editKey, url, expiresAt } (no key); the share link is {url}#k={base64url key}. Plaintext requests are rejected with 400 e2ee_required, and the key must never be sent to the server. Update with PUT /api/update/{id} (X-Edit-Key, X-Encrypted, same key, fresh IV); delete with DELETE /api/delete/{id}. Options: --expires 7d (shorter life) and --burn (one-time link; X-Expires-In and X-Burn headers in the API). A Pro API key (Authorization: Bearer, never ask the user to paste it in chat) allows longer links and a custom preview title/description, which are stored unencrypted. Before sharing, remove secrets or ask the user, and give them the whole link. Max 500 KB of Markdown (5 MB Pro), 10 writes per IP per minute and 100 per day, links expire 30 days after creation, no authentication needed for the free plan. Full instructions and code: https://md2pdf.studio/skill.md",
-  "auth": {
-    "type": "none"
-  },
-  "api": {
-    "type": "openapi",
-    "url": "https://md2pdf.studio"
-  },
-  "logo_url": "https://md2pdf.studio/og-image.png",
-  "contact_email": "jsiapo.dev@gmail.com",
-  "legal_info_url": "https://md2pdf.studio"
+    "schema_version": "v1",
+    "name_for_human": "MD2PDF",
+    "name_for_model": "md2pdf",
+    "description_for_human": "Convert Markdown to beautifully styled PDFs and HTML in your browser, and share documents as private, end-to-end encrypted links. 11 visual styles, custom CSS, templates, syntax highlighting, dark mode. No signup. Includes an npm CLI and installable AI Skill.",
+    "description_for_model": "MD2PDF (md2pdf.studio) shares Markdown as private, end-to-end encrypted links and renders it in 11 visual styles. Preferred: run `npx -y md2pdf-studio@0.1.2 share <file>` (or pipe Markdown into stdin); it encrypts locally and prints the full link, including the #k= key fragment. `npx -y md2pdf-studio@0.1.2 update <link|id> <file>` and `delete <link|id>` manage links created on the same machine; `npx -y md2pdf-studio@0.1.2 mcp` runs an MCP server. Without npm, encrypt with AES-256-GCM yourself and POST base64(IV || ciphertext || tag) to https://md2pdf.studio/api/save with headers Content-Type: text/plain and X-Encrypted: aes-256-gcm. The API returns { id, editKey, url, expiresAt } (no key); the share link is {url}#k={base64url key}. Plaintext requests are rejected with 400 e2ee_required, and the key must never be sent to the server. Update with PUT /api/update/{id} (X-Edit-Key, X-Encrypted, same key, fresh IV); delete with DELETE /api/delete/{id}. Options: --expires 7d (shorter life) and --burn (one-time link; X-Expires-In and X-Burn headers in the API). Before sharing, remove secrets or ask the user, and give them the whole link. Max 500 KB of Markdown, 10 writes per IP per minute and 100 per day, links expire 30 days after creation, no authentication needed. Full instructions: https://md2pdf.studio/skill.md",
+    "auth": {
+        "type": "none"
+    },
+    "api": {
+        "type": "openapi",
+        "url": "https://md2pdf.studio"
+    },
+    "logo_url": "https://md2pdf.studio/og-image.png",
+    "contact_email": "jsiapo.dev@gmail.com",
+    "legal_info_url": "https://md2pdf.studio"
 }

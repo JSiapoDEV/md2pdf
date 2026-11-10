@@ -182,15 +182,13 @@ print(f"{data['url']}#k={key_b64url}")</code></pre>
         <h3>Options (headers on save and update)</h3>
         <table>
             <tr><th>Header</th><th>Effect</th></tr>
-            <tr><td><code>X-Expires-In: 604800</code></td><td>Seconds until the link expires: 3600 to 2592000 (30 days) on the free plan. On update it can only shorten the life, unless you use a Pro key</td></tr>
+            <tr><td><code>X-Expires-In: 604800</code></td><td>Seconds until the link expires: 3600 to 2592000 (30 days) on the free plan. On update it can only shorten the life</td></tr>
             <tr><td><code>X-Burn: 1</code></td><td>Save only. The link can be opened one time. <code>GET /s/{id}</code> serves a page without content and <code>POST /api/open/{id}</code> returns the ciphertext once, so link-preview bots cannot use it up</td></tr>
-            <tr><td><code>Authorization: Bearer &lt;key&gt;</code></td><td>Pro API key: links up to 365 days, 5 MB documents, a larger daily quota. Unknown keys get <code>401 invalid_api_key</code></td></tr>
-            <tr><td><code>X-Doc-Title</code>, <code>X-Doc-Description</code></td><td>Pro. Percent-encoded UTF-8, up to 100 and 300 bytes. Chat apps cannot read an encrypted document, so these set the preview card, and they are stored <strong>unencrypted</strong></td></tr>
         </table>
-        <p>Without a Pro key, a header that needs one answers <code>403 pro_required</code>. When the daily quota is spent the API answers <code>429 daily_quota</code> with <code>Retry-After</code> until 00:00 UTC; deleting is never limited.</p>
+        <p>When the daily quota is spent the API answers <code>429 daily_quota</code> with <code>Retry-After</code> until 00:00 UTC; deleting is never limited.</p>
 
         <h3>GET /s/:id</h3>
-        <p>Load a shared document. Links get the same generic preview card in chat apps, because the server does not read document titles or content. Only a link whose author set a Pro title and description shows those.</p>
+        <p>Load a shared document. Links get the same generic preview card in chat apps, because the server does not read document titles or content.</p>
 
         <h2>Rate Limits</h2>
         <div class="info-grid">
@@ -200,7 +198,7 @@ print(f"{data['url']}#k={key_b64url}")</code></pre>
             </div>
             <div class="info-card">
                 <div class="label">Max document size</div>
-                <div class="value">500 KB (5 MB with a Pro key)</div>
+                <div class="value">500 KB</div>
             </div>
             <div class="info-card">
                 <div class="label">Retention</div>

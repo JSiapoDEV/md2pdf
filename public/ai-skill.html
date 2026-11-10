@@ -142,7 +142,7 @@
         <div class="info-grid">
             <div class="info-card">
                 <div class="label">CLI and MCP server</div>
-                <div class="value"><code>npx -y md2pdf-studio@0.1.1</code> — encrypts locally, prints the link</div>
+                <div class="value"><code>npx -y md2pdf-studio@0.1.2</code> — encrypts locally, prints the link</div>
             </div>
             <div class="info-card">
                 <div class="label">Claude Skill</div>
@@ -176,9 +176,9 @@
             <thead><tr><th>Agent</th><th>How</th></tr></thead>
             <tbody>
                 <tr><td>claude.ai</td><td>Download <a href="/md2pdf-skill.zip">md2pdf-skill.zip</a> and upload it in <strong>Customize → Skills</strong>. Skills need code execution turned on.</td></tr>
-                <tr><td>Claude Code</td><td><code>npx -y md2pdf-studio@0.1.1 skill --install</code></td></tr>
-                <tr><td>Codex, Cursor, Gemini CLI</td><td>Add to <code>AGENTS.md</code> (or the agent's instructions file): <em>"To share Markdown as a private link, run <code>npx -y md2pdf-studio@0.1.1 share &lt;file&gt;</code> and give the user the full link. Before sharing, remove secrets or ask the user."</em></td></tr>
-                <tr><td>MCP clients</td><td><code style="word-break: break-word;">{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.1", "mcp"] } } }</code></td></tr>
+                <tr><td>Claude Code</td><td><code>npx -y md2pdf-studio@0.1.2 skill --install</code></td></tr>
+                <tr><td>Codex, Cursor, Gemini CLI</td><td>Add to <code>AGENTS.md</code> (or the agent's instructions file): <em>"To share Markdown as a private link, run <code>npx -y md2pdf-studio@0.1.2 share &lt;file&gt;</code> and give the user the full link. Before sharing, remove secrets or ask the user."</em></td></tr>
+                <tr><td>MCP clients</td><td><code style="word-break: break-word;">{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.2", "mcp"] } } }</code></td></tr>
                 <tr><td>Browser agents</td><td>WebMCP tools in the editor (<code>convert-markdown</code>, <code>export-document</code>, <code>share-document</code>, <code>set-style</code>). Experimental: only browsers in Chrome's WebMCP trial expose them.</td></tr>
                 <tr><td>Scripts</td><td>The <a href="/api">REST API</a>. It accepts only content encrypted before upload.</td></tr>
             </tbody>
@@ -208,7 +208,7 @@
         <h2>FAQ</h2>
         <details>
             <summary>Does MD2PDF support MCP?</summary>
-            <p>Yes. The npm package includes a local MCP server (<code>npx -y md2pdf-studio@0.1.1 mcp</code>) with four tools: share, update, delete and list links. In the browser, the editor also exposes WebMCP tools, which are still experimental in Chrome.</p>
+            <p>Yes. The npm package includes a local MCP server (<code>npx -y md2pdf-studio@0.1.2 mcp</code>) with four tools: share, update, delete and list links. In the browser, the editor also exposes WebMCP tools, which are still experimental in Chrome.</p>
         </details>
         <details>
             <summary>Do agents need an API key?</summary>
@@ -220,7 +220,7 @@
         </details>
         <details>
             <summary>Are agent-created documents encrypted?</summary>
-            <p>Yes — every document is AES-256-GCM encrypted on the agent's machine before upload (<code>npx -y md2pdf-studio@0.1.1 share</code> does it for you, or see the <a href="/api">API reference</a>). The server never sees the key or the plaintext, and it rejects plaintext requests.</p>
+            <p>Yes — every document is AES-256-GCM encrypted on the agent's machine before upload (<code>npx -y md2pdf-studio@0.1.2 share</code> does it for you, or see the <a href="/api">API reference</a>). The server never sees the key or the plaintext, and it rejects plaintext requests.</p>
         </details>
 
         <div class="footer">

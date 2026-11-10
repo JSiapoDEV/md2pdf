@@ -34,7 +34,7 @@ before(async () => {
         const origin = 'http://' + req.headers.host;
         if (req.method === 'POST' && req.url === '/api/save') {
             if (req.headers['x-doc-title'] && req.headers.authorization !== 'Bearer pro-key') {
-                return send(403, { error: 'A custom title and description needs a Pro API key.', code: 'pro_required' });
+                return send(403, { error: 'A custom title and description are not available.', code: 'pro_required', feature: 'preview' });
             }
             const id = String(docs.size).padStart(8, 'A');
             docs.set(id, { body, editKey: 'edit' + id });
@@ -145,13 +145,13 @@ test('without options nothing extra is sent, and the key comes from the environm
 });
 
 test('server explanations reach the user in plain words', async () => {
-    await assert.rejects(shareDocument({ markdown: 'x', api, title: 'Hola' }), /needs a Pro API key/);
-    await assert.rejects(shareDocument({ markdown: 'x', api, title: 'Hola', description: undefined, expires: '1h', apiKey: undefined }), /Pro API key/);
+    await assert.rejects(shareDocument({ markdown: 'x', api, title: 'Hola' }), /are not available/);
+    await assert.rejects(shareDocument({ markdown: 'x', api, title: 'Hola', description: undefined, expires: '1h', apiKey: undefined }), /not available/);
 });
 
 test('size ceiling depends on having a key', async () => {
     const big = 'x'.repeat(600000);
-    await assert.rejects(shareDocument({ markdown: big, api }), /without an API key/);
+    await assert.rejects(shareDocument({ markdown: big, api }), /too large \(max 512 KB\)/);
     await shareDocument({ markdown: big, api, apiKey: 'pro-key' });
 });
 
@@ -209,7 +209,7 @@ test('the skill is self-contained and every command in it and in the docs is pin
     assert.ok(skill.includes('# md2pdf (skill ' + VERSION + ')'));
     // The old installable text sent agents to fetch and obey a remote file.
     assert.doesNotMatch(skill, /always fetch|follow those instructions/i);
-    for (const file of ['public/skill.md', 'cli/README.md', 'public/ai-skill.html', 'public/llms.txt', 'public/llms-full.txt', 'README.md']) {
+    for (const file of ['public/skill.md', 'cli/README.md', 'public/ai-skill.html', 'public/llms.txt', 'public/llms-full.txt', 'README.md', 'public/.well-known/ai-plugin.json']) {
         const text = await repoFile(file);
         assert.doesNotMatch(text, /npx (-y )?md2pdf-studio(?!@)/, file + ' has an unpinned npx command');
         assert.doesNotMatch(text, /(&quot;|")-y\1,\s*\1md2pdf-studio(?!@)/, file + ' has an unpinned MCP config');
@@ -346,4 +346,21 @@ test('upgrade: reinstalls an older skill with the latest version, and only then'
 
     // npm unreachable: says so instead of guessing.
     await assert.rejects(upgrade({ dir, check: async () => null, install }), /Could not reach npm/);
+});
+
+// A paid plan is not offered yet, so nothing people or agents read mentions one.
+// Delete this test when it launches.
+test('no public text mentions Pro, API keys or the longer limits yet', async () => {
+    const PRO = /\bPro\b|\bpaid\b|API key|MD2PDF_API_KEY|--api-key|--title|--description|365 days|(?<!\d)5 MB/;
+    const files = ['public/skill.md', 'cli/README.md', 'README.md', 'public/ai-skill.html', 'public/api.html', 'public/about.html', 'public/privacy.html',
+        'public/terms.html', 'public/index.html', 'public/llms.txt', 'public/llms-full.txt', 'public/.well-known/ai-plugin.json', 'cli/CHANGELOG.md'];
+    for (const file of files) {
+        const text = (await repoFile(file)).replace(/API keys, tokens|need an API key|no API key/g, '');
+        const hit = text.match(PRO);
+        assert.equal(hit, null, file + ' mentions "' + (hit && hit[0]) + '"');
+    }
+    const allowed = (text) => text.replace(/API keys, tokens/g, '');
+    assert.doesNotMatch(allowed((await run(['-h'])).stdout), PRO);
+    const { tools } = await handle({ method: 'tools/list' }, api);
+    assert.doesNotMatch(allowed(JSON.stringify(tools)), PRO);
 });

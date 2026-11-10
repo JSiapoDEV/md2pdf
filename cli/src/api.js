@@ -25,7 +25,7 @@ export function checkSize(markdown, apiKey) {
     if (!markdown || !markdown.trim()) throw new Error('Nothing to share: the document is empty');
     const limit = apiKey ? PRO_MAX_BYTES : FREE_MAX_BYTES;
     if (Buffer.byteLength(markdown, 'utf8') > limit) {
-        throw new Error('Document too large (max ' + Math.round(limit / 1000) + ' KB' + (apiKey ? '' : ' without an API key') + ')');
+        throw new Error('Document too large (max ' + Math.round(limit / 1000) + ' KB)');
     }
 }
 
