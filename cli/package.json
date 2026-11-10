@@ -1,6 +1,6 @@
 {
   "name": "md2pdf-studio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Share Markdown as an end-to-end encrypted link from your terminal or AI agent. Encrypts locally; the server never sees the key.",
   "type": "module",
   "bin": {
@@ -11,6 +11,7 @@
     "src",
     "skill.md",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {

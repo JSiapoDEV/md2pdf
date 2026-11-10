@@ -28,6 +28,7 @@
     const counterEl       = $('#counter');
     const toastEl         = $('#toast');
     const toastMsg        = $('#toastMessage');
+    const toastAction     = $('#toastAction');
     const viewToggle      = $('#viewToggle');
     const workspace       = $('.workspace');
     const fullscreenBtn   = $('#fullscreenBtn');
@@ -98,6 +99,7 @@
             shareFailed: 'Share failed', docTooLarge: 'Share failed — document too large',
             draftRestored: 'Draft restored', templateLoaded: 'Template loaded',
             newDocument: 'New document', sharedDocLoaded: 'Shared document loaded',
+            newDoc: 'New', undo: 'Undo',
             readOnlyTitle: 'Read-only document',
             readOnlyBody: 'This is a shared document. To make changes, create your own editable copy — the original stays untouched and you can refresh this link anytime to see updates.',
             createCopyBtn: 'Create editable copy', cancelBtn: 'Cancel',
@@ -160,6 +162,7 @@
             shareFailed: 'Error al compartir', docTooLarge: 'Error — documento muy grande',
             draftRestored: 'Borrador restaurado', templateLoaded: 'Plantilla cargada',
             newDocument: 'Nuevo documento', sharedDocLoaded: 'Documento compartido cargado',
+            newDoc: 'Nuevo', undo: 'Deshacer',
             readOnlyTitle: 'Documento de solo lectura',
             readOnlyBody: 'Este es un documento compartido. Para hacer cambios, crea tu propia copia editable — el original queda intacto y puedes recargar este enlace cuando quieras para ver actualizaciones.',
             createCopyBtn: 'Crear copia editable', cancelBtn: 'Cancelar',
@@ -234,7 +237,9 @@
         $('#myLinksBtn').lastChild.textContent = ' ' + t('myLinks');
 
         // Templates
-        document.querySelector('[data-template="blank"]').textContent = t('blankDoc');
+        $('#newDocBtnLabel').textContent = t('newDoc');
+        $('#newDocBtn').title = t('newDocument');
+        $('#newDocBtn').setAttribute('aria-label', t('newDocument'));
         document.querySelector('[data-template="cv"]').textContent = t('cvResume');
         document.querySelector('[data-template="report"]').textContent = t('report');
         document.querySelector('[data-template="docs"]').textContent = t('docs');
@@ -1805,6 +1810,37 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
 
     // Each draft has its own id. Share links are tracked per draft, never per
     // file name, so a new "untitled.md" can't overwrite an earlier link.
+    // This browser keeps a single draft, so a new document replaces it. For a
+    // few seconds the toast offers it back. In a shared view the editor shows
+    // someone else's document, so what is replaced is this browser's own draft.
+    function newDocument() {
+        let previous = { text: editor.value, id: currentDocId, name: currentFileName };
+        if (isSharedView) {
+            try { previous = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null') || {}; } catch (_) { previous = {}; }
+            leaveSharedView();
+        }
+        editor.value = '';
+        startNewDoc();
+        currentFileName = 'untitled.md';
+        fileNameEl.value = currentFileName;
+        render();
+        saveDraft();
+        editor.focus();
+        if (!previous.text || !previous.text.trim()) { showToast(t('newDocument')); return; }
+        showToast(t('newDocument'), {
+            label: t('undo'),
+            run: () => {
+                editor.value = previous.text;
+                currentDocId = previous.id || null;
+                if (!currentDocId) startNewDoc();
+                currentFileName = previous.name || 'untitled.md';
+                fileNameEl.value = currentFileName;
+                render();
+                saveDraft();
+            },
+        });
+    }
+
     function startNewDoc() {
         currentDocId = crypto.randomUUID
             ? crypto.randomUUID()
@@ -1832,10 +1868,22 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
 
     // ── Toast ────────────────────────────────────────
 
-    function showToast(msg) {
+    // An optional action ({ label, run }) adds a button and keeps the toast up longer.
+    let toastTimer = null;
+    function showToast(msg, action) {
         toastMsg.textContent = msg;
+        toastAction.hidden = !action;
+        toastAction.textContent = action ? action.label : '';
+        toastAction.onclick = action ? () => { hideToast(); action.run(); } : null;
+        toastEl.classList.toggle('has-action', !!action);
         toastEl.classList.add('show');
-        setTimeout(() => toastEl.classList.remove('show'), 2500);
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(hideToast, action ? 10000 : 2500);
+    }
+
+    function hideToast() {
+        toastEl.classList.remove('show', 'has-action');
+        toastAction.onclick = null;
     }
 
     // ── PDF Export ───────────────────────────────────
@@ -3031,6 +3079,8 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         });
         customCSSInput.addEventListener('input', () => applyCustomCSS(false));
         $('#applyCSSBtn').addEventListener('click', () => applyCustomCSS(true));
+
+        $('#newDocBtn').addEventListener('click', newDocument);
 
         // Templates
         document.querySelectorAll('[data-template]').forEach(btn => {

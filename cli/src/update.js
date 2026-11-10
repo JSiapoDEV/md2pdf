@@ -7,6 +7,7 @@
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { storePath } from './store.js';
 import { VERSION } from './version.js';
 
@@ -49,20 +50,24 @@ async function writeCache(now, latest) {
     } catch (_) { /* a read-only home only means checking again next time */ }
 }
 
+// The latest version npm reports, as { current, latest, newer }, or null when it
+// is unknown: offline, turned off, or not a plain version number. `fresh`
+// skips the day's cached answer (for `upgrade`, which the user asked for).
 export async function checkForUpdate({
     now = Date.now(),
     fetchImpl = globalThis.fetch,
     current = VERSION,
     enabled = !process.env.MD2PDF_NO_UPDATE_CHECK,
+    fresh = false,
 } = {}) {
     if (!enabled) return null;
-    let latest = await readCache(now);
+    let latest = fresh ? undefined : await readCache(now);
     if (latest === undefined) {
         latest = null;
         try {
             const res = await fetchImpl(REGISTRY, {
                 headers: { accept: 'application/json', 'user-agent': 'md2pdf-studio/' + current },
-                signal: AbortSignal.timeout(2000),
+                signal: AbortSignal.timeout(fresh ? 10000 : 2000),
             });
             if (res.ok) {
                 const version = (await res.json()).version;
@@ -72,12 +77,26 @@ export async function checkForUpdate({
         // Recorded even when it failed, so an offline machine is not slowed down on every run.
         await writeCache(now, latest);
     }
-    return latest && isNewer(latest, current) ? { current, latest } : null;
+    return latest ? { current, latest, newer: isNewer(latest, current) } : null;
 }
 
-export function updateMessage({ current, latest }, where = 'cli') {
-    const how = where === 'mcp'
-        ? 'To update, change md2pdf-studio@' + current + ' to md2pdf-studio@' + latest + ' in the MCP configuration.'
-        : 'To update the skill, run: npx -y md2pdf-studio@' + latest + ' skill --install';
-    return 'md2pdf-studio ' + latest + ' is available (this is ' + current + '). Changes: https://md2pdf.studio/changelog. ' + how;
+// npx runs packages from an _npx cache folder; anything else was installed
+// (globally or in a project). That decides which command updates this copy.
+export function runMode(moduleUrl = import.meta.url) {
+    return /[\\/]_npx[\\/]/.test(fileURLToPath(moduleUrl)) ? 'npx' : 'installed';
+}
+
+// Fixed text around a version number: no links, only commands to run.
+export function updateMessage({ current, latest }, where = runMode()) {
+    const how = {
+        mcp: 'To update, change md2pdf-studio@' + current + ' to md2pdf-studio@' + latest + ' in the MCP configuration.',
+        npx: 'To update the skill, run: npx -y md2pdf-studio@' + latest + ' upgrade',
+        installed: 'To update, run: npm install -g md2pdf-studio@' + latest,
+    }[where] || '';
+    return 'md2pdf-studio ' + latest + ' is available (this is ' + current + '). See what changed: npx -y md2pdf-studio@' + latest + ' changelog. ' + how;
+}
+
+export function versionReport(found, where = runMode()) {
+    if (!found) return '';
+    return found.newer ? updateMessage(found, where) : 'md2pdf-studio ' + found.current + ' is the latest version.';
 }

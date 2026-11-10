@@ -13,7 +13,7 @@ Last updated: 2026-10-06
 
 ## API
 
-- [CLI and MCP server — npx -y md2pdf-studio@0.1.0](https://md2pdf.studio/llms-full.txt): `npx -y md2pdf-studio@0.1.0 share file.md` encrypts locally and prints the private link; also update, delete, list, `--expires`, `--burn` (one-time links), and an MCP server over stdio.
+- [CLI and MCP server — npx -y md2pdf-studio@0.1.1](https://md2pdf.studio/llms-full.txt): `npx -y md2pdf-studio@0.1.1 share file.md` encrypts locally and prints the private link; also update, delete, list, `--expires`, `--burn` (one-time links), and an MCP server over stdio.
 - [Create Document — POST /api/save](https://md2pdf.studio/llms-full.txt): Encrypt locally with AES-256-GCM, send ciphertext with header X-Encrypted: aes-256-gcm. Plaintext is rejected. The server never sees plaintext or key.
 - [Update Document — PUT /api/update/{id}](https://md2pdf.studio/llms-full.txt): Reuse editKey. Send X-Encrypted: aes-256-gcm with fresh ciphertext and the same key.
 

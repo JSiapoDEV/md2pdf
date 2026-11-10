@@ -100,7 +100,7 @@ export async function handle(msg, api, notice) {
             if (notice && !notice.said) {
                 const update = await notice.pending;
                 notice.said = true;
-                if (update) text += '\nNote: ' + updateMessage(update, 'mcp');
+                if (update && update.newer) text += '\nNote: ' + updateMessage(update, 'mcp');
             }
             return { content: [{ type: 'text', text }] };
         } catch (err) {

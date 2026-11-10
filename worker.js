@@ -390,7 +390,7 @@ async function readCiphertext(request, plan) {
     }
     if (request.headers.get('x-encrypted') !== 'aes-256-gcm') {
         return { error: jsonResponse({
-            error: 'End-to-end encryption is required. Encrypt with AES-256-GCM locally and send header `X-Encrypted: aes-256-gcm`. See https://md2pdf.studio/skill.md for worked examples.',
+            error: 'End-to-end encryption is required. Encrypt with AES-256-GCM locally and send header `X-Encrypted: aes-256-gcm`. Or let the CLI do it: npx -y md2pdf-studio share <file>. API reference: https://md2pdf.studio/api.',
             code: 'e2ee_required',
         }, 400) };
     }

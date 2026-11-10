@@ -7,10 +7,10 @@ The document is encrypted on your machine with AES-256-GCM before it is uploaded
 No dependencies. Node 18.3 or later.
 
 ```bash
-npx -y md2pdf-studio@0.1.0 share report.md
+npx -y md2pdf-studio@0.1.1 share report.md
 # https://md2pdf.studio/s/AbCd1234#k=...      <- give people the whole link
 
-cat notes.md | npx -y md2pdf-studio@0.1.0 share       # from stdin
+cat notes.md | npx -y md2pdf-studio@0.1.1 share       # from stdin
 ```
 
 ## Commands
@@ -23,6 +23,8 @@ cat notes.md | npx -y md2pdf-studio@0.1.0 share       # from stdin
 | `list` | Links made on this machine that have not expired (printed without their keys) |
 | `mcp` | Run as an [MCP](https://modelcontextprotocol.io) server over stdio |
 | `skill [--install]` | Print the agent skill, or install it to `~/.claude/skills/md2pdf` (`--dir` to choose another folder) |
+| `upgrade` | Update the installed skill to the latest version, and say what else to change (MCP configuration, a global install) |
+| `changelog` | What changed in each version |
 
 ### Options
 
@@ -44,26 +46,35 @@ Every command here names an exact version, so what an agent runs does not change
 Install the skill for Claude Code:
 
 ```bash
-npx -y md2pdf-studio@0.1.0 skill --install
+npx -y md2pdf-studio@0.1.1 skill --install
 ```
 
 For claude.ai, download the skill as a ZIP from [md2pdf.studio/ai-skill](https://md2pdf.studio/ai-skill) and upload it in Skills.
 
 For Codex, Cursor, Gemini CLI and others, add a line to the agent's instructions file (`AGENTS.md` or equivalent):
 
-> To share Markdown as a private link, run `npx -y md2pdf-studio@0.1.0 share <file>` and give the user the full link. Before sharing, remove secrets or ask the user.
+> To share Markdown as a private link, run `npx -y md2pdf-studio@0.1.1 share <file>` and give the user the full link. Before sharing, remove secrets or ask the user.
 
 For MCP clients, register the server:
 
 ```json
-{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.0", "mcp"] } } }
+{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.1", "mcp"] } } }
 ```
 
 Tools: `share_markdown`, `update_shared_markdown`, `delete_shared_markdown`, `list_shared_markdown`. The server also sends the sharing rules (remove secrets, give the whole link) as its MCP instructions.
 
 ## Updates
 
-Once a day, `share`, `update`, `list` and the MCP server ask the npm registry for the latest version number. When there is a newer one they say so (on stderr, or in the first tool result) with the command to update. Nothing is downloaded or installed on its own. Only the version number is read; set `MD2PDF_NO_UPDATE_CHECK=1` to turn the check off.
+Use the CLI through `npx` with an exact version rather than installing it globally: what runs then never changes until you choose.
+
+Once a day, `-h`, `--version`, `share`, `update`, `list` and the MCP server ask the npm registry for the latest version number. They say whether a newer one exists (in the help, on stderr, or in the first MCP tool result) and how to update:
+
+```bash
+npx -y md2pdf-studio@<new version> changelog    # what changed
+npx -y md2pdf-studio@<new version> upgrade      # reinstall the skill with it
+```
+
+Nothing is downloaded or installed unless you run `upgrade`. Only the version number is read; set `MD2PDF_NO_UPDATE_CHECK=1` to turn the check off. Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## What is kept on your machine
 

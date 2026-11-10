@@ -1,12 +1,12 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { deleteDocument, shareDocument, updateDocument } from './ops.js';
 import { serve } from './mcp.js';
 import { readLinks } from './store.js';
-import { checkForUpdate, updateMessage } from './update.js';
+import { checkForUpdate, updateMessage, versionReport } from './update.js';
+import { DEFAULT_SKILL_DIR, upgrade } from './upgrade.js';
 import { VERSION } from './version.js';
 
 const HELP = `md2pdf-studio ${VERSION}: share Markdown as an end-to-end encrypted link
@@ -18,6 +18,8 @@ Usage:
   md2pdf-studio list                  Links created on this machine
   md2pdf-studio mcp                   Run as an MCP server over stdio
   md2pdf-studio skill [--install]     Print or install the agent skill
+  md2pdf-studio upgrade               Update the installed skill to the latest version
+  md2pdf-studio changelog             What changed in each version
 
 Reads Markdown from a file, or from stdin when the file is "-" or omitted.
 The key stays in the link (#k=): the server never sees it or the content.
@@ -33,12 +35,14 @@ Options for share and update:
 Options:
   --json         Machine-readable output
   --api <url>    Another deployment (or MD2PDF_API)
-  --dir <path>   skill --install: target directory
+  --dir <path>   skill --install and upgrade: the skill's directory
   -h, --help     Show this help
   -v, --version  Show the version
 
-Once a day share, update and list ask npm for the latest version number and
-mention a newer one; nothing is installed. MD2PDF_NO_UPDATE_CHECK=1 turns it off.
+Use it through npx with an exact version (npx -y md2pdf-studio@${VERSION} ...).
+Once a day this help, --version, share, update and list ask npm for the latest
+version number and say whether a newer one exists. Nothing is installed unless
+you run upgrade. MD2PDF_NO_UPDATE_CHECK=1 turns the check off.
 `;
 
 async function readInput(arg) {
@@ -52,13 +56,16 @@ async function readInput(arg) {
 
 class UsageError extends Error {}
 
-async function readSkill() {
+// Files that ship next to the code; in the repository the skill lives in public/.
+async function readPackageFile(name, ...elsewhere) {
     const here = dirname(fileURLToPath(import.meta.url));
-    for (const file of [join(here, '..', 'skill.md'), join(here, '..', '..', 'public', 'skill.md')]) {
+    for (const file of [join(here, '..', name), ...elsewhere.map((path) => join(here, '..', ...path))]) {
         try { return await readFile(file, 'utf8'); } catch (_) { /* try the next location */ }
     }
-    throw new Error('skill.md is missing from this install');
+    throw new Error(name + ' is missing from this install');
 }
+
+const readSkill = () => readPackageFile('skill.md', ['..', 'public', 'skill.md']);
 
 function optionsOf(values) {
     return { expires: values.expires, burn: values.burn, title: values.title, description: values.description, apiKey: values['api-key'] };
@@ -71,7 +78,7 @@ function print(values, human, data) {
 // The notice goes to stderr, so stdout stays exactly the link (or the JSON).
 async function noteUpdate(pending) {
     const update = await pending;
-    if (update) process.stderr.write('Note: ' + updateMessage(update) + '\n');
+    if (update && update.newer) process.stderr.write('Note: ' + updateMessage(update) + '\n');
 }
 
 export async function main(argv) {
@@ -99,11 +106,24 @@ export async function main(argv) {
         return 2;
     }
     const { values, positionals: [command, first, second] } = parsed;
-    if (values.version) { process.stdout.write(VERSION + '\n'); return 0; }
-    if (values.help || !command || command === 'help') { process.stdout.write(HELP); return command || values.help ? 0 : 2; }
+    const wantsHelp = values.help || !command || command === 'help';
 
     // Started now so it runs alongside the upload; it never throws.
-    const pendingUpdate = ['share', 'update', 'list'].includes(command) ? checkForUpdate() : null;
+    const pendingUpdate = values.version || wantsHelp || ['share', 'update', 'list'].includes(command) ? checkForUpdate() : null;
+
+    // stdout keeps only the number, for scripts; the report goes to stderr.
+    if (values.version) {
+        process.stdout.write(VERSION + '\n');
+        const report = versionReport(await pendingUpdate);
+        if (report) process.stderr.write(report + '\n');
+        return 0;
+    }
+    // The help says whether this is the latest version, so an agent that reads it knows.
+    if (wantsHelp) {
+        const report = versionReport(await pendingUpdate);
+        process.stdout.write(HELP + (report ? '\n' + report + '\n' : ''));
+        return command || values.help ? 0 : 2;
+    }
 
     try {
         if (command === 'share') {
@@ -143,10 +163,19 @@ export async function main(argv) {
         if (command === 'skill') {
             const skill = await readSkill();
             if (!values.install) { process.stdout.write(skill); return 0; }
-            const dir = values.dir || join(homedir(), '.claude', 'skills', 'md2pdf');
+            const dir = values.dir || DEFAULT_SKILL_DIR;
             await mkdir(dir, { recursive: true });
             await writeFile(join(dir, 'SKILL.md'), skill);
             print(values, 'Installed ' + join(dir, 'SKILL.md'), { installed: join(dir, 'SKILL.md') });
+            return 0;
+        }
+        if (command === 'upgrade') {
+            const r = await upgrade({ dir: values.dir || DEFAULT_SKILL_DIR });
+            print(values, r.text, r);
+            return 0;
+        }
+        if (command === 'changelog') {
+            process.stdout.write(await readPackageFile('CHANGELOG.md'));
             return 0;
         }
         throw new UsageError('Unknown command: ' + command);
