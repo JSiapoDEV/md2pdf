@@ -1774,17 +1774,19 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         });
     }
 
-    // "About" in the footer opens the section below the editor instead of
-    // leaving it, so the draft and the view stay put. The link still points to
-    // /about for crawlers and for anyone who opens it in a new tab.
+    // "About" in the footer opens the information as a dialog over the editor,
+    // so the draft and the view stay put. The link still points to /about for
+    // crawlers and for anyone who opens it in a new tab.
     function openInfo() {
-        document.documentElement.classList.add('info-open');
-        $('#info').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const info = $('#info');
+        info.classList.add('open');
+        info.scrollTop = 0;
+        $('#infoCloseBtn').focus();
     }
 
     function closeInfo() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => document.documentElement.classList.remove('info-open'), 500);
+        $('#info').classList.remove('open');
+        if (location.hash === '#info') history.replaceState(null, '', location.pathname + location.search);
     }
 
     function newDocument() {
@@ -3025,7 +3027,9 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             e.preventDefault();
             openInfo();
         });
-        $('#seoBackBtn').addEventListener('click', closeInfo);
+        $('#infoCloseBtn').addEventListener('click', closeInfo);
+        $('#info').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeInfo(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#info').classList.contains('open')) closeInfo(); });
         if (location.hash === '#info') openInfo();
 
         // Templates

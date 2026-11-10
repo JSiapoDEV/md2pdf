@@ -324,11 +324,11 @@
         </footer>
     </div>
 
-    <!-- About MD2PDF, below the editor. The page does not scroll while the editor
-         is in use; "About" in the footer opens this section (see openInfo). -->
-    <section class="seo-content" id="info">
+    <!-- About MD2PDF: part of the page's HTML (search engines read it), shown as a
+         dialog when "About" in the footer is clicked (see openInfo). -->
+    <section class="seo-content" id="info" role="dialog" aria-modal="true" aria-label="About MD2PDF">
         <div class="seo-container">
-            <button type="button" class="seo-back" id="seoBackBtn">&uarr; Back to the editor</button>
+            <button type="button" class="info-close" id="infoCloseBtn" aria-label="Close">&#10005;</button>
             <h1>Markdown to PDF Converter — Free Online Tool</h1>
             <p>MD2PDF is a free, open-source Markdown to PDF converter that runs entirely in your browser. Convert any .md file to beautifully styled PDF, HTML, or PNG image. No signup, no cookies, and nothing is uploaded to convert your file.</p>
 

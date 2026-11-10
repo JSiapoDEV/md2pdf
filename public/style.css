@@ -1254,32 +1254,54 @@ a.api-copy-btn { text-decoration: none; line-height: normal; }
    SEO Content (below the fold)
    ========================================= */
 
+.seo-content { color: var(--text-2); }
+
+/* "About" in the footer shows this section as a dialog over the editor, with
+   its own scroll; the editor never moves. Closed, it is not displayed. */
 .seo-content {
-    background: var(--bg-app);
-    color: var(--text-2);
-    border-top: 1px solid var(--border);
-    transition: background var(--t-normal), color var(--t-normal);
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none;
 }
 
-/* The editor fills the screen and the page does not scroll until "About" in
-   the footer opens the section below; then the page scrolls like any other,
-   and scrolling inside the editor or the preview does not drag the page. */
-html.info-open, html.info-open body { height: auto; overflow: auto; }
-html.info-open #editor, html.info-open .preview-container { overscroll-behavior: contain; }
+.seo-content.open { display: block; }
 
-.seo-back {
-    margin-bottom: 24px;
-    padding: 6px 12px;
-    font: inherit;
-    font-size: 13px;
-    color: var(--text-2);
-    background: none;
+.seo-content .seo-container {
+    position: relative;
+    margin: 40px auto;
+    background: var(--bg-app);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    animation: dropdown-in 150ms var(--ease);
+}
+
+.info-close {
+    position: sticky;
+    top: 0;
+    float: right;
+    margin: -24px -8px 0 0;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    color: var(--text-2);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
     cursor: pointer;
 }
 
-.seo-back:hover { color: var(--accent); border-color: var(--accent); }
+.info-close:hover { color: var(--accent); border-color: var(--accent); }
+
+@media (max-width: 768px) {
+    .seo-content .seo-container { margin: 12px; }
+}
 
 .seo-container {
     max-width: 760px;
