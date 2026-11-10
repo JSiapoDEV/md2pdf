@@ -6,8 +6,8 @@ import { parseArgs } from 'node:util';
 import { deleteDocument, shareDocument, updateDocument } from './ops.js';
 import { serve } from './mcp.js';
 import { readLinks } from './store.js';
-
-const VERSION = '0.1.0';
+import { checkForUpdate, updateMessage } from './update.js';
+import { VERSION } from './version.js';
 
 const HELP = `md2pdf-studio ${VERSION}: share Markdown as an end-to-end encrypted link
 
@@ -36,6 +36,9 @@ Options:
   --dir <path>   skill --install: target directory
   -h, --help     Show this help
   -v, --version  Show the version
+
+Once a day share, update and list ask npm for the latest version number and
+mention a newer one; nothing is installed. MD2PDF_NO_UPDATE_CHECK=1 turns it off.
 `;
 
 async function readInput(arg) {
@@ -63,6 +66,12 @@ function optionsOf(values) {
 
 function print(values, human, data) {
     process.stdout.write(values.json ? JSON.stringify(data) + '\n' : human + '\n');
+}
+
+// The notice goes to stderr, so stdout stays exactly the link (or the JSON).
+async function noteUpdate(pending) {
+    const update = await pending;
+    if (update) process.stderr.write('Note: ' + updateMessage(update) + '\n');
 }
 
 export async function main(argv) {
@@ -93,11 +102,15 @@ export async function main(argv) {
     if (values.version) { process.stdout.write(VERSION + '\n'); return 0; }
     if (values.help || !command || command === 'help') { process.stdout.write(HELP); return command || values.help ? 0 : 2; }
 
+    // Started now so it runs alongside the upload; it never throws.
+    const pendingUpdate = ['share', 'update', 'list'].includes(command) ? checkForUpdate() : null;
+
     try {
         if (command === 'share') {
             const r = await shareDocument({ markdown: await readInput(first), api: values.api, name: first && first !== '-' ? basename(first) : undefined, ...optionsOf(values) });
             if (r.warning) process.stderr.write('Warning: ' + r.warning + '\n');
             print(values, r.link, r);
+            await noteUpdate(pendingUpdate);
             return 0;
         }
         if (command === 'update') {
@@ -105,6 +118,7 @@ export async function main(argv) {
             if (values.burn) throw new UsageError('--burn can only be chosen when the link is created');
             const r = await updateDocument({ target: first, markdown: await readInput(second), api: values.api, ...optionsOf(values) });
             print(values, r.link, r);
+            await noteUpdate(pendingUpdate);
             return 0;
         }
         if (command === 'delete') {
@@ -119,6 +133,7 @@ export async function main(argv) {
             // Without keys: a listing pasted into a chat must not leak the documents.
             const rows = live.map(({ id, url, expiresAt, name }) => ({ id, url, expiresAt, name }));
             print(values, rows.length ? rows.map((l) => l.id + '  ' + l.url + '  expires ' + l.expiresAt + (l.name ? '  ' + l.name : '')).join('\n') : 'No links', rows);
+            await noteUpdate(pendingUpdate);
             return 0;
         }
         if (command === 'mcp') {

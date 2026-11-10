@@ -1166,6 +1166,13 @@ body {
     position: static;
 }
 
+a.api-copy-btn { text-decoration: none; line-height: normal; }
+.api-copy-btn:disabled { opacity: 0.5; cursor: default; }
+
+.skill-how { padding-left: 18px; }
+.skill-how li { margin-bottom: 4px; }
+.skill-how code { font-size: 12px; word-break: break-word; }
+
 /* =========================================
    Toast
    ========================================= */

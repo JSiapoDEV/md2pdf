@@ -3,11 +3,22 @@
 
 import { deleteDocument, shareDocument, updateDocument } from './ops.js';
 import { readLinks } from './store.js';
+import { checkForUpdate, updateMessage } from './update.js';
+import { VERSION } from './version.js';
+
+// Sent once at initialize; clients show it to the model as the server's rules.
+export const INSTRUCTIONS = [
+    'md2pdf-studio shares Markdown as an end-to-end encrypted md2pdf.studio link. The content is encrypted on this machine and the key stays in the link\'s #k= part, which the server never receives. Anyone who has the whole link can read the document.',
+    '- Before sharing, remove secrets (API keys, tokens, passwords, customer data, private logs) or ask the user.',
+    '- Give the user the whole link, including #k=. Without it nobody can read the document.',
+    '- Links expire 30 days after creation unless a shorter time is set. Use burn for a link that opens once, and offer to delete a link the user no longer needs.',
+    '- If a result says a newer version is available, tell the user. Never update anything on your own.',
+].join('\n');
 
 const TOOLS = [
     {
         name: 'share_markdown',
-        description: 'Encrypt Markdown locally (AES-256-GCM) and upload it, returning a private shareable link. The key stays in the link fragment (#k=); the server never sees it or the content. Links expire 30 days after creation unless you ask for less. Share the full link, including #k=.',
+        description: 'Encrypt Markdown locally (AES-256-GCM) and upload it, returning a private shareable link. The key stays in the link fragment (#k=); the server never sees it or the content. Before sharing, remove secrets (API keys, tokens, passwords, customer data) or ask the user. Links expire 30 days after creation unless you ask for less. Share the full link, including #k=.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -70,19 +81,27 @@ async function runTool(name, args, api) {
     throw new Error('Unknown tool: ' + name);
 }
 
-export async function handle(msg, api) {
+// `notice` holds the daily version check of this server process. Its result is
+// added to the first successful tool result only, so it is said once.
+export async function handle(msg, api, notice) {
     if (msg.method === 'initialize') {
         return {
             protocolVersion: msg.params?.protocolVersion || '2025-06-18',
             capabilities: { tools: {} },
-            serverInfo: { name: 'md2pdf-studio', version: '0.1.0' },
+            serverInfo: { name: 'md2pdf-studio', version: VERSION },
+            instructions: INSTRUCTIONS,
         };
     }
     if (msg.method === 'ping') return {};
     if (msg.method === 'tools/list') return { tools: TOOLS };
     if (msg.method === 'tools/call') {
         try {
-            const text = await runTool(msg.params?.name, msg.params?.arguments || {}, api);
+            let text = await runTool(msg.params?.name, msg.params?.arguments || {}, api);
+            if (notice && !notice.said) {
+                const update = await notice.pending;
+                notice.said = true;
+                if (update) text += '\nNote: ' + updateMessage(update, 'mcp');
+            }
             return { content: [{ type: 'text', text }] };
         } catch (err) {
             return { content: [{ type: 'text', text: 'Error: ' + err.message }], isError: true };
@@ -94,6 +113,7 @@ export async function handle(msg, api) {
 }
 
 export function serve({ api, input = process.stdin, output = process.stdout }) {
+    const notice = { pending: checkForUpdate(), said: false };
     let buffer = '';
     const send = (obj) => output.write(JSON.stringify(obj) + '\n');
     const onLine = async (line) => {
@@ -102,7 +122,7 @@ export function serve({ api, input = process.stdin, output = process.stdout }) {
         try { msg = JSON.parse(line); } catch (_) { return send({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }); }
         if (msg.id === undefined) return; // notification: no reply
         try {
-            send({ jsonrpc: '2.0', id: msg.id, result: await handle(msg, api) });
+            send({ jsonrpc: '2.0', id: msg.id, result: await handle(msg, api, notice) });
         } catch (err) {
             send({ jsonrpc: '2.0', id: msg.id, error: { code: err.code || -32603, message: err.message } });
         }

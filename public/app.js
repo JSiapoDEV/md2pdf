@@ -111,7 +111,13 @@
             customCssPlaceholder: '/* Custom CSS — applied to preview & PDF */\n\n/* Example: colored headings */\n.markdown-body h1, .markdown-body h2 {\n  color: #6366f1;\n}\n\n/* Example: rounded code blocks */\n.markdown-body pre {\n  border-radius: 16px;\n}',
             editorPlaceholder: 'Write or drop your Markdown here...',
             // Skill tab
-            skillDesc: 'Install this skill in Claude, custom GPTs, or any AI agent to let it create and share styled documents via MD2PDF.',
+            skillDesc: 'This is the whole skill: a fixed text you can read before installing it. It shares documents as end-to-end encrypted links and never tells the agent to fetch instructions from anywhere.',
+            skillHowClaudeAi: 'claude.ai: download the ZIP and upload it in Customize → Skills.',
+            skillHowCode: 'Claude Code:',
+            skillHowOthers: 'Codex, Cursor, MCP clients and more:',
+            skillLoading: 'Loading the skill…',
+            skillLoadFailed: 'Could not load the skill. Open it here:',
+            downloadZip: 'ZIP for claude.ai',
             // API tab
             apiDesc: 'REST API for programmatic access. No authentication required.',
             apiCreate: 'Create document', apiUpdate: 'Update document',
@@ -166,7 +172,13 @@
             customCssPlaceholder: '/* CSS personalizado — se aplica al preview y PDF */\n\n/* Ejemplo: titulos con color */\n.markdown-body h1, .markdown-body h2 {\n  color: #6366f1;\n}\n\n/* Ejemplo: bloques de codigo redondeados */\n.markdown-body pre {\n  border-radius: 16px;\n}',
             editorPlaceholder: 'Escribe o arrastra tu Markdown aqui...',
             // Skill tab
-            skillDesc: 'Instala esta skill en Claude, GPTs personalizados, o cualquier agente de IA para que pueda crear y compartir documentos con MD2PDF.',
+            skillDesc: 'Esta es la skill completa: un texto fijo que puedes leer antes de instalarla. Comparte documentos como enlaces cifrados de extremo a extremo y nunca le pide al agente descargar instrucciones de ningún sitio.',
+            skillHowClaudeAi: 'claude.ai: descarga el ZIP y súbelo en Customize → Skills.',
+            skillHowCode: 'Claude Code:',
+            skillHowOthers: 'Codex, Cursor, clientes MCP y más:',
+            skillLoading: 'Cargando la skill…',
+            skillLoadFailed: 'No se pudo cargar la skill. Ábrela aquí:',
+            downloadZip: 'ZIP para claude.ai',
             // API tab
             apiDesc: 'API REST para acceso programatico. No requiere autenticacion.',
             apiCreate: 'Crear documento', apiUpdate: 'Actualizar documento',
@@ -174,18 +186,26 @@
         },
     };
 
-    // Installable stub — this is what users copy into their AI agents.
-    // The agent fetches the full instructions from /skill.md at runtime.
-    const SKILL_INSTALLABLE = `---
-name: md2pdf
-description: Create and share styled PDF, HTML, and image documents from Markdown via md2pdf.studio. Use when the user wants to export, share, or create a visually styled document from markdown content.
----
+    // The skill people copy is the whole of /skill.md, the same file the npm
+    // package installs: a fixed text they can read, which never tells an agent
+    // to fetch and obey instructions from this site.
+    let skillText = null;
+    function loadSkill() {
+        if (skillText) return Promise.resolve(skillText);
+        return fetch('/skill.md', { cache: 'no-cache' }).then(function (res) {
+            if (!res.ok) throw new Error('skill.md ' + res.status);
+            return res.text();
+        }).then(function (text) { skillText = text; return text; });
+    }
 
-Before creating or sharing a document, always fetch the latest skill instructions from:
-https://md2pdf.studio/skill.md
-
-Follow those instructions exactly.
-`;
+    function saveBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
 
     function t(key) { return I18N[currentLang]?.[key] || I18N.en[key] || key; }
 
@@ -269,36 +289,51 @@ Follow those instructions exactly.
 
     function buildSkillTab() {
         var html = '<p class="api-desc">' + t('skillDesc') + '</p>';
+        html += '<ul class="api-desc skill-how">';
+        html += '<li>' + t('skillHowClaudeAi') + '</li>';
+        html += '<li>' + t('skillHowCode') + ' <code id="skillInstallCmd">npx -y md2pdf-studio skill --install</code></li>';
+        html += '<li>' + t('skillHowOthers') + ' <a href="/ai-skill">md2pdf.studio/ai-skill</a></li>';
+        html += '</ul>';
         html += '<div class="api-section">';
         html += '<h4>SKILL.md</h4>';
         html += '<div class="api-code-block">';
-        html += '<pre>' + escapeHtmlLight(SKILL_INSTALLABLE) + '</pre>';
+        html += '<pre id="skillText">' + escapeHtmlLight(skillText || t('skillLoading')) + '</pre>';
         html += '<div class="api-code-actions">';
-        html += '<button class="api-copy-btn" id="skillCopyBtn">' + t('copy') + '</button>';
-        html += '<button class="api-copy-btn" id="skillDownloadBtn">' + t('download') + '</button>';
+        html += '<button class="api-copy-btn" id="skillCopyBtn" disabled>' + t('copy') + '</button>';
+        html += '<button class="api-copy-btn" id="skillDownloadBtn" disabled>' + t('download') + '</button>';
+        html += '<a class="api-copy-btn" id="skillZipBtn" href="/md2pdf-skill.zip" download>' + t('downloadZip') + '</a>';
         html += '</div>';
         html += '</div>';
         html += '</div>';
 
         $('#tab-skill').innerHTML = html;
+        // Fetched when the dialog opens, not on every page load.
+        if (skillText || $('#apiOverlay')?.classList.contains('active')) fillSkillTab();
 
-        // Bind copy
         $('#skillCopyBtn').addEventListener('click', function () {
-            navigator.clipboard.writeText(SKILL_INSTALLABLE).then(function () {
+            navigator.clipboard.writeText(skillText).then(function () {
                 $('#skillCopyBtn').textContent = t('copied');
                 setTimeout(function () { $('#skillCopyBtn').textContent = t('copy'); }, 2000);
             });
         });
 
-        // Bind download
         $('#skillDownloadBtn').addEventListener('click', function () {
-            var blob = new Blob([SKILL_INSTALLABLE], { type: 'text/markdown;charset=utf-8' });
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = 'SKILL.md';
-            a.click();
-            URL.revokeObjectURL(url);
+            saveBlob(new Blob([skillText], { type: 'text/markdown;charset=utf-8' }), 'SKILL.md');
+        });
+
+    }
+
+    function fillSkillTab() {
+        loadSkill().then(function (text) {
+            if (!$('#skillText')) return;
+            $('#skillText').textContent = text;
+            // The install command pins the same CLI version the skill was written for.
+            var pinned = text.match(/md2pdf-studio@\d+\.\d+\.\d+/);
+            if (pinned) $('#skillInstallCmd').textContent = 'npx -y ' + pinned[0] + ' skill --install';
+            ['#skillCopyBtn', '#skillDownloadBtn'].forEach(function (sel) { $(sel).disabled = false; });
+        }).catch(function () {
+            if (!$('#skillText')) return;
+            $('#skillText').innerHTML = escapeHtmlLight(t('skillLoadFailed')) + ' <a href="/skill.md">/skill.md</a>';
         });
     }
 
@@ -2900,7 +2935,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         const apiOverlay  = $('#apiOverlay');
         const apiCloseBtn = $('#apiCloseBtn');
 
-        $('#apiPromptsBtn').addEventListener('click', () => { apiOverlay.classList.add('active'); });
+        $('#apiPromptsBtn').addEventListener('click', () => { apiOverlay.classList.add('active'); fillSkillTab(); });
         apiCloseBtn.addEventListener('click', () => { apiOverlay.classList.remove('active'); });
         apiOverlay.addEventListener('click', (e) => { if (e.target === apiOverlay) apiOverlay.classList.remove('active'); });
 
@@ -3029,56 +3064,88 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             });
         }
 
-        // Imperative: register tools via navigator.modelContext (Chrome Canary)
-        if (typeof navigator !== 'undefined' && navigator.modelContext?.registerTool) {
-            navigator.modelContext.registerTool('convert-markdown', {
-                description: 'Set markdown content and render with a chosen style. Styles: notion, github, minimal, academic, corporate, latex, dracula, newspaper, handwritten, terminal, pastel.',
-                params: {
-                    markdown: { type: 'string', description: 'Markdown text to render' },
-                    style:    { type: 'string', description: 'Visual style (default: notion)' },
+        // Imperative tools, in the shape the WebMCP draft defines:
+        // document.modelContext.registerTool({ name, description, inputSchema, execute }).
+        // Chromium first exposed it on navigator.modelContext, now deprecated,
+        // so that is only the fallback. registerTool returns a promise. A
+        // rejection (say, a name one of the forms above already declared, or
+        // an older build) only skips that tool and never breaks the page.
+        const modelContext = document.modelContext || navigator.modelContext;
+        if (!modelContext || typeof modelContext.registerTool !== 'function') return;
+        const styleNames = Object.keys(STYLES);
+        const tools = [
+            {
+                name: 'convert-markdown',
+                title: 'Render Markdown',
+                description: 'Replace the editor content with this Markdown and render it, optionally in a visual style. Nothing leaves the browser.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        markdown: { type: 'string', description: 'Markdown to render: GitHub-flavored, Mermaid code blocks, [TOC] for a table of contents.' },
+                        style: { type: 'string', enum: styleNames, description: 'Visual style. Default: notion.' },
+                    },
+                    required: ['markdown'],
                 },
-                execute: async ({ markdown, style }) => {
+                execute: async ({ markdown, style } = {}) => {
                     if (markdown) { if (isSharedView) leaveSharedView(); editor.value = markdown; startNewDoc(); currentFileName = 'agent.md'; fileNameEl.value = currentFileName; }
                     if (style && STYLES[style]) applyStyle(style);
                     render();
                     saveDraft();
                     return { success: true, message: 'Content rendered' };
                 },
-            });
-
-            navigator.modelContext.registerTool('export-document', {
-                description: 'Export current document. Formats: pdf, html, image.',
-                params: {
-                    format: { type: 'string', description: 'Export format: pdf, html, or image' },
+            },
+            {
+                name: 'export-document',
+                title: 'Export document',
+                description: 'Download the current document as a file: pdf, html (standalone, styles inlined) or image (PNG).',
+                inputSchema: {
+                    type: 'object',
+                    properties: { format: { type: 'string', enum: ['pdf', 'html', 'image'] } },
+                    required: ['format'],
                 },
-                execute: async ({ format }) => {
+                execute: async ({ format } = {}) => {
                     if (format === 'pdf')   await exportPDF();
-                    if (format === 'html')  await exportHTML();
-                    if (format === 'image') await exportImage();
+                    else if (format === 'html')  await exportHTML();
+                    else if (format === 'image') await exportImage();
+                    else return { success: false, message: 'Unknown format' };
                     return { success: true, message: `Exported as ${format}` };
                 },
-            });
-
-            navigator.modelContext.registerTool('share-document', {
-                description: 'Create a share link for the current document. It is encrypted in the browser, uploaded to md2pdf.studio and kept for 30 days; the key stays in the link (#k=). Returns the link.',
-                params: {},
+            },
+            {
+                name: 'share-document',
+                title: 'Share document',
+                description: 'Create a share link for the current document. It is encrypted in the browser, uploaded to md2pdf.studio and kept for 30 days; the key stays in the link (#k=), so anyone with the whole link can read it. Remove secrets first. Returns the link.',
+                inputSchema: { type: 'object', properties: {} },
+                annotations: { consequentialHint: true },
                 execute: async () => {
                     const url = await shareForAgent();
                     return url ? { success: true, url } : { success: false, message: 'Sharing failed' };
                 },
-            });
-
-            navigator.modelContext.registerTool('set-style', {
-                description: 'Change the visual style. Options: notion, github, minimal, academic, corporate, latex, dracula, newspaper, handwritten, terminal, pastel.',
-                params: {
-                    style: { type: 'string', description: 'Style name' },
+            },
+            {
+                name: 'set-style',
+                title: 'Set style',
+                description: 'Change the visual style of the document.',
+                inputSchema: {
+                    type: 'object',
+                    properties: { style: { type: 'string', enum: styleNames } },
+                    required: ['style'],
                 },
-                execute: async ({ style }) => {
+                execute: async ({ style } = {}) => {
                     if (STYLES[style]) { applyStyle(style); return { success: true, message: `Style set to ${style}` }; }
                     return { success: false, message: 'Unknown style' };
                 },
-            });
-        }
+            },
+        ];
+        tools.forEach((tool) => {
+            try {
+                Promise.resolve(modelContext.registerTool(tool)).catch((err) => {
+                    console.debug('WebMCP: ' + tool.name + ' not registered: ' + (err && err.message));
+                });
+            } catch (err) {
+                console.debug('WebMCP: ' + tool.name + ' not registered: ' + (err && err.message));
+            }
+        });
     }
 
     // ── Boot ─────────────────────────────────────────

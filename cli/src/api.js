@@ -1,5 +1,7 @@
 // Thin client for the share API. Only ciphertext and the edit key travel.
 
+import { VERSION } from './version.js';
+
 export const DEFAULT_API = 'https://md2pdf.studio';
 export const FREE_MAX_BYTES = 512000;
 export const PRO_MAX_BYTES = 5 * 1024 * 1024;
@@ -47,7 +49,8 @@ function optionHeaders({ apiKey, expiresInSec, burn, title, description }) {
 }
 
 async function call(base, method, path, { body, editKey, options = {} } = {}) {
-    const headers = { 'content-type': 'text/plain', ...optionHeaders(options) };
+    // The User-Agent names the client and its version, nothing about the user.
+    const headers = { 'content-type': 'text/plain', 'user-agent': 'md2pdf-studio/' + VERSION, ...optionHeaders(options) };
     if (body !== undefined) headers['x-encrypted'] = 'aes-256-gcm';
     if (editKey) headers['x-edit-key'] = editKey;
     const res = await fetch(base + path, { method, headers, body });

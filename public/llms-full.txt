@@ -58,12 +58,12 @@ API version: 1.0 (stable)
 The easiest way for an agent to share a document. It encrypts on the machine, uploads only ciphertext and prints the link. Node 18.3+, no dependencies.
 
 ```bash
-npx -y md2pdf-studio share report.md          # or: cat report.md | npx -y md2pdf-studio share
-npx -y md2pdf-studio update <link|id> report.md
-npx -y md2pdf-studio delete <link|id>
-npx -y md2pdf-studio list                     # without keys
-npx -y md2pdf-studio mcp                      # MCP server over stdio
-npx -y md2pdf-studio skill --install          # installs the skill for Claude
+npx -y md2pdf-studio@0.1.0 share report.md          # or: cat report.md | npx -y md2pdf-studio@0.1.0 share
+npx -y md2pdf-studio@0.1.0 update <link|id> report.md
+npx -y md2pdf-studio@0.1.0 delete <link|id>
+npx -y md2pdf-studio@0.1.0 list                     # without keys
+npx -y md2pdf-studio@0.1.0 mcp                      # MCP server over stdio
+npx -y md2pdf-studio@0.1.0 skill --install          # installs the skill for Claude
 ```
 
 Options: `--expires 7d` (shorter life, free: 1 hour to 30 days), `--burn` (the link opens a single time; link-preview bots do not use it up), and, with a Pro API key (`--api-key` or `MD2PDF_API_KEY`), `--title` / `--description` for the preview card chat apps show. Those two fields are stored unencrypted. Add `--json` for machine-readable output. Edit and encryption keys are kept in `~/.config/md2pdf-studio/links.json` (current user only), so later sessions can update or delete the link. Always give the user the whole link, including `#k=`.
@@ -209,14 +209,14 @@ Every link is end-to-end encrypted, but anyone holding the full link can read it
 
 ## Share
 
-    npx -y md2pdf-studio share report.md
-    cat notes.md | npx -y md2pdf-studio share
-    npx -y md2pdf-studio share report.md --expires 7d --burn
+    npx -y md2pdf-studio@0.1.0 share report.md
+    cat notes.md | npx -y md2pdf-studio@0.1.0 share
+    npx -y md2pdf-studio@0.1.0 share report.md --expires 7d --burn
 
 ## Update or delete (links made on this machine)
 
-    npx -y md2pdf-studio update <link|id> report.md
-    npx -y md2pdf-studio delete <link|id>
+    npx -y md2pdf-studio@0.1.0 update <link|id> report.md
+    npx -y md2pdf-studio@0.1.0 delete <link|id>
 
 ## Without npm
 

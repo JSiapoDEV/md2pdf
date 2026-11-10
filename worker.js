@@ -374,6 +374,59 @@ function generateEditKey() {
     return Array.from(arr, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
 }
 
+// --- A ZIP with one stored (uncompressed) file: what claude.ai's skill upload takes ---
+
+function crc32(bytes) {
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) {
+        var c = (crc ^ bytes[i]) & 0xFF;
+        for (var k = 0; k < 8; k++) c = c & 1 ? (c >>> 1) ^ 0xEDB88320 : c >>> 1;
+        crc = (crc >>> 8) ^ c;
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function zipOneFile(path, text) {
+    var name = new TextEncoder().encode(path);
+    var data = new TextEncoder().encode(text);
+    var crc = crc32(data);
+    var DOS_DATE = 0x21; // 1980-01-01, so the same skill always gives the same bytes
+    var out = new Uint8Array(30 + name.length + data.length + 46 + name.length + 22);
+    var view = new DataView(out.buffer);
+    var at = 0;
+    // Local file header
+    view.setUint32(at, 0x04034b50, true);
+    view.setUint16(at + 4, 20, true);
+    view.setUint16(at + 6, 0x0800, true); // names are UTF-8
+    view.setUint16(at + 12, DOS_DATE, true);
+    view.setUint32(at + 14, crc, true);
+    view.setUint32(at + 18, data.length, true);
+    view.setUint32(at + 22, data.length, true);
+    view.setUint16(at + 26, name.length, true);
+    out.set(name, at + 30);
+    out.set(data, at + 30 + name.length);
+    var central = at + 30 + name.length + data.length;
+    // Central directory entry
+    view.setUint32(central, 0x02014b50, true);
+    view.setUint16(central + 4, 20, true);
+    view.setUint16(central + 6, 20, true);
+    view.setUint16(central + 8, 0x0800, true);
+    view.setUint16(central + 14, DOS_DATE, true);
+    view.setUint32(central + 16, crc, true);
+    view.setUint32(central + 20, data.length, true);
+    view.setUint32(central + 24, data.length, true);
+    view.setUint16(central + 28, name.length, true);
+    out.set(name, central + 46);
+    // End of central directory
+    var end = central + 46 + name.length;
+    view.setUint32(end, 0x06054b50, true);
+    view.setUint16(end + 8, 1, true);
+    view.setUint16(end + 10, 1, true);
+    view.setUint32(end + 12, 46 + name.length, true);
+    view.setUint32(end + 16, central, true);
+    return out;
+}
+
 // The server never reads shared documents, so links get the same generic preview
 // unless the author set a title and description (Pro): those are stored in clear.
 var SHARED_META = {
@@ -598,6 +651,19 @@ export default {
             return new Response('This link format was retired: it carried the document unencrypted in the address. Ask the sender for a new link.', {
                 status: 410,
                 headers: { 'content-type': 'text/plain', 'x-robots-tag': 'noindex' },
+            });
+        }
+
+        // --- The skill as a ZIP for claude.ai, built from /skill.md so the two never differ ---
+        if (url.pathname === '/md2pdf-skill.zip' && (request.method === 'GET' || request.method === 'HEAD')) {
+            var skillRes = await env.ASSETS.fetch(new Request(new URL('/skill.md', url)));
+            if (!skillRes.ok) return new Response('Not found', { status: 404 });
+            return new Response(request.method === 'HEAD' ? null : zipOneFile('md2pdf/SKILL.md', await skillRes.text()), {
+                headers: {
+                    'content-type': 'application/zip',
+                    'content-disposition': 'attachment; filename="md2pdf-skill.zip"',
+                    'cache-control': 'public, max-age=3600',
+                },
             });
         }
 
