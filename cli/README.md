@@ -39,7 +39,14 @@ cat notes.md | npx -y md2pdf-studio@0.1.3 share       # from stdin
 
 Every command here names an exact version, so what an agent runs does not change until you choose to update. The skill is a fixed file inside the package (read it with `skill`); it never tells the agent to fetch instructions from the web.
 
-Install the skill for Claude Code:
+For Claude Code, the plugin ships the skill and updates on its own:
+
+```bash
+claude plugin marketplace add jsiapo-dev/plugins
+claude plugin install md2pdf-studio
+```
+
+Or install only the skill:
 
 ```bash
 npx -y md2pdf-studio@0.1.3 skill --install

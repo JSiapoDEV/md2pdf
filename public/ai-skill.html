@@ -170,14 +170,14 @@
         <table>
             <thead><tr><th>Agent</th><th>How</th></tr></thead>
             <tbody>
-                <tr><td>Claude Code</td><td><code>npx -y md2pdf-studio@0.1.3 skill --install</code></td></tr>
+                <tr><td>Claude Code</td><td>The plugin, which updates on its own: <code>claude plugin marketplace add jsiapo-dev/plugins</code>, then <code>claude plugin install md2pdf-studio</code>. Or only the skill: <code>npx -y md2pdf-studio@0.1.3 skill --install</code></td></tr>
                 <tr><td>Claude Desktop, claude.ai</td><td>Copy <a href="/skill.md">the skill</a>, paste it in a chat and say <em>"install this skill"</em> (or upload <a href="/md2pdf-skill.zip">md2pdf-skill.zip</a> in <strong>Customize → Skills</strong>). There, code runs in a temporary sandbox: it needs network access to md2pdf.studio (<strong>Settings → Capabilities</strong>), and links made there cannot be updated or deleted later.</td></tr>
                 <tr><td>Codex, Cursor, Gemini CLI</td><td>Add to <code>AGENTS.md</code> (or the agent's instructions file): <em>"To share Markdown as a private link, run <code>npx -y md2pdf-studio@0.1.3 share &lt;file&gt;</code> and give the user the full link. Before sharing, remove secrets or ask the user."</em></td></tr>
                 <tr><td>MCP clients</td><td><code style="word-break: break-word;">{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@0.1.3", "mcp"] } } }</code></td></tr>
                 <tr><td>Browser agents</td><td>WebMCP tools in the editor (<code>convert-markdown</code>, <code>export-document</code>, <code>share-document</code>, <code>set-style</code>). Experimental: only browsers in Chrome's WebMCP trial expose them.</td></tr>
             </tbody>
         </table>
-        <p>Once a day the CLI and the MCP server check npm for a newer version number and say how to update: <code>changelog</code> shows what changed and <code>upgrade</code> reinstalls the skill. Nothing is installed on its own; <code>MD2PDF_NO_UPDATE_CHECK=1</code> turns the check off.</p>
+        <p>The plugin brings each new version when Claude Code updates its plugins. Elsewhere, once a day the CLI and the MCP server check npm for a newer version number and say how to update: <code>changelog</code> shows what changed and <code>upgrade</code> reinstalls the skill. Nothing is installed on its own; <code>MD2PDF_NO_UPDATE_CHECK=1</code> turns the check off.</p>
 
         <h2>Example Prompts</h2>
 

@@ -1,9 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /api/
 
 # Google
 User-agent: Googlebot
 Allow: /
+Disallow: /api/
 
 User-agent: Google-Extended
 Allow: /

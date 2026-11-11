@@ -120,7 +120,9 @@
             editorPlaceholder: 'Write or drop your Markdown here...',
             // Skill tab
             skillDesc: 'This is the whole skill: a fixed text you can read before installing it. It shares documents as end-to-end encrypted links and never tells the agent to fetch instructions from anywhere.',
-            skillHowCode: 'Claude Code:',
+            skillHowCode: 'Claude Code, as a plugin that updates on its own:',
+            skillHowThen: 'then',
+            skillHowSkillOnly: 'Only the skill:',
             skillHowOthers: 'Codex, Cursor, MCP clients and more:',
             skillLoading: 'Loading the skill…',
             skillLoadFailed: 'Could not load the skill. Open it here:',
@@ -182,7 +184,9 @@
             editorPlaceholder: 'Escribe o arrastra tu Markdown aqui...',
             // Skill tab
             skillDesc: 'Esta es la skill completa: un texto fijo que puedes leer antes de instalarla. Comparte documentos como enlaces cifrados de extremo a extremo y nunca le pide al agente descargar instrucciones de ningún sitio.',
-            skillHowCode: 'Claude Code:',
+            skillHowCode: 'Claude Code, como plugin que se actualiza solo:',
+            skillHowThen: 'y luego',
+            skillHowSkillOnly: 'Solo la skill:',
             skillHowOthers: 'Codex, Cursor, clientes MCP y más:',
             skillLoading: 'Cargando la skill…',
             skillLoadFailed: 'No se pudo cargar la skill. Ábrela aquí:',
@@ -305,7 +309,8 @@
     function buildSkillTab() {
         var html = '<p class="api-desc">' + t('skillDesc') + '</p>';
         html += '<ul class="api-desc skill-how">';
-        html += '<li>' + t('skillHowCode') + ' <code id="skillInstallCmd">npx -y md2pdf-studio skill --install</code></li>';
+        html += '<li>' + t('skillHowCode') + ' <code>claude plugin marketplace add jsiapo-dev/plugins</code> ' + t('skillHowThen') + ' <code>claude plugin install md2pdf-studio</code></li>';
+        html += '<li>' + t('skillHowSkillOnly') + ' <code id="skillInstallCmd">npx -y md2pdf-studio skill --install</code></li>';
         html += '<li>' + t('skillHowOthers') + ' <a href="/ai-skill">md2pdf.studio/ai-skill</a></li>';
         html += '</ul>';
         html += '<div class="api-section">';

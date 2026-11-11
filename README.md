@@ -64,7 +64,8 @@ npm run stats     # anonymous usage counts (needs a read-only token, see scripts
 ## For AI Agents
 
 - CLI and MCP server: [`npx -y md2pdf-studio@0.1.3`](cli/README.md)
-- Install the skill: [md2pdf.studio/ai-skill](https://md2pdf.studio/ai-skill) (for Claude Code: `npx -y md2pdf-studio@0.1.3 skill --install`)
+- Claude Code plugin: `claude plugin marketplace add jsiapo-dev/plugins`, then `claude plugin install md2pdf-studio`
+- Install the skill: [md2pdf.studio/ai-skill](https://md2pdf.studio/ai-skill) (only the skill, for Claude Code: `npx -y md2pdf-studio@0.1.3 skill --install`)
 - How links work: [md2pdf.studio/api](https://md2pdf.studio/api)
 - LLM documentation: [md2pdf.studio/llms-full.txt](https://md2pdf.studio/llms-full.txt)
 - WebMCP: tools inside the editor, experimental (Chrome's origin trial)

@@ -5,7 +5,7 @@
 Website: https://md2pdf.studio
 GitHub: https://github.com/JSiapoDEV/md2pdf
 npm: https://www.npmjs.com/package/md2pdf-studio
-Last updated: 2026-11-10
+Last updated: 2026-11-11
 
 ---
 
@@ -86,7 +86,7 @@ Tools: `share_markdown`, `update_shared_markdown`, `delete_shared_markdown`, `li
 
 The skill is a fixed text, pinned to the CLI version, that never tells the agent to fetch instructions from the web. Read it at https://md2pdf.studio/skill.md.
 
-- Claude Code: `npx -y md2pdf-studio@0.1.3 skill --install`
+- Claude Code: the plugin, which updates on its own: `claude plugin marketplace add jsiapo-dev/plugins`, then `claude plugin install md2pdf-studio`. Or only the skill: `npx -y md2pdf-studio@0.1.3 skill --install`
 - Claude Desktop or claude.ai: paste the skill into a chat and ask Claude to install it (or upload https://md2pdf.studio/md2pdf-skill.zip in Customize → Skills). There, code runs in a temporary sandbox: it needs network access to md2pdf.studio (Settings → Capabilities), and links made there cannot be updated or deleted later
 - Codex, Cursor, Gemini CLI: add to `AGENTS.md`: "To share Markdown as a private link, run `npx -y md2pdf-studio@0.1.3 share <file>` and give the user the full link. Before sharing, remove secrets or ask the user."
 

@@ -353,7 +353,8 @@ test('upgrade: reinstalls an older skill with the latest version, and only then'
 test('no public text mentions Pro, API keys or the longer limits yet', async () => {
     const PRO = /\bPro\b|\bpaid\b|API key|MD2PDF_API_KEY|--api-key|--title|--description|365 days|(?<!\d)5 MB/;
     const files = ['public/skill.md', 'cli/README.md', 'README.md', 'public/ai-skill.html', 'public/api.html', 'public/about.html', 'public/privacy.html',
-        'public/terms.html', 'public/index.html', 'public/llms.txt', 'public/llms-full.txt', 'public/.well-known/ai-plugin.json', 'cli/CHANGELOG.md'];
+        'public/terms.html', 'public/index.html', 'public/llms.txt', 'public/llms-full.txt', 'public/.well-known/ai-plugin.json', 'cli/CHANGELOG.md',
+        'CHANGELOG.md', 'public/changelog.html'];
     for (const file of files) {
         const text = (await repoFile(file)).replace(/API keys, tokens|need an API key|no API key/g, '');
         const hit = text.match(PRO);

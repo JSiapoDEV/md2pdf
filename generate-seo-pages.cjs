@@ -4,7 +4,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 const SITE = 'https://md2pdf.studio';
 const GH_REPO = 'https://github.com/JSiapoDEV/md2pdf';
@@ -722,14 +721,14 @@ function buildAiSkill() {
         <table>
             <thead><tr><th>Agent</th><th>How</th></tr></thead>
             <tbody>
-                <tr><td>Claude Code</td><td><code>${NPX} skill --install</code></td></tr>
+                <tr><td>Claude Code</td><td>The plugin, which updates on its own: <code>claude plugin marketplace add jsiapo-dev/plugins</code>, then <code>claude plugin install md2pdf-studio</code>. Or only the skill: <code>${NPX} skill --install</code></td></tr>
                 <tr><td>Claude Desktop, claude.ai</td><td>Copy <a href="/skill.md">the skill</a>, paste it in a chat and say <em>"install this skill"</em> (or upload <a href="/md2pdf-skill.zip">md2pdf-skill.zip</a> in <strong>Customize → Skills</strong>). There, code runs in a temporary sandbox: it needs network access to md2pdf.studio (<strong>Settings → Capabilities</strong>), and links made there cannot be updated or deleted later.</td></tr>
                 <tr><td>Codex, Cursor, Gemini CLI</td><td>Add to <code>AGENTS.md</code> (or the agent's instructions file): <em>"To share Markdown as a private link, run <code>${NPX} share &lt;file&gt;</code> and give the user the full link. Before sharing, remove secrets or ask the user."</em></td></tr>
                 <tr><td>MCP clients</td><td><code style="word-break: break-word;">{ "mcpServers": { "md2pdf-studio": { "command": "npx", "args": ["-y", "md2pdf-studio@${CLI_VERSION}", "mcp"] } } }</code></td></tr>
                 <tr><td>Browser agents</td><td>WebMCP tools in the editor (<code>convert-markdown</code>, <code>export-document</code>, <code>share-document</code>, <code>set-style</code>). Experimental: only browsers in Chrome's WebMCP trial expose them.</td></tr>
             </tbody>
         </table>
-        <p>Once a day the CLI and the MCP server check npm for a newer version number and say how to update: <code>changelog</code> shows what changed and <code>upgrade</code> reinstalls the skill. Nothing is installed on its own; <code>MD2PDF_NO_UPDATE_CHECK=1</code> turns the check off.</p>
+        <p>The plugin brings each new version when Claude Code updates its plugins. Elsewhere, once a day the CLI and the MCP server check npm for a newer version number and say how to update: <code>changelog</code> shows what changed and <code>upgrade</code> reinstalls the skill. Nothing is installed on its own; <code>MD2PDF_NO_UPDATE_CHECK=1</code> turns the check off.</p>
 
         <h2>Example Prompts</h2>
 
@@ -772,59 +771,55 @@ function buildAiSkill() {
 }
 
 // ── /changelog ────────────────────────────────────────
+// Written by hand in CHANGELOG.md (Keep a Changelog), not taken from commit
+// subjects, which describe work in progress as well as what shipped.
+
+// Renders the subset of Markdown CHANGELOG.md uses: ## and ### headings,
+// "- " lists, paragraphs, `code`, **bold** and [links](url).
+function changelogHtml(md) {
+  const inline = (s) => esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2">$1</a>');
+  const out = [];
+  let list = false;
+  const closeList = () => { if (list) { out.push('</ul>'); list = false; } };
+  for (const line of md.split('\n')) {
+    if (line.startsWith('# ')) continue; // the page has its own <h1>
+    if (line.startsWith('## ')) { closeList(); out.push(`<h2>${inline(line.slice(3))}</h2>`); continue; }
+    if (line.startsWith('### ')) { closeList(); out.push(`<h3>${inline(line.slice(4))}</h3>`); continue; }
+    if (line.startsWith('- ')) {
+      if (!list) { out.push('<ul style="padding-left: 24px;">'); list = true; }
+      out.push(`<li style="margin-bottom:6px;">${inline(line.slice(2))}</li>`);
+      continue;
+    }
+    closeList();
+    if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+  }
+  closeList();
+  return out.join('\n        ');
+}
 
 function buildChangelog() {
   const url = `${SITE}/changelog`;
   const trail = [{ name: 'MD2PDF', href: '/' }, { name: 'Changelog', href: '/changelog' }];
-
-  // Pull last ~60 commits grouped by YYYY-MM.
-  let commits = [];
-  try {
-    const out = execSync('git log -n 80 --pretty=format:%H%x09%ad%x09%s --date=short', {
-      cwd: __dirname, encoding: 'utf8',
-    });
-    commits = out.split('\n').filter(Boolean).map(line => {
-      const [hash, date, ...rest] = line.split('\t');
-      return { hash, date, subject: rest.join('\t') };
-    }).filter(c => {
-      const s = c.subject.toLowerCase();
-      // Skip noise
-      return !s.startsWith('merge ') && !s.startsWith('wip') && !s.startsWith('chore: bump');
-    });
-  } catch (e) {
-    console.warn('git log unavailable, changelog will have no entries');
-  }
-
-  const groups = {};
-  for (const c of commits) {
-    const month = c.date.slice(0, 7); // YYYY-MM
-    (groups[month] ||= []).push(c);
-  }
-  const months = Object.keys(groups).sort().reverse();
+  const md = fs.readFileSync(path.join(__dirname, 'CHANGELOG.md'), 'utf8');
+  const latest = (md.match(/^## (\d{4}-\d{2}-\d{2})/m) || [])[1] || new Date().toISOString().slice(0, 10);
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: 'MD2PDF Changelog',
-    description: 'Release notes and recent changes to MD2PDF.',
+    description: 'What changed on md2pdf.studio, release by release.',
     url,
-    dateModified: commits[0]?.date || new Date().toISOString().slice(0, 10),
+    dateModified: latest,
     isPartOf: { '@type': 'WebApplication', name: 'MD2PDF', url: SITE },
     breadcrumb: breadcrumbJsonLd(trail),
   };
 
-  const entries = months.map(m => {
-    const [y, mo] = m.split('-');
-    const monthName = new Date(Number(y), Number(mo) - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
-    return `<h2>${monthName}</h2>
-        <ul style="padding-left: 24px;">
-            ${groups[m].map(c => `<li style="margin-bottom:6px;"><span style="color:#8b949e;font-family:'JetBrains Mono',monospace;font-size:0.82em;">${c.date}</span> — ${esc(c.subject)} <a href="${GH_REPO}/commit/${c.hash}" style="color:#6e7681;font-family:'JetBrains Mono',monospace;font-size:0.78em;">${c.hash.slice(0, 7)}</a></li>`).join('\n            ')}
-        </ul>`;
-  }).join('\n\n        ');
-
   return pageHead({
     title: 'Changelog — MD2PDF',
-    desc: 'Release notes and recent changes to MD2PDF. Grouped by month, linked to GitHub commits.',
+    desc: 'What changed on md2pdf.studio, release by release: new features, changes, removals and security fixes.',
     canonical: url,
     keywords: 'md2pdf changelog, md2pdf release notes, md2pdf updates, markdown to pdf changelog',
     jsonLd,
@@ -832,11 +827,8 @@ function buildChangelog() {
         ${breadcrumb(trail)}
 
         <h1><span class="accent">Changelog</span></h1>
-        <p class="tagline">Recent changes to MD2PDF.</p>
 
-        <p>Grouped by month. For the full history, browse commits on <a href="${GH_REPO}/commits/main">GitHub</a>.</p>
-
-        ${entries || '<p>No changes yet.</p>'}
+        ${changelogHtml(md)}
 
         ${FOOTER}
     </div>
