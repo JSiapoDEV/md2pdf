@@ -48,7 +48,7 @@ async function askAfterExport() {
 test('the Worker counts the asks, and only by name and kind of client', async () => {
     const app = await repoFile('public/app.js');
     const sent = [...app.matchAll(/track\('([a-z_]+)'\)/g)].map((m) => m[1]);
-    for (const name of ['open_star', 'open_star_share', 'star_ask_shown', 'star_ask_open']) {
+    for (const name of ['open_star', 'open_star_share', 'star_ask_shown', 'star_ask_open', 'open_support', 'support_ask_shown', 'support_ask_open']) {
         assert.ok(sent.includes(name), 'app.js must send ' + name);
         const { status, counted } = await beacon(name);
         assert.equal(status, 204);
@@ -59,16 +59,19 @@ test('the Worker counts the asks, and only by name and kind of client', async ()
     assert.equal((await beacon('not_an_event')).counted.length, 0);
 });
 
-test('the editor asks for a star on the third export, once', async () => {
+test('the editor asks for a star on the third export, once, and for support every fifteenth', async () => {
     const ask = await askAfterExport();
-    const asked = [];
-    for (let count = 1; count <= 60; count++) if (ask(count) === 'star') asked.push(count);
-    assert.deepEqual(asked, [3]);
+    const asked = { star: [], support: [] };
+    for (let count = 1; count <= 60; count++) {
+        const kind = ask(count);
+        if (kind) asked[kind].push(count);
+    }
+    assert.deepEqual(asked, { star: [3], support: [15, 30, 45, 60] });
 });
 
 test('the privacy page says what the asks count and keep', async () => {
     const privacy = await repoFile('public/privacy.html');
-    for (const said of ['a request for a star was shown', 'a count of your exports', 'se mostró un pedido de estrella', 'un conteo de tus exportaciones']) {
+    for (const said of ['a request for a star or for support was shown', 'a count of your exports', 'se mostró un pedido de estrella o de apoyo', 'un conteo de tus exportaciones']) {
         assert.ok(privacy.includes(said), 'privacy.html must say: ' + said);
     }
 });

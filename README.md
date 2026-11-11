@@ -103,6 +103,10 @@ Browse all: [md2pdf.studio/styles](https://md2pdf.studio/styles/)
 
 Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before getting started.
 
+## Support
+
+md2pdf is free and open source. If it saves you time, you can [support it on GitHub Sponsors](https://github.com/sponsors/JSiapoDEV); it pays for hosting and for time to fix bugs and build what people ask for.
+
 ## License
 
 [MIT](LICENSE) — Built by [JSiapoDev](https://jsiapo.dev)

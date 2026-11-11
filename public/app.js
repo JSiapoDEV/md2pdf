@@ -74,6 +74,8 @@
             replaceBtn: 'Replace', replaceAll: 'All',
             builtBy: 'Built by', starGithub: 'Star on GitHub',
             starAfterShare: 'Useful? A star on GitHub helps other people find md2pdf.', starAction: 'Star',
+            support: 'Support', supportTitle: 'md2pdf is free and open source. Support it on GitHub Sponsors',
+            supportAsk: 'md2pdf is free and open source. If it helps you, you can support it.', supportAction: 'Support',
             apiPrompts: 'AI Skill',
             linkCreated: 'Link created!', linkHint: 'Anyone with the full link can read this document.',
             linkExpires: 'Link expires on {date}. Anyone with the full link can read it.',
@@ -138,6 +140,8 @@
             replaceBtn: 'Reemplazar', replaceAll: 'Todo',
             builtBy: 'Creado por', starGithub: 'Estrella en GitHub',
             starAfterShare: '¿Te sirvió? Una estrella en GitHub ayuda a que otros encuentren md2pdf.', starAction: 'Dar estrella',
+            support: 'Apoyar', supportTitle: 'md2pdf es gratis y de código abierto. Apóyalo en GitHub Sponsors',
+            supportAsk: 'md2pdf es gratis y de código abierto. Si te sirve, puedes apoyarlo.', supportAction: 'Apoyar',
             apiPrompts: 'Skill de IA',
             linkCreated: 'Enlace creado!', linkHint: 'Cualquiera con el enlace completo puede leer este documento.',
             linkExpires: 'El enlace vence el {date}. Cualquiera con el enlace completo puede leerlo.',
@@ -212,11 +216,15 @@
 
     // ── Asks after exporting ─────────────────────────
     // The third export is when the tool has just been useful a few times: the
-    // editor asks once for a star. Exports are counted in this browser only.
+    // editor asks once for a star. Whoever keeps exporting gets the most out of
+    // it, so every fifteenth export mentions how to support it. Never both at
+    // once. Exports are counted in this browser only.
     const REPO_URL = 'https://github.com/JSiapoDEV/md2pdf';
+    const SUPPORT_URL = 'https://github.com/sponsors/JSiapoDEV';
 
     function askAfterExport(count) {
         if (count === 3) return 'star';
+        if (count >= 15 && count % 15 === 0) return 'support';
         return null;
     }
 
@@ -227,11 +235,18 @@
             localStorage.setItem('md2pdf-exports', String(count));
         } catch (_) { /* no storage: never ask */ }
         const said = message ? message + '. ' : '';
-        if (askAfterExport(count) === 'star') {
+        const ask = askAfterExport(count);
+        if (ask === 'star') {
             track('star_ask_shown');
             showToast(said + t('starAfterShare'), { label: t('starAction'), run: function () {
                 track('star_ask_open');
                 window.open(REPO_URL, '_blank', 'noopener');
+            } });
+        } else if (ask === 'support') {
+            track('support_ask_shown');
+            showToast(said + t('supportAsk'), { label: t('supportAction'), run: function () {
+                track('support_ask_open');
+                window.open(SUPPORT_URL, '_blank', 'noopener');
             } });
         } else if (message) {
             showToast(message);
@@ -296,6 +311,8 @@
         $('#shareStarLink').textContent = t('starAfterShare');
         $('#starText').textContent = t('starGithub');
         $('#starLink').title = t('starGithub');
+        $('#supportText').textContent = t('support');
+        $('#supportLink').title = t('supportTitle');
         $('#apiModalTitle').textContent = t('apiPrompts');
         updateShareHint();
         $('#reportAbuseLink').textContent = t('reportAbuse');
@@ -3187,6 +3204,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         $('#copyFormattedBtn').addEventListener('click', copyFormatted);
         $('#starLink').addEventListener('click', () => track('open_star'));
         $('#shareStarLink').addEventListener('click', () => track('open_star_share'));
+        $('#supportLink').addEventListener('click', () => track('open_support'));
         $('#aboutLink').addEventListener('click', (e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
             e.preventDefault();

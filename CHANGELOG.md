@@ -7,6 +7,7 @@ What changed on md2pdf.studio. The format follows [Keep a Changelog](https://kee
 ### Added
 
 - After your third export the editor asks, once, for a star on GitHub. How often that request is shown and opened is counted anonymously, like the other clicks.
+- A **Support** link in the footer, to GitHub Sponsors. From the fifteenth export the editor also mentions it, once every 15 exports. How often it is shown and opened is counted anonymously too.
 
 ## 2026-11-10
 
