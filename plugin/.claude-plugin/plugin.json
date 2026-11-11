@@ -1,0 +1,21 @@
+{
+  "name": "md2pdf-studio",
+  "displayName": "md2pdf",
+  "version": "0.1.3",
+  "description": "Share Markdown as a private, end-to-end encrypted md2pdf.studio link that opens as a styled document the reader can download as PDF, HTML or an image.",
+  "author": {
+    "name": "JSiapoDev",
+    "url": "https://jsiapo.dev"
+  },
+  "homepage": "https://md2pdf.studio/ai-skill",
+  "repository": "https://github.com/JSiapoDEV/md2pdf",
+  "license": "MIT",
+  "keywords": [
+    "markdown",
+    "pdf",
+    "share",
+    "encrypted",
+    "e2ee",
+    "md2pdf"
+  ]
+}

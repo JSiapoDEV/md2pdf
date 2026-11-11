@@ -1,0 +1,15 @@
+<!-- Source of plugin/.claude-plugin/icon.png: the site's icon (public/icon.svg)
+     on the site's dark background. ImageMagick drops the strokes; render with
+     Quick Look (macOS) instead: qlmanage -t -s 1024 -o <dir> plugin-icon.svg,
+     then copy <dir>/plugin-icon.svg.png there. The directory takes the icon
+     only the first time the plugin is saved in its portal. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#0d1117"/>
+  <g transform="translate(212 212) scale(25)" fill="none" stroke="#f0883e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10 9 9 9 8 9"/>
+  </g>
+</svg>

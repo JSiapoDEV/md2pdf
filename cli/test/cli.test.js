@@ -403,3 +403,19 @@ test('network blocks get a plain explanation with what to allow', async () => {
         await new Promise((r) => proxy.close(r));
     }
 });
+
+// The Claude plugin in plugin/ ships the same skill as the site and npm, at the
+// CLI's version, and stays within what Anthropic's directory accepts.
+test('the Claude plugin matches the site skill and the directory rules', async () => {
+    assert.equal(await repoFile('plugin/skills/md2pdf/SKILL.md'), await repoFile('public/skill.md'), 'run: npm run plugin');
+    const manifest = JSON.parse(await repoFile('plugin/.claude-plugin/plugin.json'));
+    assert.equal(manifest.version, VERSION, 'run: npm run plugin');
+    assert.equal(manifest.name, 'md2pdf-studio');
+    assert.ok(manifest.license && manifest.description && manifest.author);
+    const readme = (await repoFile('plugin/README.md')).replace(/```[\s\S]*?```/g, '');
+    assert.ok(readme.split(/\s+/).filter(Boolean).length >= 40, 'the directory wants a README of 40 words or more');
+    const { readdir } = await import('node:fs/promises');
+    const top = await readdir(new URL('../../plugin/', import.meta.url));
+    assert.ok(!top.includes('bin'), 'a bin/ folder makes claude.ai and Cowork refuse the plugin');
+    assert.ok(!top.includes('.DS_Store'));
+});

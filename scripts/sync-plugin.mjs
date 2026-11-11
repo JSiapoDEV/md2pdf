@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+// Keeps the Claude plugin in plugin/ in step with what the site and npm serve:
+// the same skill text as public/skill.md, and the CLI's version. Run it after
+// changing the skill or releasing a new md2pdf-studio: npm run plugin
+import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+
+const root = new URL('../', import.meta.url);
+const version = JSON.parse(readFileSync(new URL('cli/package.json', root), 'utf8')).version;
+copyFileSync(new URL('public/skill.md', root), new URL('plugin/skills/md2pdf/SKILL.md', root));
+const manifestUrl = new URL('plugin/.claude-plugin/plugin.json', root);
+const manifest = JSON.parse(readFileSync(manifestUrl, 'utf8'));
+manifest.version = version;
+writeFileSync(manifestUrl, JSON.stringify(manifest, null, 2) + '\n');
+console.log('plugin/ synced: skill from public/skill.md, version ' + version);

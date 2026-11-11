@@ -6,6 +6,7 @@
     "stats": "node scripts/stats.mjs",
     "test": "npm --prefix cli test",
     "dev": "npx -y wrangler@4.86.0 dev --local",
-    "pages": "node generate-seo-pages.cjs && node generate-style-pages.cjs && git checkout -- public/changelog.html"
+    "pages": "node generate-seo-pages.cjs && node generate-style-pages.cjs && git checkout -- public/changelog.html",
+    "plugin": "node scripts/sync-plugin.mjs"
   }
 }
