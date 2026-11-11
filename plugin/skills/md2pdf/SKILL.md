@@ -46,7 +46,7 @@ In a claude.ai or Claude Desktop chat, code runs in a temporary environment, not
 
 ## Newer versions
 
-The help, `--version`, `share`, `update` and `list` say when a newer version exists. If one does, tell the user. Update only if they agree, with `npx -y md2pdf-studio@0.1.3 upgrade`, which reinstalls this skill with the new version. Never update on your own.
+This skill comes from the md2pdf plugin for Claude Code, which pins the tool to the version above. The help, `--version`, `share`, `update` and `list` say when a newer version exists. If one does, tell the user that the plugin brings it when it updates, which they can check in `/plugin`. Do not run `upgrade`: it would install a second copy of this skill.
 
 ## What renders
 

@@ -10,6 +10,10 @@
   "homepage": "https://md2pdf.studio/ai-skill",
   "repository": "https://github.com/JSiapoDEV/md2pdf",
   "license": "MIT",
+  "icon": "./icon.png",
+  "documentationUrl": "https://md2pdf.studio/ai-skill",
+  "privacyPolicyUrl": "https://md2pdf.studio/privacy",
+  "termsOfServiceUrl": "https://md2pdf.studio/terms",
   "keywords": [
     "markdown",
     "pdf",

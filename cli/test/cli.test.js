@@ -407,16 +407,26 @@ test('network blocks get a plain explanation with what to allow', async () => {
 // The Claude plugin in plugin/ ships the same skill as the site and npm, at the
 // CLI's version, and stays within what Anthropic's directory accepts.
 test('the Claude plugin matches the site skill and the directory rules', async () => {
-    assert.equal(await repoFile('plugin/skills/md2pdf/SKILL.md'), await repoFile('public/skill.md'), 'run: npm run plugin');
+    const { pluginSkill } = await import('../../scripts/plugin-skill.mjs');
+    const skill = await repoFile('plugin/skills/md2pdf/SKILL.md');
+    assert.equal(skill, pluginSkill(await repoFile('public/skill.md')), 'run: npm run plugin');
+    // The plugin updates through the directory; `upgrade` would install a second copy.
+    assert.doesNotMatch(skill, /md2pdf-studio@[\d.]+ upgrade/);
     const manifest = JSON.parse(await repoFile('plugin/.claude-plugin/plugin.json'));
     assert.equal(manifest.version, VERSION, 'run: npm run plugin');
     assert.equal(manifest.name, 'md2pdf-studio');
     assert.ok(manifest.license && manifest.description && manifest.author);
+    // The directory reads its listing's icon and links from plugin.json.
+    assert.equal(manifest.icon, './icon.png');
+    for (const key of ['documentationUrl', 'privacyPolicyUrl', 'termsOfServiceUrl']) assert.match(manifest[key], /^https:\/\/md2pdf\.studio\//);
     const readme = (await repoFile('plugin/README.md')).replace(/```[\s\S]*?```/g, '');
     assert.ok(readme.split(/\s+/).filter(Boolean).length >= 40, 'the directory wants a README of 40 words or more');
+    // The security scan wants every destination disclosed.
+    for (const said of ['npm registry', 'md2pdf.studio', 'links.json', 'MD2PDF_NO_UPDATE_CHECK']) assert.ok(readme.includes(said), 'README must disclose: ' + said);
     const { readdir, stat } = await import('node:fs/promises');
     const top = await readdir(new URL('../../plugin/', import.meta.url));
     assert.ok(!top.includes('.DS_Store'));
+    assert.ok(top.includes('icon.png'));
     // bin/ keeps the plugin to Claude Code: claude.ai and Cowork refuse plugins
     // that have one, and their sandboxes usually cannot reach md2pdf.studio.
     const bin = new URL('../../plugin/bin/md2pdf-studio', import.meta.url);
