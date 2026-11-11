@@ -1,6 +1,0 @@
-#!/bin/sh
-# md2pdf-studio, pinned to the version this plugin ships. Claude Code puts a
-# plugin's bin/ on the agent's PATH. claude.ai and Cowork do not install
-# plugins that have one, which keeps this plugin to Claude Code, where the
-# tool runs on the user's computer and can reach md2pdf.studio.
-exec npx -y md2pdf-studio@0.1.3 "$@"

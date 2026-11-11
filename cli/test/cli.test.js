@@ -423,13 +423,11 @@ test('the Claude plugin matches the site skill and the directory rules', async (
     assert.ok(readme.split(/\s+/).filter(Boolean).length >= 40, 'the directory wants a README of 40 words or more');
     // The security scan wants every destination disclosed.
     for (const said of ['npm registry', 'md2pdf.studio', 'links.json', 'MD2PDF_NO_UPDATE_CHECK']) assert.ok(readme.includes(said), 'README must disclose: ' + said);
-    const { readdir, stat } = await import('node:fs/promises');
+    const { readdir } = await import('node:fs/promises');
     const top = await readdir(new URL('../../plugin/', import.meta.url));
     assert.ok(!top.includes('.DS_Store'));
     assert.ok(top.includes('icon.png'));
-    // bin/ keeps the plugin to Claude Code: claude.ai and Cowork refuse plugins
-    // that have one, and their sandboxes usually cannot reach md2pdf.studio.
-    const bin = new URL('../../plugin/bin/md2pdf-studio', import.meta.url);
-    assert.ok((await stat(bin)).mode & 0o111, 'bin/md2pdf-studio must be executable');
-    assert.match(await readFile(bin, 'utf8'), new RegExp('^exec npx -y md2pdf-studio@' + VERSION.replace(/\./g, '\\.') + ' "\\$@"$', 'm'), 'run: npm run plugin');
+    // The directory refuses bin/ from organizations it has not verified. The
+    // plugin is kept to Claude Code by its listing settings instead.
+    assert.ok(!top.includes('bin'), 'the directory refuses a bin/ folder');
 });

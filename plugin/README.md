@@ -16,9 +16,9 @@ Anyone who has the whole link can read the document, so the skill removes secret
 
 ## Claude Code only
 
-This plugin is for Claude Code, where the tool runs on your computer: it needs Node 18.3 or later, and you can update or delete the links you made later. It also puts the `md2pdf-studio` command, pinned to the same version, on the agent's PATH.
+This plugin is listed for Claude Code, where the tool runs on your computer: it needs Node 18.3 or later, and you can update or delete the links you made later.
 
-claude.ai and Cowork do not install it. Their chats run code in a sandbox that usually cannot reach md2pdf.studio; to use md2pdf there, see https://md2pdf.studio/ai-skill.
+It is not listed for claude.ai or Cowork. Their chats run code in a sandbox that usually cannot reach md2pdf.studio; to use md2pdf there, see https://md2pdf.studio/ai-skill.
 
 ## More
 
