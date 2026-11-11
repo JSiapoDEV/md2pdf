@@ -414,8 +414,12 @@ test('the Claude plugin matches the site skill and the directory rules', async (
     assert.ok(manifest.license && manifest.description && manifest.author);
     const readme = (await repoFile('plugin/README.md')).replace(/```[\s\S]*?```/g, '');
     assert.ok(readme.split(/\s+/).filter(Boolean).length >= 40, 'the directory wants a README of 40 words or more');
-    const { readdir } = await import('node:fs/promises');
+    const { readdir, stat } = await import('node:fs/promises');
     const top = await readdir(new URL('../../plugin/', import.meta.url));
-    assert.ok(!top.includes('bin'), 'a bin/ folder makes claude.ai and Cowork refuse the plugin');
     assert.ok(!top.includes('.DS_Store'));
+    // bin/ keeps the plugin to Claude Code: claude.ai and Cowork refuse plugins
+    // that have one, and their sandboxes usually cannot reach md2pdf.studio.
+    const bin = new URL('../../plugin/bin/md2pdf-studio', import.meta.url);
+    assert.ok((await stat(bin)).mode & 0o111, 'bin/md2pdf-studio must be executable');
+    assert.match(await readFile(bin, 'utf8'), new RegExp('^exec npx -y md2pdf-studio@' + VERSION.replace(/\./g, '\\.') + ' "\\$@"$', 'm'), 'run: npm run plugin');
 });

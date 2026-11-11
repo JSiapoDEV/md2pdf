@@ -8,10 +8,11 @@ Ask Claude to "share this as a link", "send this report as a PDF-ready link" or 
 
 The document is encrypted with AES-256-GCM on the machine where the tool runs, and only the ciphertext is uploaded. The key stays in the link's `#k=` part, which browsers never send to the server, so md2pdf.studio cannot read what you share. Anyone who has the whole link can read the document, so the skill removes secrets or asks you first. Links expire after 30 days, or sooner if you ask, and can be made to open only once.
 
-## Where it works
+## Claude Code only
 
-- **Claude Code**: the tool runs on your computer and needs Node 18.3 or later. You can update or delete the links you made later.
-- **claude.ai chats and Cowork**: the tool runs in a temporary sandbox, which needs network access to md2pdf.studio (Settings → Capabilities). Links made there cannot be updated or deleted later.
+This plugin is for Claude Code, where the tool runs on your computer: it needs Node 18.3 or later, and you can update or delete the links you made later. It also puts the `md2pdf-studio` command, pinned to the same version, on the agent's PATH.
+
+claude.ai and Cowork do not install it. Their chats run code in a sandbox that usually cannot reach md2pdf.studio; to use md2pdf there, see https://md2pdf.studio/ai-skill.
 
 ## More
 
