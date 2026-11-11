@@ -52,10 +52,13 @@ cd MD2PDF
 open public/index.html
 ```
 
-For local Cloudflare Workers dev:
+For local Cloudflare Workers dev, and the other project commands:
 
 ```bash
-npx wrangler dev
+npm run dev       # the site and API at http://localhost:8787
+npm test          # CLI tests
+npm run pages     # regenerate the SEO pages from their generators
+npm run stats     # anonymous usage counts (needs a read-only token, see scripts/stats.mjs)
 ```
 
 ## For AI Agents

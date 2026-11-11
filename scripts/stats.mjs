@@ -2,8 +2,8 @@
 // What people do on md2pdf.studio, from the anonymous counter (Workers
 // Analytics Engine, dataset md2pdf_events). Read-only.
 //
-//   node scripts/stats.mjs        last 7 days
-//   node scripts/stats.mjs 30     last 30 days
+//   npm run stats                 last 7 days
+//   npm run stats -- 30           last 30 days
 //
 // Needs a Cloudflare API token with only "Account Analytics: Read" and the
 // account ID, kept outside the repository:
