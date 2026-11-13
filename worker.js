@@ -35,9 +35,8 @@ async function allowWrite(request, env) {
 }
 
 // --- Plans ---
-// Every limit that differs between the free service and a paid key lives here.
-// Pro keys are checked by planOf(); until billing exists they are issued by hand
-// (see scripts/pro-key.mjs), and only their SHA-256 hashes are configured.
+// Every limit that differs between the free service and a Pro key lives here.
+// Pro keys are checked by planOf().
 
 var DAY_SEC = 86400;
 var MB = 1024 * 1024;
@@ -74,19 +73,229 @@ async function sha256Hex(text) {
     return Array.from(new Uint8Array(digest), function (b) { return b.toString(16).padStart(2, '0'); }).join('');
 }
 
-// Returns { plan, owner } where owner identifies a paid key without revealing it,
-// or { error } when a key is sent but unknown: silently treating a mistyped key as
-// the free plan would hide the mistake until a limit is hit.
+// --- Pro keys ---
+// A Pro key is either hand-issued (scripts/pro-key.mjs: only its SHA-256 hash
+// is configured, in PRO_KEY_HASHES) or the license key that Polar, the merchant
+// of record, gives whoever buys the one-year pass.
+//
+// Polar's answer to a key check includes the buyer's email, name and billing
+// address. Only `valid` and `expiresAt` leave licenseVerdict(), and neither the
+// key nor Polar's answer is ever logged or stored: the cache holds a hash of
+// the key and that verdict, nothing else.
+
+var POLAR_API = 'https://api.polar.sh';
+var POLAR_TIMEOUT_MS = 8000;
+var POLAR_MAX_ANSWER_BYTES = 65536;
+var PRO_MAX_KEY_CHARS = 128;
+// Printable ASCII without spaces, as Polar's keys are.
+var LICENSE_KEY_RE = /^[\x21-\x7e]+$/;
+var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// A verdict is trusted for an hour, so a refunded key stops working within
+// one. A good verdict is kept for a week, as a fallback for when Polar cannot
+// be reached; a bad one for ten minutes, so repeated guesses do not reach Polar.
+var LICENSE_FRESH_MS = 3600 * 1000;
+var LICENSE_KEEP_SEC = 7 * DAY_SEC;
+var LICENSE_BAD_KEEP_SEC = 600;
+
+// Polar settings come from wrangler.toml [vars]. Until the benefit holds a real
+// ID (the placeholder is the nil UUID) no Polar key is accepted, and until the
+// checkout link is set the offer is shown nowhere. The benefit is required: a
+// key of any other product of the organization must not unlock Pro.
+function polarSettings(env) {
+    var orgId = String(env.POLAR_ORG_ID || '').trim();
+    var benefitId = String(env.POLAR_BENEFIT_ID || '').trim();
+    var checkoutUrl = String(env.POLAR_CHECKOUT_URL || '').trim();
+    var apiBase = String(env.POLAR_API_BASE || POLAR_API).trim().replace(/\/+$/, '');
+    var ready = isRealUuid(orgId) && isRealUuid(benefitId) && isApiBase(apiBase);
+    return {
+        ready: ready,
+        orgId: orgId,
+        benefitId: benefitId,
+        apiBase: apiBase,
+        checkoutUrl: ready && isCheckoutUrl(checkoutUrl) ? checkoutUrl : null,
+    };
+}
+
+// A UUID, and not the nil one the placeholder uses.
+function isRealUuid(value) {
+    return UUID_RE.test(value) && !/^[0-]+$/.test(value);
+}
+
+// Where keys are checked: an https origin (api.polar.sh, or the sandbox), or
+// plain http on this machine for local tests. Never a key over plain http.
+function isApiBase(value) {
+    return /^https:\/\/[^/?#\s]+$/.test(value) || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(value);
+}
+
+// A Polar checkout link: https on polar.sh or one of its subdomains.
+function isCheckoutUrl(value) {
+    try {
+        var u = new URL(value);
+        return u.protocol === 'https:' && (u.hostname === 'polar.sh' || u.hostname.endsWith('.polar.sh'));
+    } catch (e) {
+        return false;
+    }
+}
+
+// Reads a response body as text, or returns null as soon as it passes
+// maxBytes, so an oversized answer is never buffered whole.
+async function readTextCapped(message, maxBytes) {
+    if (Number(message.headers.get('content-length')) > maxBytes) return null;
+    if (!message.body) return '';
+    var reader = message.body.getReader();
+    var chunks = [];
+    var total = 0;
+    for (;;) {
+        var step = await reader.read();
+        if (step.done) break;
+        total += step.value.byteLength;
+        if (total > maxBytes) {
+            reader.cancel().catch(function () {});
+            return null;
+        }
+        chunks.push(step.value);
+    }
+    var bytes = new Uint8Array(total);
+    var offset = 0;
+    for (var i = 0; i < chunks.length; i++) {
+        bytes.set(chunks[i], offset);
+        offset += chunks[i].byteLength;
+    }
+    return new TextDecoder().decode(bytes);
+}
+
+function discardBody(res) {
+    if (res.body) res.body.cancel().catch(function () {});
+}
+
+// When Polar sends an ID back, it must be the one this deployment expects.
+function sameIdIfPresent(received, expected) {
+    return received == null || String(received).toLowerCase() === expected.toLowerCase();
+}
+
+// Keeps the verdict and drops everything else Polar sent, the buyer's details
+// included. Returns null for an answer that does not look like Polar's. The
+// pass lasts a year, so a key without an end date is not one of its keys (a
+// benefit set up without one would otherwise unlock Pro for good).
+function licenseVerdict(data, settings) {
+    if (!data || typeof data !== 'object' || Array.isArray(data) || typeof data.status !== 'string') return null;
+    if (data.status !== 'granted'
+        || !sameIdIfPresent(data.organization_id, settings.orgId)
+        || !sameIdIfPresent(data.benefit_id, settings.benefitId)
+        || !data.expires_at) {
+        return { valid: false, expiresAt: null };
+    }
+    var expires = Date.parse(data.expires_at);
+    if (isNaN(expires)) return null;
+    return { valid: expires > Date.now(), expiresAt: new Date(expires).toISOString() };
+}
+
+// Polar's public validation endpoint needs no token. Returns
+// { valid, expiresAt }, or null when Polar gave no usable answer in time.
+async function checkLicenseKey(settings, key) {
+    var payload = { key: key, organization_id: settings.orgId, benefit_id: settings.benefitId };
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, POLAR_TIMEOUT_MS);
+    try {
+        var res = await fetch(settings.apiBase + '/v1/customer-portal/license-keys/validate', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', accept: 'application/json' },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+        });
+        // 404: unknown, revoked, disabled or expired key, or one for another
+        // product. 422: not a well-formed key. Both are verdicts, not failures.
+        if (res.status === 404 || res.status === 422) {
+            discardBody(res);
+            return { valid: false, expiresAt: null };
+        }
+        if (res.status !== 200) {
+            discardBody(res);
+            return null;
+        }
+        var text = await readTextCapped(res, POLAR_MAX_ANSWER_BYTES);
+        return text === null ? null : licenseVerdict(JSON.parse(text), settings);
+    } catch (e) {
+        // Timeout, network error or malformed answer. Deliberately not logged.
+        return null;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+// A stored verdict, read against the clock: a pass ends on its date even when
+// the last check was before it.
+function verdictNow(record, now) {
+    var ends = record.expiresAt ? Date.parse(record.expiresAt) : NaN;
+    var valid = record.valid === true && !isNaN(ends) && ends > now;
+    return { valid: valid, expiresAt: valid ? record.expiresAt : null };
+}
+
+// Key checks that have to reach Polar share the write limiter under their own
+// key, so they spend none of the share-link budget.
+async function allowKeyCheck(request, env) {
+    if (!env.WRITE_LIMITER) return true;
+    var outcome = await env.WRITE_LIMITER.limit({ key: 'lic:' + clientKey(request) });
+    return outcome.success;
+}
+
+// Returns { valid, expiresAt }, { limited: true } or { unavailable: true }.
+// Verdicts are cached in KV under a hash of the key ("lic:" can never be a
+// document ID). If Polar cannot be reached, a pass that was good on its last
+// check keeps working until its own end date.
+async function licenseOf(request, env, settings, key, hash) {
+    var cacheKey = 'lic:' + hash;
+    var now = Date.now();
+    var cached = null;
+    try {
+        cached = await env.DOCS.get(cacheKey, 'json');
+    } catch (e) {
+        cached = null;
+    }
+    if (cached && typeof cached.checkedAt !== 'number') cached = null;
+    if (cached && now - cached.checkedAt < LICENSE_FRESH_MS) return verdictNow(cached, now);
+
+    var fallback = cached && verdictNow(cached, now).valid ? verdictNow(cached, now) : null;
+    if (!(await allowKeyCheck(request, env))) return fallback || { limited: true };
+    var verdict = await checkLicenseKey(settings, key);
+    if (!verdict) return fallback || { unavailable: true };
+
+    var record = { valid: verdict.valid, expiresAt: verdict.expiresAt, checkedAt: now };
+    try {
+        await env.DOCS.put(cacheKey, JSON.stringify(record), { expirationTtl: verdict.valid ? LICENSE_KEEP_SEC : LICENSE_BAD_KEEP_SEC });
+    } catch (e) {
+        // The cache only saves calls to Polar.
+    }
+    return verdictNow(record, now);
+}
+
+// Returns { plan, owner, expiresAt } where owner identifies a paid key without
+// revealing it, or { error } when a key is sent but is not good: silently
+// treating a mistyped or expired key as the free plan would hide the mistake
+// until a limit is hit.
 async function planOf(request, env) {
     var header = request.headers.get('authorization');
-    if (!header) return { plan: PLANS.free, owner: null };
+    if (!header) return { plan: PLANS.free, owner: null, expiresAt: null };
     var match = header.match(/^Bearer\s+(\S+)$/i);
-    var hash = match ? await sha256Hex(match[1]) : null;
+    var key = match ? match[1] : null;
+    var hash = key ? await sha256Hex(key) : null;
+    var notGood = function () {
+        return { error: jsonResponse({ error: 'This key is not valid or has expired.', code: 'invalid_api_key' }, 401) };
+    };
+    if (!hash) return notGood();
+
     var known = String(env.PRO_KEY_HASHES || '').split(',').map(function (h) { return h.trim().toLowerCase(); });
-    if (!hash || known.indexOf(hash) === -1) {
-        return { error: jsonResponse({ error: 'Unknown API key.', code: 'invalid_api_key' }, 401) };
+    if (known.indexOf(hash) !== -1) return { plan: PLANS.pro, owner: hash.slice(0, 32), expiresAt: null };
+
+    var settings = polarSettings(env);
+    if (!settings.ready || key.length > PRO_MAX_KEY_CHARS || !LICENSE_KEY_RE.test(key)) return notGood();
+    var license = await licenseOf(request, env, settings, key, hash);
+    if (license.limited) return { error: tooManyRequests() };
+    if (license.unavailable) {
+        return { error: jsonResponse({ error: 'The key could not be checked right now. Try again in a minute.', code: 'license_unavailable' }, 503, { 'retry-after': '60' }) };
     }
-    return { plan: PLANS.pro, owner: hash.slice(0, 32) };
+    if (!license.valid) return notGood();
+    return { plan: PLANS.pro, owner: hash.slice(0, 32), expiresAt: license.expiresAt };
 }
 
 // Options of a paid plan that is not offered yet. The message names the limit
@@ -103,7 +312,7 @@ function proRequired(message, feature) {
 // Anyone can inflate these counts, so they guide decisions; they bill nobody.
 
 var BEACON_EVENTS = [
-    'copy_skill', 'download_skill', 'open_skill', 'open_about', 'open_support',
+    'copy_skill', 'download_skill', 'open_skill', 'open_about', 'open_support', 'open_pro', 'pro_checkout',
     'export_pdf', 'export_html', 'export_image', 'copy_formatted', 'copy_formatted_big',
     'new_document', 'template_cv', 'template_report', 'template_docs', 'template_changelog', 'template_meeting',
     // Asks: how often one is shown, and how often its link is opened.
@@ -551,6 +760,19 @@ async function route(request, env) {
             if (eventName.length > 64) return new Response(null, { status: 413 });
             if (BEACON_EVENTS.indexOf(eventName) !== -1) countEvent(env, request, eventName);
             return new Response(null, { status: 204 });
+        }
+
+        // --- GET /api/plan — what the caller's key gives, and whether Pro is on offer ---
+        if (url.pathname === '/api/plan' && request.method === 'GET') {
+            var asker = await planOf(request, env);
+            if (asker.error) return asker.error;
+            return jsonResponse({
+                plan: asker.plan.name,
+                expiresAt: asker.expiresAt,
+                maxBytes: asker.plan.maxBytes,
+                maxDays: asker.plan.maxExpirySec / DAY_SEC,
+                checkoutUrl: polarSettings(env).checkoutUrl,
+            }, 200, { 'cache-control': 'no-store' });
         }
 
         // --- POST /api/save — store a client-encrypted document, return short URL ---

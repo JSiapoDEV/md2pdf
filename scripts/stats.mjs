@@ -50,7 +50,7 @@ const LABELS = {
     copy_formatted: 'Copy with formatting', copy_formatted_big: 'Copy too big for Teams',
     open_skill: 'Open AI Skill', copy_skill: 'Copy the skill', download_skill: 'Download SKILL.md',
     download_skill_zip: 'Download skill ZIP', skill_md: 'Fetch /skill.md',
-    open_about: 'Open About', open_support: 'Open Support', new_document: 'New document',
+    open_about: 'Open About', open_support: 'Open Support', open_pro: 'Open the Pro page', pro_checkout: 'Click Get Pro', new_document: 'New document',
     pro_required: 'Hit a free limit',
     open_star: 'Open star link (footer)', open_star_share: 'Open star link (after sharing)',
     star_ask_shown: 'Star ask shown', star_ask_open: 'Star ask opened',

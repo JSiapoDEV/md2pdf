@@ -30,7 +30,18 @@ class_name = "QuotaCounter"
 tag = "v1"
 new_sqlite_classes = ["QuotaCounter"]
 
-# Pro API keys. Billing does not exist yet, so keys are issued by hand:
+# md2pdf Pro, a one-year pass sold through Polar (the merchant of record).
+# The pass's license key is the Pro key: the Worker checks it with Polar's
+# public validation endpoint, which needs no token, and keeps only a hash of
+# the key with the verdict. Until POLAR_BENEFIT_ID holds the real benefit (the
+# nil UUID is a placeholder) no Polar key is accepted; until POLAR_CHECKOUT_URL
+# holds the checkout link, the offer is shown nowhere.
+[vars]
+POLAR_ORG_ID = "70a0d0a3-ab23-4a01-b3af-400efc6d05c1"
+POLAR_BENEFIT_ID = "00000000-0000-0000-0000-000000000000"
+POLAR_CHECKOUT_URL = ""
+
+# Keys can also be issued by hand, for gifts and tests:
 #   node scripts/pro-key.mjs        (prints the key to hand over and its hash)
 #   npx wrangler secret put PRO_KEY_HASHES   (comma-separated hashes)
 # The Worker only ever sees hashes; the keys themselves are not stored anywhere.

@@ -836,6 +836,91 @@ function buildChangelog() {
 </html>`;
 }
 
+// ── /pro ──────────────────────────────────────────────
+// The one-year pass. The limits in the table are the ones worker.js applies.
+// The buy link is not written here: /pro.js reads it from /api/plan, so the
+// page offers nothing until the checkout link is configured in wrangler.toml.
+
+const PRO_PRICE = 'US$14';
+
+function buildPro() {
+  const url = `${SITE}/pro`;
+  const trail = [{ name: 'MD2PDF', href: '/' }, { name: 'Pro', href: '/pro' }];
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'md2pdf Pro',
+    description: 'A one-year pass for md2pdf.studio: share links that last a year and documents up to 5 MB.',
+    url,
+    isPartOf: { '@type': 'WebApplication', name: 'MD2PDF', url: SITE },
+    breadcrumb: breadcrumbJsonLd(trail),
+  };
+  const field = 'background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#c9d1d9;padding:10px 12px;font:inherit;';
+
+  return pageHead({
+    title: 'md2pdf Pro — share links that last a year',
+    desc: `md2pdf Pro is a one-year pass, ${PRO_PRICE} paid once: share links that last a year, documents up to 5 MB and 2,000 writes a day. Converting and exporting stay free.`,
+    canonical: url,
+    keywords: 'md2pdf pro, markdown share link one year, large markdown documents, md2pdf pricing',
+    jsonLd,
+  }) + `
+        ${breadcrumb(trail)}
+
+        <h1>md2pdf <span class="accent">Pro</span></h1>
+        <p class="tagline">Share links that last a year, and room for bigger documents. ${PRO_PRICE} for one year, paid once.</p>
+
+        <p>Everything md2pdf does today stays free: converting Markdown, exporting PDF, HTML and images, the styles and templates, and end-to-end encrypted share links. Pro is for people whose links have to stay up, or who share a lot.</p>
+
+        <table>
+            <thead><tr><th></th><th style="width:18%;white-space:nowrap;">Free</th><th style="width:30%;">Pro</th></tr></thead>
+            <tbody>
+                <tr><td>How long a share link lasts</td><td>30 days</td><td>1 year</td></tr>
+                <tr><td>Size of a shared document</td><td>500 KB</td><td>5 MB</td></tr>
+                <tr><td>Links created or updated a day</td><td>100</td><td>2,000</td></tr>
+                <tr><td>Your own title and description on the link's preview in chat apps</td><td>No</td><td>Yes, from the command-line tool</td></tr>
+                <tr><td>Converting, and exporting PDF, HTML and images</td><td>Yes</td><td>Yes</td></tr>
+                <tr><td>End-to-end encryption of what you share</td><td>Yes</td><td>Yes</td></tr>
+            </tbody>
+        </table>
+        <p>In the editor, updating a link with a Pro key also renews it for another year.</p>
+
+        <div class="cta-row">
+            <a href="#key" class="cta" id="proBuy" rel="noopener" hidden>Get md2pdf Pro for ${PRO_PRICE}</a>
+            <a href="/" class="cta-secondary">Open the editor</a>
+        </div>
+        <p id="proUnavailable" hidden>md2pdf Pro is not on sale yet.</p>
+
+        <h2>How it works</h2>
+        <ol style="padding-left: 24px;">
+            <li>You pay once through Polar, the merchant of record that sells md2pdf Pro. It is not a subscription: nothing renews on its own.</li>
+            <li>Polar gives you a license key, on its confirmation page and by email.</li>
+            <li>Paste the key below to use Pro in this browser. For the <code>md2pdf-studio</code> command-line tool, set it as <code>MD2PDF_API_KEY</code>.</li>
+        </ol>
+        <p>The key works for one year from the purchase, in the browsers and computers you use. There is no account: the key is all there is. When the year ends, the links you made stay up until their own end date, and new links go back to the free limits.</p>
+
+        <h2 id="key">Your key</h2>
+        <p id="proStatus" hidden></p>
+        <form id="proForm">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <label for="proKeyInput">License key</label>
+                <input id="proKeyInput" type="text" autocomplete="off" spellcheck="false" maxlength="128" style="${field}flex:1;min-width:240px;">
+                <button type="submit" id="proActivate" style="${field}cursor:pointer;font-weight:600;">Use this key here</button>
+            </div>
+        </form>
+        <p id="proMessage" role="status" style="min-height:1.5em;"></p>
+        <button type="button" id="proRemove" style="${field}cursor:pointer;" hidden>Remove the key from this browser</button>
+        <noscript><p>This page needs JavaScript to check and save a key.</p></noscript>
+
+        <h2>What does not change</h2>
+        <p>Pro does not weaken the encryption. A document is still encrypted on your device, and the key that opens it stays in the link, so the server cannot read what you share. The Pro key only tells the server which limits apply: it is kept in your browser, and the server keeps a hash of it, not the key. <a href="/privacy">Privacy</a> has the details.</p>
+
+        ${FOOTER}
+    </div>
+    <script src="/pro.js" defer></script>
+</body>
+</html>`;
+}
+
 // ── Emit ──────────────────────────────────────────────
 
 function writeFile(rel, contents) {
@@ -861,5 +946,6 @@ writeFile('vs/index.html', buildVsIndex());
 writeFile('api.html', buildApi());
 writeFile('ai-skill.html', buildAiSkill());
 writeFile('changelog.html', buildChangelog());
+writeFile('pro.html', buildPro());
 
 console.log('\n✓ SEO pages generated');

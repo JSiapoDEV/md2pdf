@@ -348,12 +348,14 @@ test('upgrade: reinstalls an older skill with the latest version, and only then'
     await assert.rejects(upgrade({ dir, check: async () => null, install }), /Could not reach npm/);
 });
 
-// A paid plan is not offered yet, so nothing people or agents read mentions one.
-// Delete this test when it launches.
-test('no public text mentions Pro, API keys or the longer limits yet', async () => {
+// md2pdf Pro is described on /pro, in the editor's FAQ and in the privacy page.
+// The agent-facing texts and the CLI's own documents do not mention it until
+// the CLI release that documents its options: update them together, then
+// delete this test.
+test('the CLI, the skill and the agent documents do not mention Pro yet', async () => {
     const PRO = /\bPro\b|\bpaid\b|API key|MD2PDF_API_KEY|--api-key|--title|--description|365 days|(?<!\d)5 MB/;
-    const files = ['public/skill.md', 'cli/README.md', 'README.md', 'public/ai-skill.html', 'public/api.html', 'public/about.html', 'public/privacy.html',
-        'public/terms.html', 'public/index.html', 'public/llms.txt', 'public/llms-full.txt', 'public/.well-known/ai-plugin.json', 'cli/CHANGELOG.md',
+    const files = ['public/skill.md', 'cli/README.md', 'README.md', 'public/ai-skill.html', 'public/api.html', 'public/about.html',
+        'public/terms.html', 'public/llms.txt', 'public/llms-full.txt', 'public/.well-known/ai-plugin.json', 'cli/CHANGELOG.md',
         'CHANGELOG.md', 'public/changelog.html'];
     for (const file of files) {
         const text = (await repoFile(file)).replace(/API keys, tokens|need an API key|no API key/g, '');
@@ -432,3 +434,25 @@ test('the Claude plugin matches the site skill and the directory rules', async (
     // plugin is kept to Claude Code by its listing settings instead.
     assert.ok(!top.includes('bin'), 'the directory refuses a bin/ folder');
 });
+
+// /pro sells what worker.js applies, and its buy link comes from the server.
+test('the Pro page states the limits the Worker applies', async () => {
+    const page = await repoFile('public/pro.html');
+    const workerSource = await repoFile('worker.js');
+    for (const [shown, applied] of [
+        ['<td>30 days</td><td>1 year</td>', 'maxExpirySec: 365 * DAY_SEC'],
+        ['<td>500 KB</td><td>5 MB</td>', 'maxBytes: 5 * MB'],
+        ['<td>100</td><td>2,000</td>', 'dailyWrites: 2000'],
+    ]) {
+        assert.ok(page.includes(shown), 'pro.html must show ' + shown);
+        assert.ok(workerSource.includes(applied), 'worker.js must apply ' + applied);
+    }
+    assert.ok(workerSource.includes('maxBytes: 512000') && workerSource.includes('dailyWrites: 100') && workerSource.includes('maxExpirySec: 30 * DAY_SEC'));
+    assert.match(page, /US\$14/);
+    // The checkout link is configuration, read from /api/plan: never written into the page.
+    assert.doesNotMatch(page, /polar\.sh/);
+    assert.match(page, /<script src="\/pro\.js" defer><\/script>/);
+    // The editor fills its Pro line only from /api/plan, so nothing shows until Pro is on sale.
+    assert.match(await repoFile('public/index.html'), /id="shareProLink"><\/a>/);
+});
+

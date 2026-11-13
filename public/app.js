@@ -74,6 +74,12 @@
             replaceBtn: 'Replace', replaceAll: 'All',
             builtBy: 'Built by', starGithub: 'Star on GitHub',
             starAfterShare: 'Useful? A star on GitHub helps other people find md2pdf.', starAction: 'Star',
+            proOffer: 'Links last 30 days. With md2pdf Pro they last a year.',
+            proActive: 'md2pdf Pro is active until {date}: links last a year.',
+            proActiveNoDate: 'md2pdf Pro is active: links last a year.',
+            proEnded: 'Your md2pdf Pro key is no longer valid. This link uses the free limits.',
+            proSee: 'See Pro',
+            docTooLargePro: 'This document is over 500 KB. md2pdf Pro takes up to 5 MB.',
             support: 'Support', supportTitle: 'md2pdf is free and open source. Support it on GitHub Sponsors',
             supportAsk: 'md2pdf is free and open source. If it helps you, you can support it.', supportAction: 'Support',
             apiPrompts: 'AI Skill',
@@ -140,6 +146,12 @@
             replaceBtn: 'Reemplazar', replaceAll: 'Todo',
             builtBy: 'Creado por', starGithub: 'Estrella en GitHub',
             starAfterShare: '¿Te sirvió? Una estrella en GitHub ayuda a que otros encuentren md2pdf.', starAction: 'Dar estrella',
+            proOffer: 'Los enlaces duran 30 días. Con md2pdf Pro duran un año.',
+            proActive: 'md2pdf Pro está activo hasta el {date}: los enlaces duran un año.',
+            proActiveNoDate: 'md2pdf Pro está activo: los enlaces duran un año.',
+            proEnded: 'Tu clave de md2pdf Pro ya no es válida. Este enlace usa los límites gratuitos.',
+            proSee: 'Ver Pro',
+            docTooLargePro: 'Este documento pasa de 500 KB. md2pdf Pro acepta hasta 5 MB.',
             support: 'Apoyar', supportTitle: 'md2pdf es gratis y de código abierto. Apóyalo en GitHub Sponsors',
             supportAsk: 'md2pdf es gratis y de código abierto. Si te sirve, puedes apoyarlo.', supportAction: 'Apoyar',
             apiPrompts: 'Skill de IA',
@@ -2498,6 +2510,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         $('#shareModalTitle').textContent = t('myLinks');
         $('#shareUrlRow').hidden = true;
         $('#shareStar').hidden = true;
+        $('#sharePro').hidden = true;
         shareDeleteBtn.hidden = true;
         shareUpdateBtn.hidden = true;
         renderShareLinks(true);
@@ -2517,6 +2530,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         shareDeleteBtn.hidden = !shareModalDocId;
         shareUpdateBtn.hidden = true;
         updateShareHint();
+        updateProLine();
         renderShareLinks();
         shareOverlay.classList.add('active');
         shareUrlInput.focus();
@@ -2623,6 +2637,82 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         return url;
     }
 
+    // ── md2pdf Pro ───────────────────────────────────
+    // The Pro key (the license key of the one-year pass) is entered on /pro,
+    // kept in this browser only and sent with share requests.
+    const PRO_KEY_STORE = 'md2pdf-pro-key';
+    const PRO_LINK_SECONDS = 365 * 86400;
+    let planInfo = null;   // { plan, expiresAt, checkoutUrl }, once asked
+    let planKey = null;    // the key planInfo was asked with
+
+    function proKey() {
+        try { return localStorage.getItem(PRO_KEY_STORE) || ''; } catch (_) { return ''; }
+    }
+
+    function forgetProKey() {
+        try { localStorage.removeItem(PRO_KEY_STORE); } catch (_) { /* nothing stored */ }
+        planInfo = null;
+    }
+
+    function openPro() {
+        track('open_pro');
+        window.open('/pro', '_blank', 'noopener');
+    }
+
+    // What this browser's key gives, and whether Pro is on offer. Asked once.
+    async function loadPlan() {
+        // The key can change in another tab (/pro), so the answer is kept per key.
+        let key = proKey();
+        if (planInfo && planKey === key) return planInfo;
+        planInfo = null;
+        try {
+            let res = await fetch('/api/plan', key ? { headers: { Authorization: 'Bearer ' + key } } : undefined);
+            if (key && res.status === 401) { forgetProKey(); key = ''; res = await fetch('/api/plan'); }
+            if (res.ok) { planInfo = await res.json(); planKey = key; }
+        } catch (_) { /* offline: no Pro line */ }
+        return planInfo;
+    }
+
+    // Sends a share request with the Pro key when there is one. A key that is
+    // no longer good is forgotten and the request goes again with the free
+    // limits; one that cannot be checked right now is kept for next time.
+    async function shareFetch(path, method, body, headersFor) {
+        const attempt = (key) => fetch(path, {
+            method: method,
+            headers: Object.assign({ 'Content-Type': 'text/plain', 'X-Encrypted': 'aes-256-gcm' },
+                headersFor ? headersFor(!!key) : {}, key ? { Authorization: 'Bearer ' + key } : {}),
+            body: body,
+        });
+        const key = proKey();
+        let res = await attempt(key);
+        if (key && (res.status === 401 || res.status === 503)) {
+            if (res.status === 401) {
+                forgetProKey();
+                showToast(t('proEnded'), { label: t('proSee'), run: openPro });
+            }
+            res = await attempt('');
+        }
+        return res;
+    }
+
+    // The line under a link: the pass when there is one, the offer when Pro is on sale.
+    async function updateProLine() {
+        const line = $('#sharePro');
+        line.hidden = true;
+        if (isSharedView) return;
+        const info = await loadPlan();
+        if (!info) return;
+        if (info.plan === 'pro') {
+            $('#shareProLink').textContent = info.expiresAt
+                ? t('proActive').replace('{date}', formatDate(info.expiresAt)) : t('proActiveNoDate');
+        } else if (info.checkoutUrl) {
+            $('#shareProLink').textContent = t('proOffer');
+        } else {
+            return;
+        }
+        line.hidden = false;
+    }
+
     function isUsableShare(entry) {
         return !!entry && typeof entry.id === 'string' && typeof entry.editKey === 'string' &&
             typeof entry.encKey === 'string' && (!entry.expiresAt || Date.parse(entry.expiresAt) > Date.now());
@@ -2633,6 +2723,10 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
     }
 
     function shareErrorToast(status) {
+        if (status === 413 && planInfo && planInfo.plan === 'free' && planInfo.checkoutUrl) {
+            showToast(t('docTooLargePro'), { label: t('proSee'), run: openPro });
+            return;
+        }
         showToast(status === 413 ? t('docTooLarge') : status === 429 ? t('tooManyShares') : t('shareFailed'));
     }
 
@@ -2666,15 +2760,12 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         try {
             const { key: cryptoKey, b64: encKey } = await e2eeGenerateKey();
             const ciphertext = await e2eeEncrypt(text, cryptoKey);
-            const res = await fetch('/api/save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain',
-                    'X-Encrypted': 'aes-256-gcm',
-                },
-                body: ciphertext,
-            });
-            if (!res.ok) { shareErrorToast(res.status); return null; }
+            const res = await shareFetch('/api/save', 'POST', ciphertext);
+            if (!res.ok) {
+                if (res.status === 413) await loadPlan();
+                shareErrorToast(res.status);
+                return null;
+            }
 
             const data = await res.json();
             const shares = getShareMap();
@@ -2709,15 +2800,9 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         try {
             const cryptoKey = await e2eeImportKeyFull(entry.encKey);
             const ciphertext = await e2eeEncrypt(text, cryptoKey);
-            const res = await fetch('/api/update/' + entry.id, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'text/plain',
-                    'X-Edit-Key': entry.editKey,
-                    'X-Encrypted': 'aes-256-gcm',
-                },
-                body: ciphertext,
-            });
+            // With a Pro key, updating a link also renews it for a year.
+            const res = await shareFetch('/api/update/' + entry.id, 'PUT', ciphertext, (pro) => Object.assign(
+                { 'X-Edit-Key': entry.editKey }, pro ? { 'X-Expires-In': String(PRO_LINK_SECONDS) } : {}));
             if (res.status === 404) {
                 // Expired or deleted elsewhere: start a new link instead.
                 delete shares[docId];
@@ -3205,6 +3290,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         $('#starLink').addEventListener('click', () => track('open_star'));
         $('#shareStarLink').addEventListener('click', () => track('open_star_share'));
         $('#supportLink').addEventListener('click', () => track('open_support'));
+        $('#shareProLink').addEventListener('click', () => track('open_pro'));
         $('#aboutLink').addEventListener('click', (e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
             e.preventDefault();

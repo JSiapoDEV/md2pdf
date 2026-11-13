@@ -350,7 +350,7 @@ function buildPage(style) {
 
         <details>
             <summary>Is the ${style.name} style free?</summary>
-            <p>Yes, completely free. All 11 styles are included at no cost. No signup, no premium tiers.</p>
+            <p>Yes. All 11 styles are included at no cost, with no signup. Converting and exporting are free; an optional pass, <a href="/pro">md2pdf Pro</a>, only adds share links that last longer and room for bigger documents.</p>
         </details>
         <details>
             <summary>Can I customize the ${style.name} style with my own CSS?</summary>
