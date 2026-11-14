@@ -52,6 +52,9 @@ const LABELS = {
     download_skill_zip: 'Download skill ZIP', skill_md: 'Fetch /skill.md',
     open_about: 'Open About', new_document: 'New document',
     pro_required: 'Hit a free limit',
+    open_star: 'Open star link (footer)', open_star_share: 'Open star link (after sharing)',
+    star_ask_shown: 'Star ask shown', star_ask_open: 'Star ask opened',
+    support_ask_shown: 'Support ask shown', support_ask_open: 'Support ask opened',
 };
 const label = (name) => LABELS[name] || (name.startsWith('template_') ? 'Template: ' + name.slice(9) : name);
 const pad = (s, n) => String(s).padEnd(n);
@@ -75,3 +78,18 @@ for (const r of byDay) console.log('  ' + pad(String(r.day).slice(0, 10), 12) + 
 console.log('\nFree limits hit (demand a paid plan would meet)');
 if (!limits.length) console.log('  none yet');
 for (const r of limits) console.log('  ' + pad(r.limit || '(unknown)', 12) + pad(r.client, 9) + Math.round(r.n));
+
+// Asks: to how many one was shown, and how many of them opened its link.
+// The star line under a new link is shown once per link made in the browser.
+const total = (name, client) => Math.round(byEvent
+    .filter((r) => r.event === name && (!client || r.client === client))
+    .reduce((sum, r) => sum + Number(r.n), 0));
+const rate = (opened, shown) => (shown ? '  (' + Math.round((100 * opened) / shown) + '%)' : '');
+const funnel = (text, shown, opened) => console.log('  ' + pad(text, 32) + 'shown ' + pad(shown, 7) + 'opened ' + opened + rate(opened, shown));
+
+console.log('\nAsks: shown, and how many opened the link');
+funnel('Star, after the 3rd export', total('star_ask_shown'), total('star_ask_open'));
+funnel('Star, after sharing a link', total('link_created', 'browser'), total('open_star_share'));
+funnel('Support, from the 15th export', total('support_ask_shown'), total('support_ask_open'));
+console.log('  ' + pad('Star link in the footer', 32) + 'opened ' + total('open_star'));
+console.log('  ' + pad('Support link in the footer', 32) + 'opened ' + total('open_support'));

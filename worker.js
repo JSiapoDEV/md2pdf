@@ -106,6 +106,8 @@ var BEACON_EVENTS = [
     'copy_skill', 'download_skill', 'open_skill', 'open_about',
     'export_pdf', 'export_html', 'export_image', 'copy_formatted', 'copy_formatted_big',
     'new_document', 'template_cv', 'template_report', 'template_docs', 'template_changelog', 'template_meeting',
+    // Asks: how often one is shown, and how often its link is opened.
+    'open_star', 'open_star_share', 'star_ask_shown', 'star_ask_open',
 ];
 
 function clientKind(request) {

@@ -2,6 +2,12 @@
 
 What changed on md2pdf.studio. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the site has no version numbers, so each release is the date it went live. The `md2pdf-studio` command-line tool has [its own changelog](https://github.com/JSiapoDEV/md2pdf/blob/main/cli/CHANGELOG.md).
 
+## 2026-11-13
+
+### Added
+
+- After your third export the editor asks, once, for a star on GitHub. How often that request is shown and opened is counted anonymously, like the other clicks.
+
 ## 2026-11-10
 
 ### Added

@@ -73,7 +73,7 @@
             find: 'Find...', replace: 'Replace...',
             replaceBtn: 'Replace', replaceAll: 'All',
             builtBy: 'Built by', starGithub: 'Star on GitHub',
-            starAfterShare: 'Useful? A star on GitHub helps other people find md2pdf.',
+            starAfterShare: 'Useful? A star on GitHub helps other people find md2pdf.', starAction: 'Star',
             apiPrompts: 'AI Skill',
             linkCreated: 'Link created!', linkHint: 'Anyone with the full link can read this document.',
             linkExpires: 'Link expires on {date}. Anyone with the full link can read it.',
@@ -137,7 +137,7 @@
             find: 'Buscar...', replace: 'Reemplazar...',
             replaceBtn: 'Reemplazar', replaceAll: 'Todo',
             builtBy: 'Creado por', starGithub: 'Estrella en GitHub',
-            starAfterShare: '¿Te sirvió? Una estrella en GitHub ayuda a que otros encuentren md2pdf.',
+            starAfterShare: '¿Te sirvió? Una estrella en GitHub ayuda a que otros encuentren md2pdf.', starAction: 'Dar estrella',
             apiPrompts: 'Skill de IA',
             linkCreated: 'Enlace creado!', linkHint: 'Cualquiera con el enlace completo puede leer este documento.',
             linkExpires: 'El enlace vence el {date}. Cualquiera con el enlace completo puede leerlo.',
@@ -210,6 +210,34 @@
         try { if (navigator.sendBeacon) navigator.sendBeacon('/api/event', eventName); } catch (_) { /* never matters */ }
     }
 
+    // ── Asks after exporting ─────────────────────────
+    // The third export is when the tool has just been useful a few times: the
+    // editor asks once for a star. Exports are counted in this browser only.
+    const REPO_URL = 'https://github.com/JSiapoDEV/md2pdf';
+
+    function askAfterExport(count) {
+        if (count === 3) return 'star';
+        return null;
+    }
+
+    function exportDone(message) {
+        let count = 0;
+        try {
+            count = (parseInt(localStorage.getItem('md2pdf-exports'), 10) || 0) + 1;
+            localStorage.setItem('md2pdf-exports', String(count));
+        } catch (_) { /* no storage: never ask */ }
+        const said = message ? message + '. ' : '';
+        if (askAfterExport(count) === 'star') {
+            track('star_ask_shown');
+            showToast(said + t('starAfterShare'), { label: t('starAction'), run: function () {
+                track('star_ask_open');
+                window.open(REPO_URL, '_blank', 'noopener');
+            } });
+        } else if (message) {
+            showToast(message);
+        }
+    }
+
     function saveBlob(blob, filename) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -266,6 +294,8 @@
         // Share modal
         $('#shareModalTitle').textContent = t('linkCreated');
         $('#shareStarLink').textContent = t('starAfterShare');
+        $('#starText').textContent = t('starGithub');
+        $('#starLink').title = t('starGithub');
         $('#apiModalTitle').textContent = t('apiPrompts');
         updateShareHint();
         $('#reportAbuseLink').textContent = t('reportAbuse');
@@ -2114,6 +2144,8 @@ body {
 
             iframe.contentWindow.focus();
             iframe.contentWindow.print();
+            // print() returns when the dialog closes.
+            exportDone(null);
 
             const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
             iframe.contentWindow.onafterprint = cleanup;
@@ -2228,7 +2260,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         a.download = title + '.html';
         a.click();
         URL.revokeObjectURL(url);
-        showToast(t('htmlDownloaded'));
+        exportDone(t('htmlDownloaded'));
     }
 
     // ── Dropdowns ────────────────────────────────────
@@ -2302,7 +2334,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             link.download = currentFileName.replace(/\.(md|markdown|txt|mdx)$/i, '') + '.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
-            showToast(t('imgDownloaded'));
+            exportDone(t('imgDownloaded'));
         } catch (err) {
             console.error('Image export failed', err);
             alert('Image export failed.');
@@ -3153,6 +3185,8 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
 
         $('#newDocBtn').addEventListener('click', newDocument);
         $('#copyFormattedBtn').addEventListener('click', copyFormatted);
+        $('#starLink').addEventListener('click', () => track('open_star'));
+        $('#shareStarLink').addEventListener('click', () => track('open_star_share'));
         $('#aboutLink').addEventListener('click', (e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
             e.preventDefault();

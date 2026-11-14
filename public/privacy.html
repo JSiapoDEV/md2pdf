@@ -47,7 +47,7 @@
         <nav class="lang-switch" aria-label="Language"><a href="#en" hreflang="en">English</a> &middot; <a href="#es" hreflang="es">Español</a></nav>
         <div id="docEn" lang="en">
         <h1>Privacy Policy</h1>
-        <p class="subtitle">Effective November 10, 2026</p>
+        <p class="subtitle">Effective November 13, 2026</p>
 
         <p>md2pdf.studio is operated by JSiapoDev, an individual developer based in Peru, who is responsible for the processing described here. Contact: <a href="mailto:jsiapo.dev@gmail.com">jsiapo.dev@gmail.com</a>.</p>
 
@@ -63,11 +63,11 @@
         <h2>What is processed, and for how long</h2>
         <table>
             <tr><th>Data</th><th>Where</th><th>Why</th><th>Kept</th></tr>
-            <tr><td>Your drafts, settings, and the links you created with their keys</td><td>Your browser's local storage only</td><td>Auto-save and editing your own links</td><td>Until you clear your browser data</td></tr>
+            <tr><td>Your drafts, settings, a count of your exports, and the links you created with their keys</td><td>Your browser's local storage only</td><td>Auto-save, editing your own links, and asking for a star only once</td><td>Until you clear your browser data</td></tr>
             <tr><td>Share links: the encrypted document, its ID, an edit key, creation and expiry dates</td><td>Cloudflare KV</td><td>Serving the link</td><td>30 days from creation unless the author chose a shorter time, or until it is deleted. A one-time link is also deleted when it is opened. Links created before the October 2, 2026 update: 90 days after their last update</td></tr>
             <tr><td>Daily usage counters: how many writes and bytes today, under an irreversible hash of your IP address. We do not store the address itself</td><td>Cloudflare Durable Objects</td><td>Daily limits on free use, to stop abuse</td><td>Until 00:00 UTC of the day they were counted. One-time links keep a marker that they were opened for 31 days</td></tr>
             <tr><td>Links and keys created with the <code>md2pdf-studio</code> command-line tool or MCP server</td><td>Your computer only (<code>~/.config/md2pdf-studio/links.json</code>, readable by your user)</td><td>Updating or deleting your own links later</td><td>Until you delete the file or the link expires</td></tr>
-            <tr><td>Anonymous counts: the name of an event (a link was created; the skill was copied or downloaded; the AI Skill dialog or the About page was opened; a document was exported, copied with formatting, or started with New or a template; or a limit was hit, and which one) and the kind of client (browser, the <code>md2pdf-studio</code> tool, or another program), read from the User-Agent. No IP address, no identifier, no content</td><td>Cloudflare Workers Analytics Engine</td><td>Knowing which features are used and which limits people reach</td><td>Three months</td></tr>
+            <tr><td>Anonymous counts: the name of an event (a link was created; the skill was copied or downloaded; the AI Skill dialog, the About page or a link to star the project on GitHub was opened; a request for a star was shown; a document was exported, copied with formatting, or started with New or a template; or a limit was hit, and which one) and the kind of client (browser, the <code>md2pdf-studio</code> tool, or another program), read from the User-Agent. No IP address, no identifier, no content</td><td>Cloudflare Workers Analytics Engine</td><td>Knowing which features are used and which limits people reach</td><td>Three months</td></tr>
             <tr><td>Your IP address, when you create, update or delete a link</td><td>Cloudflare's rate limiter, in memory</td><td>Preventing abuse of share links</td><td>About 60 seconds; we do not store it</td></tr>
             <tr><td>Standard request data (IP address, browser, page, referring site)</td><td>Cloudflare, which hosts the site</td><td>Delivering and protecting the site; we see aggregate counts such as visits per page and country</td><td>Under Cloudflare's retention policies; we keep no logs of our own</td></tr>
         </table>
@@ -107,7 +107,7 @@
         <template id="docEs">
         <div lang="es">
         <h1>Política de privacidad</h1>
-        <p class="subtitle">Vigente desde el 10 de noviembre de 2026</p>
+        <p class="subtitle">Vigente desde el 13 de noviembre de 2026</p>
         <p class="note">Traducción de la versión en inglés. Si hay diferencias, prevalece la versión en inglés.</p>
 
         <p>md2pdf.studio es operado por JSiapoDev, un desarrollador independiente con sede en Perú, responsable del tratamiento que se describe aquí. Contacto: <a href="mailto:jsiapo.dev@gmail.com">jsiapo.dev@gmail.com</a>.</p>
@@ -124,11 +124,11 @@
         <h2>Qué se trata y por cuánto tiempo</h2>
         <table>
             <tr><th>Datos</th><th>Dónde</th><th>Para qué</th><th>Cuánto tiempo</th></tr>
-            <tr><td>Tus borradores, tu configuración y los enlaces que creaste, con sus claves</td><td>Solo en el almacenamiento local de tu navegador</td><td>Guardado automático y edición de tus propios enlaces</td><td>Hasta que borres los datos del navegador</td></tr>
+            <tr><td>Tus borradores, tu configuración, un conteo de tus exportaciones y los enlaces que creaste, con sus claves</td><td>Solo en el almacenamiento local de tu navegador</td><td>Guardado automático, edición de tus propios enlaces y pedir una estrella una sola vez</td><td>Hasta que borres los datos del navegador</td></tr>
             <tr><td>Enlaces para compartir: el documento cifrado, su ID, una clave de edición, y las fechas de creación y de vencimiento</td><td>Cloudflare KV</td><td>Servir el enlace</td><td>30 días desde su creación, salvo que el autor haya elegido un plazo menor, o hasta que se borre. Un enlace de un solo uso también se borra al abrirse. Enlaces creados antes de la actualización del 2 de octubre de 2026: 90 días después de su última actualización</td></tr>
             <tr><td>Contadores de uso diario: cuántas escrituras y bytes hoy, bajo un hash irreversible de tu dirección IP. No guardamos la dirección</td><td>Cloudflare Durable Objects</td><td>Límites diarios del uso gratuito, para frenar abusos</td><td>Hasta las 00:00 UTC del día en que se contaron. Los enlaces de un solo uso conservan durante 31 días una marca de que ya se abrieron</td></tr>
             <tr><td>Enlaces y claves creados con la herramienta de línea de comandos <code>md2pdf-studio</code> o su servidor MCP</td><td>Solo en tu computadora (<code>~/.config/md2pdf-studio/links.json</code>, que solo tu usuario puede leer)</td><td>Actualizar o borrar tus propios enlaces más adelante</td><td>Hasta que borres el archivo o venza el enlace</td></tr>
-            <tr><td>Conteos anónimos: el nombre de un evento (se creó un enlace; se copió o descargó la skill; se abrió el diálogo Skill de IA o la página Acerca de; se exportó un documento, se copió con formato o se empezó con Nuevo o una plantilla; o se alcanzó un límite, y cuál) y el tipo de cliente (navegador, la herramienta <code>md2pdf-studio</code> u otro programa), leído de la cabecera que identifica al cliente. Sin dirección IP, sin identificadores, sin contenido</td><td>Cloudflare Workers Analytics Engine</td><td>Saber qué funciones se usan y qué límites alcanza la gente</td><td>Tres meses</td></tr>
+            <tr><td>Conteos anónimos: el nombre de un evento (se creó un enlace; se copió o descargó la skill; se abrió el diálogo Skill de IA, la página Acerca de o un enlace para dar una estrella al proyecto en GitHub; se mostró un pedido de estrella; se exportó un documento, se copió con formato o se empezó con Nuevo o una plantilla; o se alcanzó un límite, y cuál) y el tipo de cliente (navegador, la herramienta <code>md2pdf-studio</code> u otro programa), leído de la cabecera que identifica al cliente. Sin dirección IP, sin identificadores, sin contenido</td><td>Cloudflare Workers Analytics Engine</td><td>Saber qué funciones se usan y qué límites alcanza la gente</td><td>Tres meses</td></tr>
             <tr><td>Tu dirección IP, cuando creas, actualizas o borras un enlace</td><td>El limitador de solicitudes de Cloudflare, en memoria</td><td>Evitar abusos de los enlaces para compartir</td><td>Unos 60 segundos; no la guardamos</td></tr>
             <tr><td>Datos estándar de cada solicitud (dirección IP, navegador, página, sitio de origen)</td><td>Cloudflare, que aloja el sitio</td><td>Servir y proteger el sitio; vemos cifras agregadas, como visitas por página y país</td><td>Según las políticas de retención de Cloudflare; no llevamos registros propios</td></tr>
         </table>
