@@ -105,6 +105,8 @@ function proRequired(message, feature) {
 var BEACON_EVENTS = [
     'copy_skill', 'download_skill', 'open_skill', 'open_about', 'open_support',
     'export_pdf', 'export_html', 'export_image', 'copy_formatted', 'copy_formatted_big',
+    // A PDF's pages: A4, Letter or one long page, and whether it had page numbers.
+    'pdf_a4', 'pdf_letter', 'pdf_single', 'pdf_page_numbers',
     'new_document', 'template_cv', 'template_report', 'template_docs', 'template_changelog', 'template_meeting',
     // Asks: how often one is shown, and how often its link is opened.
     'open_star', 'open_star_share', 'star_ask_shown', 'star_ask_open', 'support_ask_shown', 'support_ask_open',

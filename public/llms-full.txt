@@ -18,7 +18,7 @@ Last updated: 2026-11-11
 - **Auto table of contents** — write `[TOC]` on its own line to generate a linked TOC from headings
 - 11 visual styles for document rendering
 - Custom CSS injection for full styling control
-- Export to PDF (continuous single page), HTML (standalone with inlined styles), and PNG image
+- Export to PDF (A4 or Letter pages, or one long page; a line with only `\newpage` starts a new page), HTML (standalone with inlined styles), and PNG image
 - **End-to-end encrypted share links** — the document is encrypted on the device (AES-256-GCM) and the key stays in the link's `#k=` part, which never reaches the server
 - One-time links and links with a shorter life than the 30-day default
 - Link previews in chat apps show a generic card, because the server cannot read the content

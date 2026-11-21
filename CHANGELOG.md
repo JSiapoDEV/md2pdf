@@ -2,6 +2,19 @@
 
 What changed on md2pdf.studio. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the site has no version numbers, so each release is the date it went live. The `md2pdf-studio` command-line tool has [its own changelog](https://github.com/JSiapoDEV/md2pdf/blob/main/cli/CHANGELOG.md).
 
+## 2026-11-20
+
+### Changed
+
+- PDFs come out in pages: A4, or Letter where Letter is the usual paper, with 25 mm margins on every page. Under **Export PDF** you can switch to Letter, to A4, or back to the whole document on **one long page**, as before. The choice is remembered in your browser.
+- Tables split between rows and repeat their header on the next page; a heading stays with the text that follows it.
+- The PDF is titled with the document's name instead of "Markdown to PDF Converter Online Free — MD2PDF", which is also the file name the print dialog suggests.
+
+### Added
+
+- **Page numbers** ("2 / 5" at the bottom), off unless you turn them on.
+- A line with only `\newpage` or `\pagebreak` starts a new page; Typora's `<div style="page-break-after: always"></div>` works too. The preview marks the break with a dashed line.
+
 ## 2026-11-13
 
 ### Added

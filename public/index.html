@@ -147,6 +147,14 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                             Export PDF
                         </button>
+                        <div class="pdf-options">
+                            <div class="pdf-pages" id="pdfPagesSeg" role="radiogroup" aria-label="Page size of the PDF">
+                                <span class="pdf-pages-label" id="pdfPagesLabel">Pages</span>
+                                <button type="button" role="radio" aria-checked="true" data-pages="a4">A4</button><button type="button" role="radio" aria-checked="false" data-pages="letter">Letter</button><button type="button" role="radio" aria-checked="false" data-pages="single" title="The whole document on one long page">Single</button>
+                            </div>
+                            <label class="pdf-numbers"><input type="checkbox" id="pageNumbersChk"> <span id="pageNumbersLabel">Page numbers</span></label>
+                        </div>
+                        <div class="dropdown-divider"></div>
                         <button class="dropdown-item" id="exportHTMLBtn">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                             Export HTML
@@ -407,7 +415,7 @@
 
             <details><summary>Does it work offline?</summary><p>The editor and preview work offline after the initial page load. Export and sharing features require an internet connection.</p></details>
 
-            <details><summary>What export formats are available?</summary><p>PDF (continuous single page), HTML (standalone file with inlined styles), and PNG image. All formats preserve your chosen style.</p></details>
+            <details><summary>What export formats are available?</summary><p>PDF in A4 or Letter pages, or on one long page if you prefer; HTML (standalone file with inlined styles); and PNG image. All formats preserve your chosen style.</p></details>
 
             <details><summary>Can AI agents use MD2PDF?</summary><p>Yes. MD2PDF provides an installable Skill in the Claude Skills format (SKILL.md) that works with Claude, Custom GPTs, Gemini, and any compatible agent. The md2pdf-studio CLI and MCP server do the encryption on the agent's machine, and WebMCP tools in the editor serve browser agents (experimental).</p></details>
 
@@ -495,7 +503,7 @@
 
             <details><summary>¿Funciona sin conexión?</summary><p>El editor y la vista previa funcionan sin conexión después de cargar la página. Exportar y compartir necesitan internet.</p></details>
 
-            <details><summary>¿En qué formatos puedo exportar?</summary><p>PDF (una sola página continua), HTML (un archivo independiente con los estilos incluidos) e imagen PNG. Todos conservan el estilo que elegiste.</p></details>
+            <details><summary>¿En qué formatos puedo exportar?</summary><p>PDF en hojas A4 o Carta, o en una sola hoja larga si lo prefieres; HTML (un archivo independiente con los estilos incluidos) e imagen PNG. Todos conservan el estilo que elegiste.</p></details>
 
             <details><summary>¿Los agentes de IA pueden usar MD2PDF?</summary><p>Sí. MD2PDF ofrece una skill instalable en el formato de Claude Skills (SKILL.md) que funciona con Claude, Codex, Gemini y cualquier agente compatible. El CLI md2pdf-studio y su servidor MCP cifran en la máquina del agente, y las herramientas WebMCP del editor sirven a los agentes del navegador (experimental).</p></details>
 
@@ -559,7 +567,7 @@
         {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Conversion runs in your browser: your Markdown is never uploaded to convert it. Only if you create a share link is the document uploaded, and it is encrypted in your browser first, so the server stores ciphertext it cannot read. No cookies, no account."}},
         {"@type": "Question", "name": "Can I share my documents?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Click Export > Share Link to generate a shareable URL. Recipients can view your styled document in their browser. Link previews in chat apps show a generic card, because the server cannot read the document."}},
         {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "The editor and preview work offline after the initial page load. Export and sharing features require an internet connection."}},
-        {"@type": "Question", "name": "What export formats are available?", "acceptedAnswer": {"@type": "Answer", "text": "PDF (continuous single page), HTML (standalone file with inlined styles), and PNG image. All formats preserve your chosen style."}},
+        {"@type": "Question", "name": "What export formats are available?", "acceptedAnswer": {"@type": "Answer", "text": "PDF in A4 or Letter pages, or on one long page if you prefer; HTML (standalone file with inlined styles); and PNG image. All formats preserve your chosen style."}},
         {"@type": "Question", "name": "Can AI agents use MD2PDF?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. MD2PDF provides an installable Skill in the Claude Skills format plus the md2pdf-studio CLI and MCP server, so Claude, Codex, Cursor, Gemini, and other agents can create, update, and share styled documents on the user's behalf."}},
         {"@type": "Question", "name": "Does MD2PDF support Mermaid diagrams?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Write Mermaid code inside a ```mermaid code block and it renders automatically as an SVG diagram. Supported types include flowcharts, sequence diagrams, Gantt charts, pie charts, class diagrams, and more."}},
         {"@type": "Question", "name": "Can I generate a table of contents?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Write [TOC] on its own line anywhere in your document. MD2PDF will auto-generate a linked table of contents from all your headings."}},
@@ -686,7 +694,7 @@
 
     <form id="wmcpExport"
           toolname="export-document"
-          tooldescription="Export the current markdown document to a file. Choose the format: pdf (styled continuous page), html (standalone file with styles inlined), or image (PNG screenshot)."
+          tooldescription="Export the current markdown document to a file. Choose the format: pdf (styled, in A4 or Letter pages or on one long page), html (standalone file with styles inlined), or image (PNG screenshot)."
           toolautosubmit="true"
           hidden>
         <select name="format"
@@ -695,6 +703,14 @@
             <option value="pdf">PDF</option>
             <option value="html">HTML</option>
             <option value="image">Image (PNG)</option>
+        </select>
+        <select name="pages"
+                toolparamtitle="PDF Pages"
+                toolparamdescription="PDF only. a4 or letter: pages with 25 mm margins. single: the whole document on one long page. Leave empty for the choice saved in the editor.">
+            <option value="">Saved choice</option>
+            <option value="a4">A4</option>
+            <option value="letter">Letter</option>
+            <option value="single">Single long page</option>
         </select>
     </form>
 

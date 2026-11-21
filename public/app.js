@@ -92,6 +92,8 @@
             copy: 'Copy', copied: 'Copied!',
             download: 'Download',
             generatingPdf: 'Generating PDF...',
+            pdfPages: 'Pages', pdfPagesTitle: 'Page size of the PDF', pdfLetter: 'Letter', pdfSingle: 'Single',
+            pdfSingleTitle: 'The whole document on one long page', pageNumbers: 'Page numbers', pageBreak: 'Page break',
             dropHere: 'Drop your <strong>.md</strong> file here',
             emptyPreview: 'Start typing to see the preview...',
             words: 'words', minRead: 'min',
@@ -158,6 +160,8 @@
             copy: 'Copiar', copied: 'Copiado!',
             download: 'Descargar',
             generatingPdf: 'Generando PDF...',
+            pdfPages: 'Hojas', pdfPagesTitle: 'Tamaño de hoja del PDF', pdfLetter: 'Carta', pdfSingle: 'Una sola',
+            pdfSingleTitle: 'Todo el documento en una sola hoja larga', pageNumbers: 'Número de página', pageBreak: 'Salto de página',
             dropHere: 'Suelta tu archivo <strong>.md</strong> aqui',
             emptyPreview: 'Empieza a escribir para ver la vista previa...',
             words: 'palabras', minRead: 'min',
@@ -276,6 +280,13 @@
 
         $('#exportBtn span').textContent = t('export');
         $('#exportPDFBtn').lastChild.textContent = ' ' + t('exportPdf');
+        $('#pdfPagesLabel').textContent = t('pdfPages');
+        $('#pdfPagesSeg').setAttribute('aria-label', t('pdfPagesTitle'));
+        $('#pdfPagesSeg [data-pages="letter"]').textContent = t('pdfLetter');
+        $('#pdfPagesSeg [data-pages="single"]').textContent = t('pdfSingle');
+        $('#pdfPagesSeg [data-pages="single"]').title = t('pdfSingleTitle');
+        $('#pageNumbersLabel').textContent = t('pageNumbers');
+        labelPageBreaks();
         $('#exportHTMLBtn').lastChild.textContent = ' ' + t('exportHtml');
         $('#exportImageBtn').lastChild.textContent = ' ' + t('exportImage');
         $('#shareBtn').lastChild.textContent = ' ' + t('shareLink');
@@ -1410,11 +1421,13 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     // ── Render ───────────────────────────────────────
 
     const TOC_PLACEHOLDER = '\u00ABTOC_PLACEHOLDER\u00BB';
+    const PAGE_BREAK_PLACEHOLDER = '\u00ABPAGE_BREAK\u00BB';
 
-    // Replace [TOC] / [TOC title="..."] lines with a placeholder paragraph before
-    // marked parses the source. Blank lines around it keep it a paragraph of its
-    // own even next to other text; lines inside fenced code are left alone.
-    function markTOC(src) {
+    // Replace [TOC] / [TOC title="..."] lines, and \newpage or \pagebreak lines,
+    // with a placeholder paragraph before marked parses the source. Blank lines
+    // around it keep it a paragraph of its own even next to other text; lines
+    // inside fenced code are left alone.
+    function markSpecialLines(src) {
         let fence = null;   // { char, len } of the open code fence
         return src.split('\n').map(line => {
             const f = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
@@ -1429,6 +1442,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
                 return line;
             }
             if (fence) return line;
+            if (/^\\(?:newpage|pagebreak)\s*$/.test(line)) return '\n' + PAGE_BREAK_PLACEHOLDER + '\n';
             const m = line.match(/^\[toc(?:\s+title="([^"]*)")?\]\s*$/i);
             if (!m) return line;
             return '\n' + (m[1] ? TOC_PLACEHOLDER + ':' + m[1] : TOC_PLACEHOLDER) + '\n';
@@ -1496,9 +1510,10 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         if (!src) {
             preview.innerHTML = '<div class="preview-empty"><p>Start typing to see the preview...</p></div>';
         } else {
-            const processed = markTOC(src);
+            const processed = markSpecialLines(src);
             preview.replaceChildren(sanitizeMarkdownHTML(marked.parse(processed)));
             injectTOC();
+            injectPageBreaks();
             preview.querySelectorAll('pre code').forEach(block => {
                 if (block.classList.contains('language-mermaid')) return;
                 hljs.highlightElement(block);
@@ -1526,6 +1541,31 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             const title = (p.textContent.trim().match(placeholderRe)[1] || '').trim();
             p.replaceWith(buildTOC(headings, title));
         });
+    }
+
+    // A \newpage or \pagebreak line becomes an empty .page-break block, which
+    // the PDF ends a page after. Typora's <div style="page-break-after: always">
+    // already breaks the page in print through its own style; it only gets
+    // .page-break-shown, so the preview marks it too.
+    const BREAK_STYLE_RE = /(?:page-)?break-(?:before|after)\s*:\s*(?:always|page)/i;
+
+    function injectPageBreaks() {
+        preview.querySelectorAll('p').forEach(p => {
+            if (p.textContent.trim() !== PAGE_BREAK_PLACEHOLDER) return;
+            const div = document.createElement('div');
+            div.className = 'page-break';
+            p.replaceWith(div);
+        });
+        preview.querySelectorAll('[style]').forEach(el => {
+            if (!el.children.length && !el.textContent.trim() && BREAK_STYLE_RE.test(el.getAttribute('style'))) {
+                el.classList.add('page-break-shown');
+            }
+        });
+        labelPageBreaks();
+    }
+
+    function labelPageBreaks() {
+        preview.querySelectorAll('.page-break, .page-break-shown').forEach(el => { el.dataset.label = t('pageBreak'); });
     }
 
     function buildTOC(headings, title) {
@@ -1618,7 +1658,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
     function cleanCopyOfPreview() {
         const clone = preview.cloneNode(true);
         let omitted = 0;
-        clone.querySelectorAll('.code-block-header, button, script, style').forEach(n => n.remove());
+        clone.querySelectorAll('.code-block-header, .page-break, .page-break-shown, button, script, style').forEach(n => n.remove());
         clone.querySelectorAll('.mermaid-block').forEach(n => {
             omitted++;
             const note = document.createElement('p');
@@ -2061,8 +2101,106 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
         return STYLES[currentStyle]?.dark === true;
     }
 
-    async function exportPDF() {
+    // ── PDF pages ────────────────────────────────────
+    // A PDF comes out in pages (A4 or Letter, 25 mm margins) or, by choice, as
+    // one long page the height of the document. The choice is kept in this
+    // browser. Without one, the paper is the one the visitor's country uses.
+
+    const PDF_PAGES = ['a4', 'letter', 'single'];
+    const LETTER_REGIONS = ['US', 'CA', 'MX', 'PH', 'CL', 'CO', 'VE', 'CR', 'GT', 'PA', 'SV', 'HN', 'NI', 'DO', 'PR'];
+
+    let pdfPages = 'a4';
+    let pdfPageNumbers = false;
+
+    function defaultPdfPages() {
+        const tag = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+        let region = '';
+        try { region = new Intl.Locale(tag).maximize().region || ''; } catch (_) {
+            region = ((tag.match(/-([a-z]{2})(?:-|$)/i) || [])[1] || '').toUpperCase();
+        }
+        return LETTER_REGIONS.includes(region) ? 'letter' : 'a4';
+    }
+
+    function loadPdfOptions() {
+        pdfPages = defaultPdfPages();
+        try {
+            const saved = localStorage.getItem('md2pdf-pdf-pages');
+            if (PDF_PAGES.includes(saved)) pdfPages = saved;
+            pdfPageNumbers = localStorage.getItem('md2pdf-pdf-numbers') === '1';
+        } catch (_) { /* the defaults */ }
+        showPdfOptions();
+    }
+
+    function setPdfPages(pages) {
+        if (!PDF_PAGES.includes(pages)) return;
+        pdfPages = pages;
+        try { localStorage.setItem('md2pdf-pdf-pages', pages); } catch (_) { /* not remembered */ }
+        showPdfOptions();
+    }
+
+    function setPdfPageNumbers(on) {
+        pdfPageNumbers = !!on;
+        try { localStorage.setItem('md2pdf-pdf-numbers', on ? '1' : '0'); } catch (_) { /* not remembered */ }
+        showPdfOptions();
+    }
+
+    function showPdfOptions() {
+        document.querySelectorAll('#pdfPagesSeg [data-pages]').forEach(btn => {
+            btn.setAttribute('aria-checked', btn.dataset.pages === pdfPages ? 'true' : 'false');
+        });
+        const numbers = $('#pageNumbersChk');
+        numbers.checked = pdfPageNumbers;
+        numbers.disabled = pdfPages === 'single';
+    }
+
+    // The name shown in the editor, without its extension: the PDF's title and
+    // the file name the print dialog suggests.
+    function documentTitle() {
+        return currentFileName.replace(/\.(md|markdown|txt|mdx)$/i, '').trim() || 'untitled';
+    }
+
+    // Page rules for the print iframe. Paged: the margin is the page's own, so
+    // every sheet gets it, and the page background fills the margin too (a dark
+    // style gets no white frame). Declaring all six margin boxes keeps Chrome
+    // from printing its date, title and URL there. Single: no margin, so there
+    // is no room for those; the padding frames the one long page.
+    function pdfPageCSS(pages, numbers, bg, dark) {
+        if (pages === 'single') {
+            return `
+@page { margin: 0; size: 210mm 297mm; }
+body { padding: 18mm 16mm; }
+.page-break, .page-break-shown { display: none; }
+.markdown-body [style*="break-"] {
+  break-before: auto !important; break-after: auto !important;
+  page-break-before: auto !important; page-break-after: auto !important;
+}`;
+        }
+        const size = pages === 'letter' ? 'letter' : 'A4';
+        const number = numbers ? 'counter(page) " / " counter(pages)' : '""';
+        return `
+@page {
+  size: ${size};
+  margin: 25mm;
+  background: ${bg};
+  @top-left { content: ""; } @top-center { content: ""; } @top-right { content: ""; }
+  @bottom-left { content: ""; } @bottom-right { content: ""; }
+  @bottom-center {
+    content: ${number};
+    font: 9pt -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: ${dark ? '#8b949e' : '#6e7781'};
+  }
+}
+body { padding: 0; }
+.page-break { break-after: page; page-break-after: always; height: 0; margin: 0; border: 0; }`;
+    }
+
+    async function exportPDF(options) {
+        const opts    = options || {};
+        const pages   = PDF_PAGES.includes(opts.pages) ? opts.pages : pdfPages;
+        const numbers = pages !== 'single' && (typeof opts.pageNumbers === 'boolean' ? opts.pageNumbers : pdfPageNumbers);
         track('export_pdf');
+        track('pdf_' + pages);
+        if (numbers) track('pdf_page_numbers');
         const btnLabel = exportBtn.querySelector('span');
         exportBtn.classList.add('loading');
         if (btnLabel) btnLabel.textContent = 'Preparing...';
@@ -2075,6 +2213,7 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
             const styleCSS = getStyleCSSForPrint();
             const userCSS  = customCSSInput.value || '';
             const content  = preview.innerHTML;
+            const title    = documentTitle();
 
             const bodyBg = style.bg;
             const bodyFg = dark ? '#e6edf3' : '#1f2328';
@@ -2089,12 +2228,11 @@ Text formatting: **bold**, *italic*, ~~strikethrough~~, \`inline code\`, and [li
 <html>
 <head>
 <meta charset="UTF-8">
-<title> </title>
+<title>${escapeHtmlFull(title)}</title>
 <style>${css}</style>
 <style>${styleCSS}</style>
 <style>${userCSS}</style>
 <style>
-@page { margin: 0; size: 210mm 297mm; }
 html {
   background: ${bodyBg} !important;
   -webkit-print-color-adjust: exact;
@@ -2102,7 +2240,7 @@ html {
   color-adjust: exact;
 }
 body {
-  margin: 0; padding: 18mm 16mm;
+  margin: 0;
   background: ${bodyBg} !important;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
@@ -2113,9 +2251,18 @@ body {
   font-size: 15px; line-height: 1.7;
   color: ${bodyFg};
 }
-.markdown-body p, .markdown-body li, .markdown-body pre,
-.markdown-body blockquote, .markdown-body table, .markdown-body tr,
-.markdown-body img { break-inside: avoid; page-break-inside: avoid; }
+/* Where a page may end: text splits, but never leaves a lone line on either
+   page (a short list item stays whole); a table splits between rows; a
+   heading stays with what follows it; images and diagrams move whole.
+   Nothing longer is kept whole: a list item with a long sublist would jump
+   to the next page and leave the rest of this one empty. */
+.markdown-body p { orphans: 3; widows: 3; }
+.markdown-body li, .markdown-body pre, .markdown-body blockquote { orphans: 2; widows: 2; }
+.markdown-body tr, .markdown-body img, .markdown-body svg,
+.markdown-body .mermaid-block {
+  break-inside: avoid; page-break-inside: avoid;
+}
+.markdown-body thead { display: table-header-group; }
 .markdown-body h1,.markdown-body h2,.markdown-body h3,
 .markdown-body h4,.markdown-body h5,.markdown-body h6 {
   break-inside: avoid; page-break-inside: avoid;
@@ -2138,6 +2285,7 @@ body {
 .code-block-wrapper { border: none; overflow: visible; margin: 16px 0; }
 .code-block-wrapper pre { border-radius: 6px !important; }
 </style>
+<style>${pdfPageCSS(pages, numbers, bodyBg, dark)}</style>
 </head>
 <body>
 <article class="markdown-body">${content}</article>
@@ -2148,20 +2296,31 @@ body {
             await new Promise(resolve => { iframe.onload = resolve; setTimeout(resolve, 1500); });
             await new Promise(r => setTimeout(r, 300));
 
-            // Measure and set continuous page height
-            const bodyH = doc.body.scrollHeight;
-            const pageSizeEl = doc.createElement('style');
-            pageSizeEl.textContent = `@page { margin: 0; size: 210mm ${bodyH + 1}px; }`;
-            doc.head.appendChild(pageSizeEl);
-            await new Promise(r => setTimeout(r, 100));
+            if (pages === 'single') {
+                // One page as tall as the document.
+                const bodyH = doc.body.scrollHeight;
+                const pageSizeEl = doc.createElement('style');
+                pageSizeEl.textContent = `@page { margin: 0; size: 210mm ${bodyH + 1}px; }`;
+                doc.head.appendChild(pageSizeEl);
+                await new Promise(r => setTimeout(r, 100));
+            }
 
             exportOverlay.classList.remove('active');
             exportBtn.classList.remove('loading');
             if (btnLabel) btnLabel.textContent = 'Export';
 
+            // With a blank title here, Chrome titled the PDF after the page
+            // ("Markdown to PDF Converter Online Free — MD2PDF"). The page wears
+            // the document's name too while the dialog is open.
+            const pageTitle = document.title;
+            document.title = title;
             iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-            // print() returns when the dialog closes.
+            try {
+                iframe.contentWindow.print();
+            } finally {
+                // print() returns when the dialog closes.
+                document.title = pageTitle;
+            }
             exportDone(null);
 
             const cleanup = () => { if (iframe.parentNode) document.body.removeChild(iframe); };
@@ -2244,6 +2403,7 @@ body {
   border-color: ${dark ? '#30363d' : '#d1d9e0'};
 }
 .code-copy-btn.copied { color: #22c55e; }
+@media print { .page-break { break-after: page; page-break-after: always; } }
 </style>
 </head>
 <body>
@@ -2337,15 +2497,15 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
 
         try {
             const style = STYLES[currentStyle] || STYLES.notion;
-            // Hide copy headers for clean screenshot
-            preview.querySelectorAll('.code-block-header').forEach(h => h.style.display = 'none');
+            // Hide copy headers and page break marks for a clean screenshot
+            preview.querySelectorAll('.code-block-header, .page-break, .page-break-shown').forEach(h => h.style.display = 'none');
             const canvas = await html2canvas(preview, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: style.bg,
                 logging: false,
             });
-            preview.querySelectorAll('.code-block-header').forEach(h => h.style.display = '');
+            preview.querySelectorAll('.code-block-header, .page-break, .page-break-shown').forEach(h => h.style.display = '');
 
             const link = document.createElement('a');
             link.download = currentFileName.replace(/\.(md|markdown|txt|mdx)$/i, '') + '.png';
@@ -3101,6 +3261,10 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
 
         // Export
         exportPDFBtn.addEventListener('click',  () => { exportDropdown.classList.remove('open'); exportPDF(); });
+        document.querySelectorAll('#pdfPagesSeg [data-pages]').forEach(btn => {
+            btn.addEventListener('click', () => setPdfPages(btn.dataset.pages));
+        });
+        $('#pageNumbersChk').addEventListener('change', (e) => setPdfPageNumbers(e.target.checked));
         exportHTMLBtn.addEventListener('click', () => { exportDropdown.classList.remove('open'); exportHTML(); });
         exportImageBtn.addEventListener('click', () => { exportDropdown.classList.remove('open'); exportImage(); });
         shareBtn.addEventListener('click', () => { exportDropdown.classList.remove('open'); shareByURL(); });
@@ -3249,8 +3413,9 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         if (wmcpExport) {
             wmcpExport.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const format = new FormData(wmcpExport).get('format');
-                if (format === 'pdf')   exportPDF();
+                const fd = new FormData(wmcpExport);
+                const format = fd.get('format');
+                if (format === 'pdf')   exportPDF({ pages: fd.get('pages') || undefined });
                 if (format === 'html')  exportHTML();
                 if (format === 'image') exportImage();
             });
@@ -3296,14 +3461,18 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
             {
                 name: 'export-document',
                 title: 'Export document',
-                description: 'Download the current document as a file: pdf, html (standalone, styles inlined) or image (PNG).',
+                description: 'Download the current document as a file: pdf (A4 or Letter pages, or one long page), html (standalone, styles inlined) or image (PNG).',
                 inputSchema: {
                     type: 'object',
-                    properties: { format: { type: 'string', enum: ['pdf', 'html', 'image'] } },
+                    properties: {
+                        format: { type: 'string', enum: ['pdf', 'html', 'image'] },
+                        pages: { type: 'string', enum: PDF_PAGES, description: 'PDF only. a4 or letter: pages with 25 mm margins; a line with only \\newpage starts a new page. single: the whole document on one long page. Default: the choice saved in the editor.' },
+                        pageNumbers: { type: 'boolean', description: 'PDF pages only: print "page / total" at the bottom of each page. Default: the choice saved in the editor (off).' },
+                    },
                     required: ['format'],
                 },
-                execute: async ({ format } = {}) => {
-                    if (format === 'pdf')   await exportPDF();
+                execute: async ({ format, pages, pageNumbers } = {}) => {
+                    if (format === 'pdf')   await exportPDF({ pages, pageNumbers });
                     else if (format === 'html')  await exportHTML();
                     else if (format === 'image') await exportImage();
                     else return { success: false, message: 'Unknown format' };
@@ -3356,6 +3525,7 @@ document.querySelectorAll('.code-copy-btn').forEach(function(btn){
         // Restore language (default: detect from browser)
         const savedLang = localStorage.getItem('md2pdf-lang') || (navigator.language.startsWith('es') ? 'es' : 'en');
         applyLanguage(savedLang);
+        loadPdfOptions();
 
         // Restore saved style (default: notion) — ?style= query param overrides
         const urlParams = new URLSearchParams(location.search);

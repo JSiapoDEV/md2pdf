@@ -123,6 +123,18 @@
         <h1><span class="accent">Changelog</span></h1>
 
         <p>What changed on md2pdf.studio. The format follows <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>; the site has no version numbers, so each release is the date it went live. The <code>md2pdf-studio</code> command-line tool has <a href="https://github.com/JSiapoDEV/md2pdf/blob/main/cli/CHANGELOG.md">its own changelog</a>.</p>
+        <h2>2026-11-20</h2>
+        <h3>Changed</h3>
+        <ul style="padding-left: 24px;">
+        <li style="margin-bottom:6px;">PDFs come out in pages: A4, or Letter where Letter is the usual paper, with 25 mm margins on every page. Under <strong>Export PDF</strong> you can switch to Letter, to A4, or back to the whole document on <strong>one long page</strong>, as before. The choice is remembered in your browser.</li>
+        <li style="margin-bottom:6px;">Tables split between rows and repeat their header on the next page; a heading stays with the text that follows it.</li>
+        <li style="margin-bottom:6px;">The PDF is titled with the document's name instead of &ldquo;Markdown to PDF Converter Online Free — MD2PDF&rdquo;, which is also the file name the print dialog suggests.</li>
+        </ul>
+        <h3>Added</h3>
+        <ul style="padding-left: 24px;">
+        <li style="margin-bottom:6px;"><strong>Page numbers</strong> (&ldquo;2 / 5&rdquo; at the bottom), off unless you turn them on.</li>
+        <li style="margin-bottom:6px;">A line with only <code>\newpage</code> or <code>\pagebreak</code> starts a new page; Typora's <code>&lt;div style="page-break-after: always"&gt;&lt;/div&gt;</code> works too. The preview marks the break with a dashed line.</li>
+        </ul>
         <h2>2026-11-13</h2>
         <h3>Added</h3>
         <ul style="padding-left: 24px;">

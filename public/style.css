@@ -419,6 +419,49 @@ body {
 
 .dropdown-item:hover { background: var(--btn-ghost-hover); }
 
+/* PDF page options, under Export PDF */
+#exportDropdown .dropdown-menu { min-width: 236px; }
+
+.pdf-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 2px 12px 8px 34px;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--text-2);
+    white-space: nowrap;
+}
+
+.pdf-pages { display: flex; align-items: center; }
+
+.pdf-pages-label { margin-right: 8px; }
+
+.pdf-pages button {
+    padding: 3px 8px;
+    font: 500 12px var(--font-ui);
+    color: var(--text-2);
+    background: none;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: background var(--t-fast), color var(--t-fast);
+}
+
+.pdf-pages button + button { border-left: none; }
+.pdf-pages button:nth-of-type(1) { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.pdf-pages button:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.pdf-pages button:hover { background: var(--btn-ghost-hover); color: var(--text-1); }
+
+.pdf-pages button[aria-checked="true"] {
+    color: var(--accent);
+    background: var(--accent-subtle);
+}
+
+.pdf-numbers { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.pdf-numbers input { margin: 0; accent-color: var(--accent); cursor: pointer; }
+.pdf-numbers:has(input:disabled) { opacity: 0.45; cursor: default; }
+.pdf-numbers input:disabled { cursor: default; }
+
 .dropdown-divider {
     height: 1px;
     background: var(--border);
@@ -785,6 +828,37 @@ body {
     border: 1px dashed var(--border);
     border-radius: 8px;
     text-align: center;
+}
+
+/* =========================================
+   Page breaks (\newpage): a dashed mark in the preview only
+   ========================================= */
+
+.markdown-body .page-break,
+.markdown-body .page-break-shown {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: auto;
+    margin: 28px 0;
+    font: 600 10px/1 var(--font-ui);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8b949e;
+    user-select: none;
+}
+
+.markdown-body .page-break::before,
+.markdown-body .page-break-shown::before {
+    content: "";
+    flex: 1;
+    border-top: 1px dashed currentColor;
+    opacity: 0.7;
+}
+
+.markdown-body .page-break::after,
+.markdown-body .page-break-shown::after {
+    content: attr(data-label);
 }
 
 /* =========================================

@@ -17,7 +17,7 @@
 - **Live Preview** — Split editor with real-time rendering
 - **11 Visual Styles** — Notion, GitHub, Minimal, Academic, Corporate, LaTeX, Dracula, Newspaper, Handwritten, Terminal, Pastel
 - **5 Templates** — CV/Resume, Report, Documentation, Changelog, Meeting Notes
-- **Export** — PDF (continuous, no page breaks), HTML (standalone with inline styles), PNG
+- **Export** — PDF in A4 or Letter pages (25 mm margins, optional page numbers, `\newpage` for a manual break) or on one long page, HTML (standalone with inline styles), PNG
 - **Custom CSS** — Inject your own styles
 - **Share by URL** — end-to-end encrypted (AES-256-GCM) short links; the key never reaches the server
 - **Expiry and one-time links** — choose a shorter lifetime, or make a link open once

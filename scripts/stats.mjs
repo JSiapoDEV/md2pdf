@@ -47,6 +47,8 @@ const SINCE = "timestamp > NOW() - INTERVAL '" + days + "' DAY";
 const LABELS = {
     link_created: 'Links created',
     export_pdf: 'Export PDF', export_html: 'Export HTML', export_image: 'Export image',
+    pdf_a4: 'PDF in A4 pages', pdf_letter: 'PDF in Letter pages', pdf_single: 'PDF on one long page',
+    pdf_page_numbers: 'PDF with page numbers',
     copy_formatted: 'Copy with formatting', copy_formatted_big: 'Copy too big for Teams',
     open_skill: 'Open AI Skill', copy_skill: 'Copy the skill', download_skill: 'Download SKILL.md',
     download_skill_zip: 'Download skill ZIP', skill_md: 'Fetch /skill.md',
